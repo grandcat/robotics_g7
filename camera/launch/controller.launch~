@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="camera" name="tracking" type="tracking" output="screen"/>
+  <node pkg="camera" name="controller" type="controller"/>
+  <node pkg="rviz" name="plot" type="rviz"/>
+
+</launch>
