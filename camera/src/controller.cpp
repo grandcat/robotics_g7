@@ -15,13 +15,18 @@ using namespace camera;
 ros::Publisher cmd_pub;
 
 
-const int depth0 = 100;
+const int depth0 = 500;
 const int alpha = 10;
 const int beta = 10;
 void receive_cam(const Position::ConstPtr &msg)
 {
 	int pos = msg->x;
-	int depth = depth0 - msg->depth;
+	int depth = 0;
+
+	if(msg->depth != 0)
+	{
+		depth = depth0 - msg->depth;
+	}
 
 	Speed speed_msg;
 	speed_msg.W1 = alpha*pos + beta*depth;

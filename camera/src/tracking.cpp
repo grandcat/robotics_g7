@@ -66,10 +66,13 @@ void object_depth(IplImage* img_depth)
 	{
 		for(int j = 0; j <= 10; j++)
 		{
-			if((((x+j-5) < height) & ((y+i-5) < width)) & (((x+j-5) >= 0) & ((y+i-5) >= 0)) & !isnan(cvGetReal2D(img_depth,x+j-5,y+i-5)))
+			if((((x+j-5) < height) & ((y+i-5) < width)) & (((x+j-5) >= 0) & ((y+i-5) >= 0)))
 			{
-				d += cvGetReal2D(img_depth,x+j-5,y+i-5);
-				n++;
+				if(!isnan(cvGetReal2D(img_depth,x+j-5,y+i-5)))
+				{
+					d += cvGetReal2D(img_depth,x+j-5,y+i-5);
+					n++;
+				}
 			}
 		}
 	}
@@ -293,10 +296,6 @@ int main(int argc, char** argv)
 	ImageConverter ic;
 	ros::spin();
 
-	cvReleaseImage(&ic.hsv_image);
-	cvReleaseImage(&ic.hsv_mask);
-	cvReleaseImage(&ic.img);
-	cvReleaseImage(&ic.img_depth);
 	cvDestroyAllWindows();
 
 	return 0;
