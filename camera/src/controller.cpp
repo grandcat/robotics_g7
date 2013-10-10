@@ -29,8 +29,8 @@ void receive_cam(const Position::ConstPtr &msg)
 	}
 
 	Speed speed_msg;
-	speed_msg.W1 = alpha*pos - beta*depth;
-	speed_msg.W2 = -alpha*pos - beta*depth;
+	speed_msg.W1 = -alpha*pos - beta*depth;
+	speed_msg.W2 = alpha*pos - beta*depth;
 	speed_msg.header.stamp = ros::Time::now();
 	cmd_pub.publish(speed_msg);
 }
