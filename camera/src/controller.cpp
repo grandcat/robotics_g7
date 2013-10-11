@@ -15,15 +15,15 @@ using namespace camera;
 ros::Publisher cmd_pub;
 
 
-const int depth0 = 500;
-const float alpha = 0.1;
-const float beta = 0.1;
+const int depth0 = 550;
+const float alpha = 0.04;
+const float beta = 0.04;
 void receive_cam(const Position::ConstPtr &msg)
 {
 	int pos = msg->x;
 	int depth = 0;
 
-	if(msg->depth != 0)
+	if(msg->depth != 0 & msg->depth < 850)
 	{
 		depth = depth0 - msg->depth;
 	}
