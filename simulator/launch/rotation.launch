@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="fake_motors" name="motors" type="fake_motors"/>
+  <node pkg="simulator" name="odometry" type="odometry" output="screen"/>
+  <node pkg="rviz" name="plot" type="rviz"/>
+  <node pkg="simulator" name="rotation" type="rotation" output="screen" launch-prefix="xterm -e"/>
+
+</launch>
