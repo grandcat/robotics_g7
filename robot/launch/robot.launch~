@@ -1,0 +1,9 @@
+<launch>
+
+
+
+  <node pkg="test" name="odometry" type="odometry" output="screen"/>
+  <node pkg="rviz" name="plot" type="rviz"/>
+  <node pkg="test" name="controller" type="controller" output="screen" launch-prefix="xterm -e"/>
+
+</launch>

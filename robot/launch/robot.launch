@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
+  <node pkg="robot" name="odometry" type="odometry" output="screen"/>
+  <node pkg="robot" name="motors" type="motors" output="screen"/>
+  <node pkg="rviz" name="plot" type="rviz"/>
+  <node pkg="robot" name="controller" type="controller" output="screen" launch-prefix="xterm -e"/>
+
+</launch>
