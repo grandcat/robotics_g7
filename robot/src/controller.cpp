@@ -6,7 +6,7 @@
  */
 
 #include <ros/ros.h>
-#include <differential_drive/PWM.h>
+#include <differential_drive/Speed.h>
 #include <differential_drive/Odometry.h>
 #include "headers/controller.h"
 
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "controller");
 	ros::NodeHandle nh;
-	speed_pub = nh.advertise<PWM>("/motion/Speed", 100);
+	speed_pub = nh.advertise<Speed>("/motion/Speed", 100);
 	odom_sub = nh.subscribe("/motion/Odometry",1000,receive_odom);
 
 	ros::Rate loop_rate(100);

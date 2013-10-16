@@ -189,7 +189,7 @@ TOOLCHAINCONFIG:FILEPATH=TOOLCHAINCONFIG-NOTFOUND
 USERCONFIG:FILEPATH=USERCONFIG-NOTFOUND
 
 //Path to a file.
-_file_name:FILEPATH=/home/robo/DD2425_2013/robotics_g7/robot/src/motors.cpp
+_file_name:FILEPATH=/home/robo/DD2425_2013/robotics_g7/robot/src/EKF.cpp
 
 //Value Computed by CMake
 robot_BINARY_DIR:STATIC=/home/robo/DD2425_2013/robotics_g7/robot/build

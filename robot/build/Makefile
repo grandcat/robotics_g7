@@ -96,6 +96,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named EKF
+
+# Build rule for target.
+EKF: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 EKF
+.PHONY : EKF
+
+# fast build rule for target.
+EKF/fast:
+	$(MAKE) -f CMakeFiles/EKF.dir/build.make CMakeFiles/EKF.dir/build
+.PHONY : EKF/fast
+
+#=============================================================================
 # Target rules for targets named ROSBUILD_genmsg_cpp
 
 # Build rule for target.
@@ -342,6 +355,34 @@ tests/fast:
 	$(MAKE) -f CMakeFiles/tests.dir/build.make CMakeFiles/tests.dir/build
 .PHONY : tests/fast
 
+#=============================================================================
+# Target rules for targets named wall_follower
+
+# Build rule for target.
+wall_follower: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 wall_follower
+.PHONY : wall_follower
+
+# fast build rule for target.
+wall_follower/fast:
+	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/build
+.PHONY : wall_follower/fast
+
+# target to build an object file
+src/EKF.o:
+	$(MAKE) -f CMakeFiles/EKF.dir/build.make CMakeFiles/EKF.dir/src/EKF.o
+.PHONY : src/EKF.o
+
+# target to preprocess a source file
+src/EKF.i:
+	$(MAKE) -f CMakeFiles/EKF.dir/build.make CMakeFiles/EKF.dir/src/EKF.i
+.PHONY : src/EKF.i
+
+# target to generate assembly for a file
+src/EKF.s:
+	$(MAKE) -f CMakeFiles/EKF.dir/build.make CMakeFiles/EKF.dir/src/EKF.s
+.PHONY : src/EKF.s
+
 # target to build an object file
 src/controller.o:
 	$(MAKE) -f CMakeFiles/controller.dir/build.make CMakeFiles/controller.dir/src/controller.o
@@ -402,12 +443,28 @@ src/odometry.s:
 	$(MAKE) -f CMakeFiles/odometry.dir/build.make CMakeFiles/odometry.dir/src/odometry.s
 .PHONY : src/odometry.s
 
+# target to build an object file
+src/wall_follower.o:
+	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/src/wall_follower.o
+.PHONY : src/wall_follower.o
+
+# target to preprocess a source file
+src/wall_follower.i:
+	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/src/wall_follower.i
+.PHONY : src/wall_follower.i
+
+# target to generate assembly for a file
+src/wall_follower.s:
+	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/src/wall_follower.s
+.PHONY : src/wall_follower.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
+	@echo "... EKF"
 	@echo "... ROSBUILD_genmsg_cpp"
 	@echo "... ROSBUILD_genmsg_lisp"
 	@echo "... ROSBUILD_gensrv_cpp"
@@ -429,6 +486,10 @@ help:
 	@echo "... test-results"
 	@echo "... test-results-run"
 	@echo "... tests"
+	@echo "... wall_follower"
+	@echo "... src/EKF.o"
+	@echo "... src/EKF.i"
+	@echo "... src/EKF.s"
 	@echo "... src/controller.o"
 	@echo "... src/controller.i"
 	@echo "... src/controller.s"
@@ -441,6 +502,9 @@ help:
 	@echo "... src/odometry.o"
 	@echo "... src/odometry.i"
 	@echo "... src/odometry.s"
+	@echo "... src/wall_follower.o"
+	@echo "... src/wall_follower.i"
+	@echo "... src/wall_follower.s"
 .PHONY : help
 
 

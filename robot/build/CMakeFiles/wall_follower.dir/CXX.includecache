@@ -6,6 +6,28 @@
 
 #IncludeRegexTransform: 
 
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/AnalogC.h
+string
+-
+vector
+-
+map
+-
+ostream
+-
+ros/serialization.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/serialization.h
+ros/builtin_message_traits.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/builtin_message_traits.h
+ros/message_operations.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/message_operations.h
+ros/time.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/time.h
+ros/macros.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/macros.h
+ros/assert.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
+
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Odometry.h
 string
 -
@@ -52,20 +74,16 @@ ros/assert.h
 std_msgs/Header.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/std_msgs/Header.h
 
-/home/robo/DD2425_2013/robotics_g7/robot/src/controller.cpp
+/home/robo/DD2425_2013/robotics_g7/robot/src/wall_follower.cpp
 ros/ros.h
 -
 differential_drive/Speed.h
 -
 differential_drive/Odometry.h
 -
-headers/controller.h
-/home/robo/DD2425_2013/robotics_g7/robot/src/headers/controller.h
-
-/home/robo/DD2425_2013/robotics_g7/robot/src/headers/controller.h
-ros/ros.h
+differential_drive/AnalogC.h
 -
-differential_drive/Odometry.h
+headers/wall_follower.h
 -
 
 /opt/ros/fuerte/include/XmlRpcDecl.h

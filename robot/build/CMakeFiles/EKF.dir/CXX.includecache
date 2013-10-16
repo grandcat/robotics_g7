@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Odometry.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/AnalogC.h
 string
 -
 vector
@@ -28,7 +28,7 @@ ros/macros.h
 ros/assert.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
 
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Speed.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
 string
 -
 vector
@@ -49,23 +49,19 @@ ros/macros.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/macros.h
 ros/assert.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
-std_msgs/Header.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/std_msgs/Header.h
 
-/home/robo/DD2425_2013/robotics_g7/robot/src/controller.cpp
+/home/robo/DD2425_2013/robotics_g7/robot/src/EKF.cpp
 ros/ros.h
 -
-differential_drive/Speed.h
+differential_drive/Encoders.h
 -
-differential_drive/Odometry.h
+differential_drive/AnalogC.h
 -
-headers/controller.h
-/home/robo/DD2425_2013/robotics_g7/robot/src/headers/controller.h
+headers/EKF.h
+/home/robo/DD2425_2013/robotics_g7/robot/src/headers/EKF.h
 
-/home/robo/DD2425_2013/robotics_g7/robot/src/headers/controller.h
+/home/robo/DD2425_2013/robotics_g7/robot/src/headers/EKF.h
 ros/ros.h
--
-differential_drive/Odometry.h
 -
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
@@ -677,20 +673,4 @@ ros/forwards.h
 /opt/ros/fuerte/include/ros/ros/forwards.h
 
 /opt/ros/fuerte/include/rosconsole/macros_generated.h
-
-/opt/ros/fuerte/include/std_msgs/Header.h
-string
--
-vector
--
-map
--
-ros/types.h
--
-ros/serialization.h
--
-ros/builtin_message_traits.h
--
-ros/message_operations.h
--
 
