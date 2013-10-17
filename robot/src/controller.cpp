@@ -24,6 +24,8 @@ void receive_odom(const Odometry::ConstPtr &msg)
 	double dist = 0;
 
 	Speed speed;
+	speed.W1 = 0;
+	speed.W2 = 0;
 
 	x = msg->x;
 	y = msg->y;
@@ -48,12 +50,12 @@ void receive_odom(const Odometry::ConstPtr &msg)
 	diff_ang = angle(diff_ang);
 	diff_ang_cmd = angle(diff_ang_cmd);
 
-	dist = sqrt((y_cmd-y)*(y_cmd-y)+(x_cmd-x)*(x_cmd-x));
+	dist = x_cmd-x;
 
 	dtheta = theta-theta_cmd;
 	dtheta = angle(dtheta);
 
-	if((100*dtheta*dtheta > error) | (dist > error))
+	if(((dtheta*dtheta > error) | (dist > error)) & flag)
 	{
 		if((dist > 4) & ((-diff_ang > M_PI/20) | (-diff_ang < -M_PI/20)))
 		{
@@ -63,7 +65,6 @@ void receive_odom(const Odometry::ConstPtr &msg)
 
 		speed.W1 = rho*dist-alpha*diff_ang-beta*diff_ang_cmd;
 		speed.W2 = rho*dist+alpha*diff_ang+beta*diff_ang_cmd;
-		speed_pub.publish(speed);
 	}
 	else
 	{
@@ -71,12 +72,10 @@ void receive_odom(const Odometry::ConstPtr &msg)
 		{
 			printf("DONE\n");
 			flag = false;
-
-			speed.W1 = 0;
-			speed.W2 = 0;
-			speed_pub.publish(speed);
 		}
 	}
+
+	speed_pub.publish(speed);
 }
 
 
@@ -87,14 +86,16 @@ void enterCmd()
 	std::cin.getline(l,50);
 	x_cmd = atof(l);
 
-	std::cout << "y =\n";
-	std::cin.getline(l,50);
-	y_cmd = atof(l);
+	//std::cout << "y =\n";
+	//std::cin.getline(l,50);
+	//y_cmd = atof(l);
+	y_cmd = 0;
 
-	std::cout << "theta =\n";
-	std::cin.getline(l,50);
-	theta_cmd = atof(l);
-	theta_cmd = theta_cmd/180*M_PI;
+	//std::cout << "theta =\n";
+	//std::cin.getline(l,50);
+	//theta_cmd = atof(l);
+	//theta_cmd = theta_cmd/180*M_PI;
+	theta_cmd = 0;
 
 	flag = true;
 
@@ -124,7 +125,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "controller");
 	ros::NodeHandle nh;
-	speed_pub = nh.advertise<Speed>("/motion/Speed", 100);
+	speed_pub = nh.advertise<Speed>("/motion/Speed",100);
 	odom_sub = nh.subscribe("/motion/Odometry",1000,receive_odom);
 
 	ros::Rate loop_rate(100);

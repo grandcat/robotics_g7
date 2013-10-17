@@ -29,7 +29,7 @@ void receive_encoder(const Encoders::ConstPtr &msg)
 	y += sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	theta += -r/2/l*(delta_right-delta_left)/ticks_rev*2*M_PI;
 
-	printf("x = %f, y = %f, theta = %f\n",x,y,theta/M_PI*180);
+	// printf("x = %f, y = %f, theta = %f\n",x,y,theta/M_PI*180);
 
 	while((theta > M_PI) | (theta <= -M_PI))
 	{

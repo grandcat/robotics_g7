@@ -19,47 +19,49 @@ ros::Subscriber speed_sub;
 ros::Subscriber enc_sub_m;
 
 
+double speed1_temp, speed2_temp;
 double speed1, speed2;
 double speed_instruction1, speed_instruction2;
 
 int avg;
-const int n = 10;
+const int n = 3;
 
-const double k = 3;
+const double k = 0.2;
 const double kI = 1;
-const double int_max = 30;
+const double int_max = 130;
 double integral1, integral2;
 
 void receive_enc(const Encoders::ConstPtr &msg)
 {
 	// Compute current speed
-	speed1 += msg->delta_encoder1*2*M_PI/ticks_rev/msg->timestamp*1E-3;
-	speed2 += msg->delta_encoder2*2*M_PI/ticks_rev/msg->timestamp*1E-3;
+	speed1_temp += msg->delta_encoder2*2*M_PI/ticks_rev/msg->timestamp/1E-3;
+	speed2_temp += msg->delta_encoder1*2*M_PI/ticks_rev/msg->timestamp/1E-3;
 	avg++;
 	if(avg == n)
 	{
-		speed1 = speed1/n;
-		speed2 = speed2/n;
-		speed1 = 0;
-		speed2 = 0;
+		speed1 = speed1_temp/n;
+		speed2 = speed2_temp/n;
+		speed1_temp = 0;
+		speed2_temp = 0;
 		avg = 0;
 	}
 
 	// Control the speed
 	PWM pwm;
-	double T = msg->timestamp;
+	double T = msg->timestamp*1E-3;
 	// Motor 1
 	double error1 = speed_instruction1 - speed1;
-	integral1 += error1*T;
+	//printf("error1 = %f, ref = %f, current = %f, int = %f\n",error1,speed_instruction1,speed1,integral1);
+	integral1 += kI*error1*T;
 
 	if(integral1 > int_max) {integral1 = int_max;}
 	else if(integral1 < -int_max)  {integral1 = -int_max;}
 
-	double u1 = k*error1 + kI*integral1;
+	double u1 = k*error1 + integral1;
 
 	//Threshold
 	if(u1 > 5) {u1 += 35;}
-	else if(u1 < -5) {u1-=35;}
+	else if(u1 < -5) {u1 -= 35;}
 
 	if(u1 > 255) {u1 = 255;}
 	else if(u1 < -255)  {u1 = -255;}
@@ -68,12 +70,12 @@ void receive_enc(const Encoders::ConstPtr &msg)
 
 	// Motor 2
 	double error2 = speed_instruction2 - speed2;
-	integral2 += error2*T;
+	integral2 += kI*error2*T;
 
 	if(integral2 > int_max) {integral2 = int_max;}
 	else if(integral2 < -int_max)  {integral2 = -int_max;}
 
-	double u2 = k*error2 + kI*integral2;
+	double u2 = k*error2 + integral2;
 
 	//Threshold
 	if(u2 > 5) {u2 += 35;}
@@ -82,7 +84,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 	if(u2 > 255) {u2 = 255;}
 	else if(u2 < -255)  {u2 = -255;}
 
-	pwm.PWM2 = u2;
+	pwm.PWM2 = -u2;
 
 	// Publish
 	pwm.header.stamp = ros::Time::now();
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "motors");
 	ros::NodeHandle nh;
-	pwm_pub = nh.advertise<PWM>("/motion/PWM", 100);
+	pwm_pub = nh.advertise<PWM>("/motion/PWM", 1);
 	speed_sub = nh.subscribe("/motion/Speed",1000,receive_speed);
 	enc_sub_m = nh.subscribe("/motion/Encoders",1000,receive_enc);
 

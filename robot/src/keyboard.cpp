@@ -78,8 +78,8 @@ void arrowsCmd(ros::Publisher cmd_pub)
 			break;
 		case KEYCODE_D:
 			ROS_DEBUG("DOWN");
-			cmd.W1 = -10;
-			cmd.W2 = -10;
+			cmd.W1 = 0;
+			cmd.W2 = 0;
 			cmd.header.stamp = ros::Time::now();
 			dirty = true;
 			break;
@@ -88,9 +88,7 @@ void arrowsCmd(ros::Publisher cmd_pub)
 		if(dirty ==true)
 		{
 			cmd_pub.publish(cmd);
-			ros::Duration(0.02).sleep();
-			cmd.W1 = 0;
-			cmd.W2 = 0;
+			ros::Duration(0.1).sleep();
 			cmd.header.stamp = ros::Time::now();
 			cmd_pub.publish(cmd);
 			dirty=false;
@@ -112,7 +110,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "keyboard");
 	ros::NodeHandle nh;
-	ros::Publisher cmd_pub = nh.advertise<Speed>("/motion/Speed", 100);
+	ros::Publisher cmd_pub = nh.advertise<Speed>("/motion/Speed",100);
 
 	signal(SIGINT,quit);
 	arrowsCmd(cmd_pub);

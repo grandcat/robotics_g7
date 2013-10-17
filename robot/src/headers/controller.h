@@ -18,11 +18,11 @@ ros::Publisher speed_pub;
 ros::Subscriber odom_sub;
 
 
-const double error = 0.005;
+const double error = 0.02;
 
-const double rho = 60;
-const double alpha = 60;
-const double beta = 30;
+const double rho = 10;
+const double alpha = 30;
+const double beta = 10;
 
 double x_cmd = 0;
 double y_cmd = 0;
