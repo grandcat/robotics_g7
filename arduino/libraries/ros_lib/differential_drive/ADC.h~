@@ -1,0 +1,111 @@
+#ifndef _ROS_differential_drive_ADC_h
+#define _ROS_differential_drive_ADC_h
+
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+#include "ros/msg.h"
+
+namespace differential_drive
+{
+
+  class ADC : public ros::Msg
+  {
+    public:
+      uint16_t ch1;
+      uint16_t ch2;
+      uint16_t ch3;
+      uint16_t ch4;
+      uint16_t ch5;
+      uint16_t ch6;
+      uint16_t ch7;
+      uint16_t ch8;
+      uint16_t cell1;
+      uint16_t cell2;
+      uint16_t cell3;
+
+    virtual int serialize(unsigned char *outbuffer) const
+    {
+      int offset = 0;
+      *(outbuffer + offset + 0) = (this->ch1 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch1 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch1);
+      *(outbuffer + offset + 0) = (this->ch2 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch2 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch2);
+      *(outbuffer + offset + 0) = (this->ch3 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch3 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch3);
+      *(outbuffer + offset + 0) = (this->ch4 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch4 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch4);
+      *(outbuffer + offset + 0) = (this->ch5 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch5 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch5);
+      *(outbuffer + offset + 0) = (this->ch6 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch6 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch6);
+      *(outbuffer + offset + 0) = (this->ch7 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch7 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch7);
+      *(outbuffer + offset + 0) = (this->ch8 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->ch8 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->ch8);
+      *(outbuffer + offset + 0) = (this->cell1 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->cell1 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->cell1);
+      *(outbuffer + offset + 0) = (this->cell2 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->cell2 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->cell2);
+      *(outbuffer + offset + 0) = (this->cell3 >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (this->cell3 >> (8 * 1)) & 0xFF;
+      offset += sizeof(this->cell3);
+      return offset;
+    }
+
+    virtual int deserialize(unsigned char *inbuffer)
+    {
+      int offset = 0;
+      this->ch1 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch1 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch1);
+      this->ch2 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch2 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch2);
+      this->ch3 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch3 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch3);
+      this->ch4 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch4 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch4);
+      this->ch5 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch5 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch5);
+      this->ch6 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch6 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch6);
+      this->ch7 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch7 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch7);
+      this->ch8 =  ((uint16_t) (*(inbuffer + offset)));
+      this->ch8 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->ch8);
+      this->cell1 =  ((uint16_t) (*(inbuffer + offset)));
+      this->cell1 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->cell1);
+      this->cell2 =  ((uint16_t) (*(inbuffer + offset)));
+      this->cell2 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->cell2);
+      this->cell3 =  ((uint16_t) (*(inbuffer + offset)));
+      this->cell3 |= ((uint16_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      offset += sizeof(this->cell3);
+     return offset;
+    }
+
+    const char * getType(){ return "differential_drive/ADC"; };
+    const char * getMD5(){ return "cd3093272c68e18946c45e1fdb4c3420"; };
+
+  };
+
+}
+#endif

@@ -1,0 +1,51 @@
+ /*
+ * Motors.h
+ * --------------------
+ * Copyright : (c) 2013, Germain Haessig <germain.haessig@ens-cachan.fr>
+ * Licence   : BSD3
+ * Motors Class
+ */
+
+#include "Arduino.h"
+
+class Motors{
+
+//private :
+public:
+float _k ;
+float _ki ;
+int _int_max ;
+char _dir_pin ;
+char _pwm_pin ;
+char _brk_pin ;
+char _cfb_pin ;	
+
+int _encoder_value_old ;
+int _encoder_value ;
+
+
+
+float _speed_instruction ;
+float _speed ;
+
+float _error ;
+float _int;
+
+
+
+
+Motors(char dir_pin,char pwm_pin,char brk_pin,char cfb_pin);
+~Motors(void);
+
+int Set_speed(int u);
+
+int Speed_regulation(float W, unsigned long Te, int encoder, int encoder_old);
+
+float Read_current();
+
+float Read_speed(int encoder, int encoder_old, unsigned long Te);
+
+int Set_control_parameters(float K, float KI, int INT_MAX);
+
+};
+

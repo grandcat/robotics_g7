@@ -82,8 +82,29 @@ ros::Publisher sensor("/sensors/ADC", &Amsg);  // Create a publisher to "/sensor
 /* Subscriber Callback */
 void messagePWM( const differential_drive::PWM &cmd_msg){
   /* get the speed from message and apply it */
-  MotorA.Set_speed(cmd_msg.PWM1);
-  MotorB.Set_speed(cmd_msg.PWM2);
+  digitalWrite(ChA_CFb, LOW);  // No brake
+  if (cmd_msg.PWM1<0)  {
+    //if(cmd_msg.PWM1>-40)	{cmd_msg.PWM1=0;}
+    digitalWrite(ChA_Dir, LOW);
+    analogWrite(ChA_Pwm,-cmd_msg.PWM1);
+  }
+  else {
+    //if(cmd_msg.PWM1<40)	{cmd_msg.PWM1=0;}
+    digitalWrite(ChA_Dir, HIGH);
+    analogWrite(ChA_Pwm,cmd_msg.PWM1);
+  }
+
+  digitalWrite(ChB_CFb, LOW);  // No brake
+  if (cmd_msg.PWM2<0)  {
+    //if(cmd_msg.PWM2)>-40)	{cmd_msg.PWM2)=0;}
+    digitalWrite(ChB_Dir, LOW);
+    analogWrite(ChB_Pwm,-cmd_msg.PWM2);
+  }
+  else {
+    //if(cmd_msg.PWM2)<40)	{cmd_msg.PWM2)=0;}
+    digitalWrite(ChB_Dir, HIGH);
+    analogWrite(ChB_Pwm,cmd_msg.PWM2);
+  }
 }
 
 
@@ -166,12 +187,6 @@ void loop()  {
   static unsigned long t_ADC;
   static boolean low_batt = false ;
   nh.spinOnce();
-  /* Watchdog timer */
-  if(millis()-wdtime > 2000)  { 
-    MotorA.Set_speed(0);
-    MotorB.Set_speed(0);
-    wdtime = millis() ;
-  }
 
   /* Read IR sensors value every 100ms */
   if(millis()-t_ADC>100)

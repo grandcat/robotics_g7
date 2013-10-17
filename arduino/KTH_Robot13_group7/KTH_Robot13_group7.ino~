@@ -52,6 +52,12 @@
 int led_pin[6] = {38,40,42,44,46,48};
 
 
+/* Motor objects creation */
+/* Please refer to "Motors.h" for further informations */
+Motors MotorA(ChA_Dir,ChA_Pwm,ChA_Brk,ChA_CFb);
+Motors MotorB(ChB_Dir,ChB_Pwm,ChB_Brk,ChB_CFb);
+
+
 /* Servomotors definition */
 Servo servo[8];
 char servo_pin[] = {22,24,26,28,30,32,34,36};
@@ -81,37 +87,30 @@ ros::Publisher sensor("/sensors/ADC", &Amsg);  // Create a publisher to "/sensor
 
 /* Subscriber Callback */
 void messagePWM( const differential_drive::PWM &cmd_msg){
-  /* store the time for Watchdog */
-  wdtime = millis() ;  
-  
-  /* get the time since last call */
-  time_old = time ;  
-  time = millis() ;
-  
-  /* Store encoders value and publish */
-  encoder1_loc = encoder1 ;
-  encoder2_loc = encoder2 ;
-  
-  imlost.encoder1 = encoder1;
-  imlost.encoder2 = encoder2;
-  imlost.delta_encoder1 = encoder1_loc-encoder1_old ;
-  imlost.delta_encoder2 = encoder2_loc-encoder2_old ;
-  
-  imlost.timestamp = time - time_old ;
-  p.publish(&imlost);
-  
   /* get the speed from message and apply it */
-  MotorA.Set_speed(cmd_msg.PWM1);
-  MotorB.Set_speed(cmd_msg.PWM2);
-  
-  if(cpt<10)  {cpt++;}
-  else  {
-    cpt = 0;   
+  digitalWrite(ChA_CFb, LOW);  // No brake
+  if (u<0)  {
+    //if(u>-40)	{u=0;}
+    digitalWrite(ChA_Dir, LOW);
+    analogWrite(ChA_Pwm,-cmd_msg->PWM1);
   }
-  
-  /* Store encoders value */
-  encoder1_old = encoder1_loc ;
-  encoder2_old = encoder2_loc ; 
+  else {
+    //if(u<40)	{u=0;}
+    digitalWrite(ChA_Dir, HIGH);
+    analogWrite(ChA_Pwm,u);
+  }
+
+  digitalWrite(ChB_CFb, LOW);  // No brake
+  if (u<0)  {
+    //if(u>-40)	{u=0;}
+    digitalWrite(ChB_Dir, LOW);
+    analogWrite(ChB_Pwm,-cmd_msg->PWM2);
+  }
+  else {
+    //if(u<40)	{u=0;}
+    digitalWrite(ChB_Dir, HIGH);
+    analogWrite(ChB_Pwm,u);
+  }
 }
 
 
