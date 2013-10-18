@@ -8,6 +8,7 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <differential_drive/Speed.h>
+#include <differential_drive/PWM.h>
 #include <signal.h>
 #include <termios.h>
 #include <stdio.h>
@@ -51,46 +52,49 @@ void arrowsCmd(ros::Publisher cmd_pub)
 		Speed cmd;
 		cmd.W1 = cmd.W2 = 0;
 
+		PWM pwm;
+		pwm.PWM1 = pwm.PWM2 = 0;
+
 		ROS_DEBUG("value: 0x%02X\n", c);
 
 		switch(c)
 		{
 		case KEYCODE_L:
 			ROS_DEBUG("LEFT");
-			cmd.W1 = -10;
-			cmd.W2 = 10;
-			cmd.header.stamp = ros::Time::now();
+			pwm.PWM1 = 100;
+			pwm.PWM2 = 100;
 			dirty = true;
 			break;
 		case KEYCODE_R:
 			ROS_DEBUG("RIGHT");
-			cmd.W1 = 10;
-			cmd.W2 = -10;
-			cmd.header.stamp = ros::Time::now();
+			pwm.PWM1 = 0;
+			pwm.PWM2 = 0;
 			dirty = true;
 			break;
 		case KEYCODE_U:
 			ROS_DEBUG("UP");
-			cmd.W1 = 10;
-			cmd.W2 = 10;
-			cmd.header.stamp = ros::Time::now();
+			cmd.W1 = 6;
+			cmd.W2 = 6;
 			dirty = true;
 			break;
 		case KEYCODE_D:
 			ROS_DEBUG("DOWN");
 			cmd.W1 = 0;
 			cmd.W2 = 0;
-			cmd.header.stamp = ros::Time::now();
 			dirty = true;
 			break;
 		}
 
 		if(dirty ==true)
 		{
-			cmd_pub.publish(cmd);
 			ros::Duration(0.1).sleep();
 			cmd.header.stamp = ros::Time::now();
 			cmd_pub.publish(cmd);
+
+			ros::Duration(0.1).sleep();
+			pwm.header.stamp = ros::Time::now();
+			pwm_pub.publish(pwm);
+
 			dirty=false;
 		}
 	}
@@ -111,6 +115,7 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "keyboard");
 	ros::NodeHandle nh;
 	ros::Publisher cmd_pub = nh.advertise<Speed>("/motion/Speed",100);
+	ros::Publisher pwm_pub = nh.advertise<PWM>("/motion/PWM",100);
 
 	signal(SIGINT,quit);
 	arrowsCmd(cmd_pub);

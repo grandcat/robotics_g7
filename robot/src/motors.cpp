@@ -51,17 +51,13 @@ void receive_enc(const Encoders::ConstPtr &msg)
 	double T = msg->timestamp*1E-3;
 	// Motor 1
 	double error1 = speed_instruction1 - speed1;
-	//printf("error1 = %f, ref = %f, current = %f, int = %f\n",error1,speed_instruction1,speed1,integral1);
+	printf("error1 = %f, ref = %f, current = %f, int = %f\n",error1,speed_instruction1,speed1,integral1);
 	integral1 += kI*error1*T;
 
 	if(integral1 > int_max) {integral1 = int_max;}
 	else if(integral1 < -int_max)  {integral1 = -int_max;}
 
 	double u1 = k*error1 + integral1;
-
-	//Threshold
-	if(u1 > 5) {u1 += 35;}
-	else if(u1 < -5) {u1 -= 35;}
 
 	if(u1 > 255) {u1 = 255;}
 	else if(u1 < -255)  {u1 = -255;}
@@ -76,10 +72,6 @@ void receive_enc(const Encoders::ConstPtr &msg)
 	else if(integral2 < -int_max)  {integral2 = -int_max;}
 
 	double u2 = k*error2 + integral2;
-
-	//Threshold
-	if(u2 > 5) {u2 += 35;}
-	else if(u2 < -5) {u2 -= 35;}
 
 	if(u2 > 255) {u2 = 255;}
 	else if(u2 < -255)  {u2 = -255;}
