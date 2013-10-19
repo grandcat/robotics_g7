@@ -26,7 +26,7 @@ int kfd = 0;
 struct termios cooked, raw;
 
 
-void arrowsCmd(ros::Publisher cmd_pub)
+void arrowsCmd(ros::Publisher cmd_pub,ros::Publisher pwm_pub)
 {
 	char c;
 	bool dirty=false;
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 	ros::Publisher pwm_pub = nh.advertise<PWM>("/motion/PWM",100);
 
 	signal(SIGINT,quit);
-	arrowsCmd(cmd_pub);
+	arrowsCmd(cmd_pub,pwm_pub);
 
 	return 0;
 }
