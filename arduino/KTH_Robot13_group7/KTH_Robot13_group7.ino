@@ -82,28 +82,30 @@ ros::Publisher sensor("/sensors/ADC", &Amsg);  // Create a publisher to "/sensor
 /* Subscriber Callback */
 void messagePWM( const differential_drive::PWM &cmd_msg){
   /* get the speed from message and apply it */
+  int u1 = cmd_msg.PWM1;
   digitalWrite(ChA_CFb, LOW);  // No brake
-  if (cmd_msg.PWM1<0)  {
-    //if(cmd_msg.PWM1>-40)	{cmd_msg.PWM1=0;}
+  if (u1<0)  {
+    if(u1>-40)	{u1=0;}
     digitalWrite(ChA_Dir, LOW);
-    analogWrite(ChA_Pwm,-cmd_msg.PWM1);
+    analogWrite(ChA_Pwm,-u1);
   }
   else {
-    //if(cmd_msg.PWM1<40)	{cmd_msg.PWM1=0;}
+    if(u1<40)	{u1=0;}
     digitalWrite(ChA_Dir, HIGH);
-    analogWrite(ChA_Pwm,cmd_msg.PWM1);
+    analogWrite(ChA_Pwm,u1);
   }
 
+  int u2 = cmd_msg.PWM2;
   digitalWrite(ChB_CFb, LOW);  // No brake
-  if (cmd_msg.PWM2<0)  {
-    //if(cmd_msg.PWM2)>-40)	{cmd_msg.PWM2)=0;}
+  if (u2<0)  {
+    if(u2>-40)	{u2=0;}
     digitalWrite(ChB_Dir, LOW);
-    analogWrite(ChB_Pwm,-cmd_msg.PWM2);
+    analogWrite(ChB_Pwm,-u2);
   }
   else {
-    //if(cmd_msg.PWM2)<40)	{cmd_msg.PWM2)=0;}
+    if(u2<40)	{u2=0;}
     digitalWrite(ChB_Dir, HIGH);
-    analogWrite(ChB_Pwm,cmd_msg.PWM2);
+    analogWrite(ChB_Pwm,u2);
   }
 }
 

@@ -52,12 +52,6 @@
 int led_pin[6] = {38,40,42,44,46,48};
 
 
-/* Motor objects creation */
-/* Please refer to "Motors.h" for further informations */
-Motors MotorA(ChA_Dir,ChA_Pwm,ChA_Brk,ChA_CFb);
-Motors MotorB(ChB_Dir,ChB_Pwm,ChB_Brk,ChB_CFb);
-
-
 /* Servomotors definition */
 Servo servo[8];
 char servo_pin[] = {22,24,26,28,30,32,34,36};
@@ -88,28 +82,30 @@ ros::Publisher sensor("/sensors/ADC", &Amsg);  // Create a publisher to "/sensor
 /* Subscriber Callback */
 void messagePWM( const differential_drive::PWM &cmd_msg){
   /* get the speed from message and apply it */
+  int u1 = cmd_msg.PWM1;
   digitalWrite(ChA_CFb, LOW);  // No brake
-  if (u<0)  {
-    //if(u>-40)	{u=0;}
+  if (u1<0)  {
+    if(u1>-40)	{u1=0;}
     digitalWrite(ChA_Dir, LOW);
-    analogWrite(ChA_Pwm,-cmd_msg->PWM1);
+    analogWrite(ChA_Pwm,-u1);
   }
   else {
-    //if(u<40)	{u=0;}
+    if(u1<40)	{u1=0;}
     digitalWrite(ChA_Dir, HIGH);
-    analogWrite(ChA_Pwm,u);
+    analogWrite(ChA_Pwm,u1);
   }
 
+  int u2 = cmd_msg.PWM2;
   digitalWrite(ChB_CFb, LOW);  // No brake
-  if (u<0)  {
-    //if(u>-40)	{u=0;}
+  if (u2<0)  {
+    if(u2>-40)	{u2=0;}
     digitalWrite(ChB_Dir, LOW);
-    analogWrite(ChB_Pwm,-cmd_msg->PWM2);
+    analogWrite(ChB_Pwm,-u2);
   }
   else {
-    //if(u<40)	{u=0;}
+    if(u2<40)	{u2=0;}
     digitalWrite(ChB_Dir, HIGH);
-    analogWrite(ChB_Pwm,u);
+    analogWrite(ChB_Pwm,u2);
   }
 }
 
@@ -193,12 +189,6 @@ void loop()  {
   static unsigned long t_ADC;
   static boolean low_batt = false ;
   nh.spinOnce();
-  /* Watchdog timer */
-  if(millis()-wdtime > 2000)  { 
-    MotorA.Set_speed(0);
-    MotorB.Set_speed(0);
-    wdtime = millis() ;
-  }
 
   /* Read IR sensors value every 100ms */
   if(millis()-t_ADC>100)
