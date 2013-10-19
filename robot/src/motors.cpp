@@ -64,6 +64,10 @@ void receive_enc(const Encoders::ConstPtr &msg)
 
 		double u1 = k*error1 + integral1 + kD*derivative1;
 
+		// Threshold
+		if(u1 > 5) {u1 += 35;}
+		if(u1 < -5)  {u1 -= -35;}
+
 		if(u1 > 255) {u1 = 255;}
 		else if(u1 < -255)  {u1 = -255;}
 
@@ -79,6 +83,10 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		else if(integral2 < -int_max)  {integral2 = -int_max;}
 
 		double u2 = k*error2 + integral2 + kD*derivative2;
+
+		// Threshold
+		if(u2 > 5) {u2 += 35;}
+		if(u2 < -5)  {u2 -= -35;}
 
 		if(u2 > 255) {u2 = 255;}
 		else if(u2 < -255)  {u2 = -255;}
