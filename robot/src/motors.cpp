@@ -57,7 +57,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		integral1 += kI*error1*T;
 		double derivative1 = (error1-p_error1)/T;
 		p_error1 = error1;
-		printf("error1 = %f, deriv = %f, current = %f, int = %f\n",error1,derivative1,speed1,integral1);
+		//printf("error1 = %f, deriv = %f, current = %f, int = %f\n",error1,derivative1,speed1,integral1);
 
 		if(integral1 > int_max) {integral1 = int_max;}
 		else if(integral1 < -int_max)  {integral1 = -int_max;}
