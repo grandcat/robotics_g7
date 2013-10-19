@@ -21,13 +21,9 @@ ros::Subscriber sensors_sub;
 
 const double error = 0.005;
 
-const double rho = 60;
-const double alpha = 60;
-const double beta = 30;
 
-double x_cmd = 0;
-double y_cmd = 0;
-double theta_cmd = 0;
+
+double x_cmd = 0.2;
 
 
 void receive_odom(const Odometry::ConstPtr &msg);
