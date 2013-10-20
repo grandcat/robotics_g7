@@ -19,10 +19,6 @@ ros::Publisher odom_pub;
 ros::Subscriber enc_sub;
 ros::Publisher marker_pub;
 
-const double r = 0.05;
-const double l = 0.249;
-const float ticks_rev = 360;
-
 
 void receive_encoder(const Encoders::ConstPtr &msg);
 

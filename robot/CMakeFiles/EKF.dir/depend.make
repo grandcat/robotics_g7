@@ -3,8 +3,10 @@
 
 CMakeFiles/EKF.dir/src/EKF.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/AnalogC.h
 CMakeFiles/EKF.dir/src/EKF.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
+CMakeFiles/EKF.dir/src/EKF.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Speed.h
 CMakeFiles/EKF.dir/src/EKF.o: src/EKF.cpp
 CMakeFiles/EKF.dir/src/EKF.o: src/headers/EKF.h
+CMakeFiles/EKF.dir/src/EKF.o: src/headers/parameters.h
 CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/XmlRpcDecl.h
 CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/XmlRpcValue.h
 CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/ros/advertise_options.h
@@ -59,4 +61,5 @@ CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/ros/types.h
 CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/ros/wall_timer.h
 CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/ros/wall_timer_options.h
 CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/rosconsole/macros_generated.h
+CMakeFiles/EKF.dir/src/EKF.o: /opt/ros/fuerte/include/std_msgs/Header.h
 

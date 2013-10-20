@@ -4,8 +4,10 @@
 CMakeFiles/EKF.dir/src/EKF.o
  /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/AnalogC.h
  /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
+ /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Speed.h
  /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/EKF.cpp
  /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/EKF.h
+ /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
  /opt/ros/fuerte/include/XmlRpcDecl.h
  /opt/ros/fuerte/include/XmlRpcValue.h
  /opt/ros/fuerte/include/ros/advertise_options.h
@@ -60,3 +62,4 @@ CMakeFiles/EKF.dir/src/EKF.o
  /opt/ros/fuerte/include/ros/wall_timer.h
  /opt/ros/fuerte/include/ros/wall_timer_options.h
  /opt/ros/fuerte/include/rosconsole/macros_generated.h
+ /opt/ros/fuerte/include/std_msgs/Header.h

@@ -44,7 +44,6 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 	speed_pub = nh.advertise<Speed>("/motion/Speed", 100);
 	odom_sub = nh.subscribe("/motion/Odometry",1000,receive_odom);
-	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 
 	ros::Rate loop_rate(100);
 

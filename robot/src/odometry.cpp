@@ -12,6 +12,7 @@
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_datatypes.h>
 #include "headers/odometry.h"
+#include "headers/parameters.h"
 
 
 using namespace differential_drive;
