@@ -76,11 +76,7 @@ ros/assert.h
 std_msgs/Header.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/std_msgs/Header.h
 
-/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/odometry.h
-ros/ros.h
--
-differential_drive/Encoders.h
--
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
 
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/motors.cpp
 ros/ros.h
@@ -91,8 +87,8 @@ differential_drive/Speed.h
 -
 differential_drive/Encoders.h
 -
-headers/odometry.h
-/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/odometry.h
+headers/parameters.h
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
 ros/macros.h

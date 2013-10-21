@@ -4,7 +4,7 @@
 CMakeFiles/motors.dir/src/motors.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
 CMakeFiles/motors.dir/src/motors.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/PWM.h
 CMakeFiles/motors.dir/src/motors.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Speed.h
-CMakeFiles/motors.dir/src/motors.o: src/headers/odometry.h
+CMakeFiles/motors.dir/src/motors.o: src/headers/parameters.h
 CMakeFiles/motors.dir/src/motors.o: src/motors.cpp
 CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/include/XmlRpcDecl.h
 CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/include/XmlRpcValue.h

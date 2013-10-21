@@ -9,10 +9,12 @@
 #include <differential_drive/Encoders.h>
 #include <differential_drive/AnalogC.h>
 #include <differential_drive/Speed.h>
+#include "Eigen/Dense"
 #include "headers/EKF.h"
 #include "headers/parameters.h"
 
 using namespace differential_drive;
+using namespace Eigen;
 
 
 double uniformRandom()
@@ -30,75 +32,6 @@ double normalRandom()
 }
 
 
-Mat operator*(const Mat &A, const Mat &B)
-{
-	Mat res;
-	int sizeA = A.size();
-	int sizeB = B.at(0).size();
-	int size = B.size();
-	for(int i = 0; i < sizeA; i++)
-	{
-		for(int j = 0; j < sizeB; j++)
-		{
-			for(int n = 0; n < size; n++)
-			{
-				res[i][j] += A[i][n]*B[n][j];
-			}
-		}
-	}
-	return res;
-}
-
-
-Mat transpose(const Mat &A)
-{
-	Mat res;
-	int sizeR = A.size();
-	int sizeC = A.at(0).size();
-	for(int i = 0; i < sizeC; i++)
-	{
-		for(int j = 0; j < sizeR; j++)
-		{
-			res[i][j] = A[j][i];
-		}
-	}
-	return res;
-}
-
-
-Mat operator+(const Mat &A, const Mat &B)
-{
-	Mat res;
-	int size = A.size();
-	for(int i = 0; i < size; i++)
-	{
-		for(int j = 0; j < size; j++)
-		{
-			res[i][j] = A[i][j] + B[i][j];
-		}
-	}
-	return res;
-}
-
-
-Mat inv(const Mat &A)
-{
-	Mat S;
-	return S;
-}
-
-
-Mat eye(int size)
-{
-	Mat I;
-	for(int i = 0; i < size; i++)
-	{
-		I[i][i] = 1;
-	}
-	return I;
-}
-
-
 void receive_enc(const Encoders::ConstPtr &msg)
 {
 	int delta_right = msg->delta_encoder2;
@@ -109,8 +42,8 @@ void receive_enc(const Encoders::ConstPtr &msg)
 	theta_bar += -r/2/l*(delta_right-delta_left)/ticks_rev*2*M_PI;
 	y_wall_bar += 0;
 
-	G[1][3] += -sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
-	G[2][3] += cos(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
+	G(1,3) += -sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
+	G(2,3) += cos(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 }
 
 
@@ -122,25 +55,26 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	int s4 = msg->ch4;
 
 	// Prediction
-	sigma_bar = G*sigma*transpose(G) + R;
+	sigma_bar = G*sigma*G.transpose() + R;
 
 	// Correction
 	double s1_hat = (y_wall_bar-y_bar)/cos(theta_bar);
 
-	H[0][1] = -1/cos(theta_bar);
-	H[0][2] = (y_wall_bar-y_bar)*sin(theta_bar)/cos(theta_bar)/cos(theta_bar);
-	H[0][3] = 1/cos(theta_bar);
+	H(0,1) = -1/cos(theta_bar);
+	H(0,2) = (y_wall_bar-y_bar)*sin(theta_bar)/cos(theta_bar)/cos(theta_bar);
+	H(0,3) = 1/cos(theta_bar);
 
-	Mat S = H*sigma_bar*transpose(H) + Q;
-	K = sigma_bar*transpose(H)*inv(S);
+	Matrix4d S = H*sigma_bar*H.transpose() + Q;
+	K = sigma_bar*H.transpose()*S.inverse();
 
-	Mat mu_bar = K*(s1-s1_hat);
-	x_bar += mu_bar[0][0];
-	y_bar += mu_bar[1][0];
-	theta_bar += mu_bar[2][0];
-	y_wall += mu_bar[3][0];
+	MatrixXd mu_bar(4,1);
+	mu_bar = K*(s1-s1_hat);
+	x_bar += mu_bar(0,0);
+	y_bar += mu_bar(1,0);
+	theta_bar += mu_bar(2,0);
+	y_wall += mu_bar(3,0);
 
-	sigma_bar = (eye(4)-K*H)*sigma_bar;
+	sigma_bar = (MatrixXd::Identity(4,4)-K*H)*sigma_bar;
 
 	x = x_bar;
 	y = y_bar;
@@ -149,8 +83,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 	sigma = sigma_bar;
 
-	G[1][3] = 0;
-	G[2][3] = 0;
+	G(1,3) = 0;
+	G(2,3) = 0;
 }
 
 
@@ -163,13 +97,10 @@ int main(int argc, char** argv)
 
 
 	// Init
-	for(int i = 0; i < 4; i++)
-	{
-		sigma[i][i] = 1E-6;
-		R[i][i] = 1E-6;
-		Q[i][i] = 1E-4;
-		G[i][i] = 1;
-	}
+	sigma = 1E-6 * MatrixXd::Identity(4,4);
+	R = 1E-6 * MatrixXd::Identity(4,4);
+	Q = 1E-4 * MatrixXd::Identity(4,4);
+	G = MatrixXd::Identity(4,4);
 
 
 	ros::Rate loop_rate(100);

@@ -9,13 +9,10 @@
 #define EKF_H_
 
 #include <ros/ros.h>
-#include <vector>
+#include "../Eigen/Dense"
 
 using namespace differential_drive;
-using namespace std;
-
-typedef vector<double> Vec;
-typedef vector<Vec> Mat;
+using namespace Eigen;
 
 
 ros::Subscriber enc_sub;
@@ -24,22 +21,14 @@ ros::Subscriber sensors_sub;
 
 double x,y,theta,y_wall;
 double x_bar,y_bar,theta_bar,y_wall_bar;
-Mat sigma,sigma_bar,K;
-Mat R,Q;
-Mat G,H;
+Matrix4d sigma,sigma_bar,K;
+Matrix4d R,Q;
+Matrix4d G,H;
 
 
 double uniformRandom();
 
 double normalRandom();
-
-Mat operator*(const Mat &A, const Mat &B);
-
-Mat operator+(const Mat &A, const Mat &B);
-
-Mat transpose(const Mat &A);
-
-Mat eye(int size);
 
 void receive_enc(const Encoders::ConstPtr &msg);
 

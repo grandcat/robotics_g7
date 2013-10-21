@@ -80,6 +80,8 @@ ros/ros.h
 differential_drive/Encoders.h
 -
 
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
+
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/odometry.cpp
 ros/ros.h
 -
@@ -95,6 +97,8 @@ tf/transform_datatypes.h
 -
 headers/odometry.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/odometry.h
+headers/parameters.h
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
 ros/macros.h
