@@ -36,31 +36,23 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 	double x_cmd = x + x_cmd_traj;
 	double y_cmd = y_wall + (y-y_wall)/abs(y-y_wall)*y_cmd_traj;
-	double theta_cmd = 0;
 
 	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
-	diff_ang_cmd = atan((y_cmd-y)/(x_cmd-x))-theta_cmd;
 	if((x_cmd-x) < 0)
 	{
 		if((y_cmd-y) > 0)
 		{
 			diff_ang += M_PI;
-			diff_ang_cmd += M_PI;
 		}
 		else
 		{
 			diff_ang -= M_PI;
-			diff_ang_cmd -= M_PI;
 		}
 
 	}
 	diff_ang = angle(diff_ang);
-	diff_ang_cmd = angle(diff_ang_cmd);
 
 	dist = sqrt((x_cmd-x)*(x_cmd-x)+(y_cmd-y)*(y_cmd-y));
-
-	dtheta = theta-theta_cmd;
-	dtheta = angle(dtheta);
 
 	if(flag)
 	{
@@ -70,8 +62,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			diff_ang_cmd = 0;
 		}
 
-		speed.W1 = rho*dist-alpha*diff_ang-beta*diff_ang_cmd;
-		speed.W2 = rho*dist+alpha*diff_ang+beta*diff_ang_cmd;
+		speed.W1 = rho*dist-alpha*diff_ang;
+		speed.W2 = rho*dist+alpha*diff_ang;
 	}
 
 	speed_pub.publish(speed);
