@@ -1,4 +1,7 @@
 FILE(REMOVE_RECURSE
+  "msg_gen"
+  "src/robot/msg"
+  "msg_gen"
   "CMakeFiles/odometry.dir/src/odometry.o"
   "bin/odometry.pdb"
   "bin/odometry"

@@ -1,4 +1,7 @@
 FILE(REMOVE_RECURSE
+  "msg_gen"
+  "src/robot/msg"
+  "msg_gen"
   "CMakeFiles/motors.dir/src/motors.o"
   "bin/motors.pdb"
   "bin/motors"

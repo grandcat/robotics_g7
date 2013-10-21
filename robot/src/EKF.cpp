@@ -10,10 +10,12 @@
 #include <differential_drive/AnalogC.h>
 #include <differential_drive/Speed.h>
 #include "Eigen/Dense"
+#include "robot/EKF.h"
 #include "headers/EKF.h"
 #include "headers/parameters.h"
 
 using namespace differential_drive;
+using namespace robot;
 using namespace Eigen;
 
 
@@ -85,6 +87,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 	G(1,3) = 0;
 	G(2,3) = 0;
+
+	// Publish
+	EKF ekf;
+	ekf.x = x;
+	ekf.y = y;
+	ekf.theta = theta;
+	ekf.y_wall = y_wall;
+	EKF_pub.publish(ekf);
 }
 
 
@@ -94,6 +104,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 	enc_sub = nh.subscribe("/motion/Encoders",1000,receive_enc);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
+	EKF_pub = nh.advertise<EKF>("/motion/EKF",100);
 
 
 	// Init

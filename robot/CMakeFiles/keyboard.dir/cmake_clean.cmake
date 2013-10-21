@@ -1,4 +1,7 @@
 FILE(REMOVE_RECURSE
+  "msg_gen"
+  "src/robot/msg"
+  "msg_gen"
   "CMakeFiles/keyboard.dir/src/keyboard.o"
   "bin/keyboard.pdb"
   "bin/keyboard"

@@ -17,6 +17,7 @@ using namespace Eigen;
 
 ros::Subscriber enc_sub;
 ros::Subscriber sensors_sub;
+ros::Publisher EKF_pub;
 
 
 double x,y,theta,y_wall;

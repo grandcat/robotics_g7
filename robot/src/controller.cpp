@@ -86,16 +86,14 @@ void enterCmd()
 	std::cin.getline(l,50);
 	x_cmd = atof(l);
 
-	//std::cout << "y =\n";
-	//std::cin.getline(l,50);
-	//y_cmd = atof(l);
-	y_cmd = 0;
+	std::cout << "y =\n";
+	std::cin.getline(l,50);
+	y_cmd = atof(l);
 
-	//std::cout << "theta =\n";
-	//std::cin.getline(l,50);
-	//theta_cmd = atof(l);
-	//theta_cmd = theta_cmd/180*M_PI;
-	theta_cmd = 0;
+	std::cout << "theta =\n";
+	std::cin.getline(l,50);
+	theta_cmd = atof(l);
+	theta_cmd = theta_cmd/180*M_PI;
 
 	flag = true;
 

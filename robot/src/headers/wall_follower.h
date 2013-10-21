@@ -9,24 +9,31 @@
 #define WALL_FOLLOWER_H_
 
 #include <ros/ros.h>
-#include <differential_drive/Odometry.h>
+#include <differential_drive/Encoders.h>
+#include "robot/EKF.h"
 
 using namespace differential_drive;
+using namespace robot;
 
 
 ros::Publisher speed_pub;
-ros::Subscriber odom_sub;
+ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 
 
-const double error = 0.005;
+const double rho = 10;
+const double alpha = 30;
+const double beta = 10;
+
+const double x_cmd_traj = 0.1;
+const double y_cmd_traj = 0.15;
+
+bool flag = true;
 
 
+void receive_EKF(const EKF::ConstPtr &msg);
 
-double x_cmd = 0.2;
-
-
-void receive_odom(const Odometry::ConstPtr &msg);
+void receive_sensors(const Encoders::ConstPtr &msg);
 
 double angle(double theta);
 

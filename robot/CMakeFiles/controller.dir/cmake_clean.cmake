@@ -1,4 +1,7 @@
 FILE(REMOVE_RECURSE
+  "msg_gen"
+  "src/robot/msg"
+  "msg_gen"
   "CMakeFiles/controller.dir/src/controller.o"
   "bin/controller.pdb"
   "bin/controller"

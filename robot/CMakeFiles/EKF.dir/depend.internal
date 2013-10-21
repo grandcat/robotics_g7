@@ -266,3 +266,4 @@ CMakeFiles/EKF.dir/src/EKF.o
  /opt/ros/fuerte/include/ros/wall_timer_options.h
  /opt/ros/fuerte/include/rosconsole/macros_generated.h
  /opt/ros/fuerte/include/std_msgs/Header.h
+ msg_gen/cpp/include/robot/EKF.h

@@ -18,7 +18,7 @@ ros::Publisher speed_pub;
 ros::Subscriber odom_sub;
 
 
-const double error = 0.02;
+const double error = 0.01;
 
 const double rho = 10;
 const double alpha = 30;
