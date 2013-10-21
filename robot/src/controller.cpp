@@ -50,7 +50,7 @@ void receive_odom(const Odometry::ConstPtr &msg)
 	diff_ang = angle(diff_ang);
 	diff_ang_cmd = angle(diff_ang_cmd);
 
-	dist = x_cmd-x;
+	dist = sqrt((x_cmd-x)*(x_cmd-x)+(y_cmd-y)*(y_cmd-y));
 
 	dtheta = theta-theta_cmd;
 	dtheta = angle(dtheta);

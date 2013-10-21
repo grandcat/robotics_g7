@@ -28,7 +28,7 @@ ros/macros.h
 ros/assert.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
 
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Odometry.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
 string
 -
 vector
@@ -77,18 +77,20 @@ std_msgs/Header.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/wall_follower.h
 ros/ros.h
 -
-differential_drive/Odometry.h
+differential_drive/Encoders.h
 -
+robot/EKF.h
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/robot/EKF.h
 
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/wall_follower.cpp
 ros/ros.h
 -
 differential_drive/Speed.h
 -
-differential_drive/Odometry.h
--
 differential_drive/AnalogC.h
 -
+robot/EKF.h
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/robot/EKF.h
 headers/wall_follower.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/wall_follower.h
 
@@ -717,4 +719,26 @@ ros/builtin_message_traits.h
 -
 ros/message_operations.h
 -
+
+msg_gen/cpp/include/robot/EKF.h
+string
+-
+vector
+-
+map
+-
+ostream
+-
+ros/serialization.h
+msg_gen/cpp/include/robot/ros/serialization.h
+ros/builtin_message_traits.h
+msg_gen/cpp/include/robot/ros/builtin_message_traits.h
+ros/message_operations.h
+msg_gen/cpp/include/robot/ros/message_operations.h
+ros/time.h
+msg_gen/cpp/include/robot/ros/time.h
+ros/macros.h
+msg_gen/cpp/include/robot/ros/macros.h
+ros/assert.h
+msg_gen/cpp/include/robot/ros/assert.h
 

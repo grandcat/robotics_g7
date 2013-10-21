@@ -20,9 +20,9 @@ ros::Subscriber odom_sub;
 
 const double error = 0.01;
 
-const double rho = 10;
-const double alpha = 30;
-const double beta = 10;
+const double rho = 5;
+const double alpha = 15;
+const double beta = 30;
 
 double x_cmd = 0;
 double y_cmd = 0;
