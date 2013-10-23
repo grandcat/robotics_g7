@@ -98,6 +98,56 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 }
 
 
+void rotate(bool right)
+{
+	// Save true values
+	if(theta_true == 0)
+	{
+		x_true += x;
+		y_true += y;
+	}
+	if(theta_true == M_PI/2)
+	{
+		x_true += -y;
+		y_true += x;
+	}
+	if(theta_true == -M_PI/2)
+	{
+		x_true += y;
+		y_true += -x;
+	}
+	if(theta_true == M_PI)
+	{
+		x_true += -x;
+		y_true += -y;
+	}
+
+	if(right) {theta_true -= M_PI/2;}
+	else {theta_true += M_PI/2;}
+	theta_true = angle(theta_true);
+
+	x = y = theta = 0;
+}
+
+
+double angle(double th)
+{
+	while((th > M_PI) | (th <= -M_PI))
+	{
+		if(th > 0)
+		{
+			th -= 2*M_PI;
+		}
+		else
+		{
+			th += 2*M_PI;
+		}
+	}
+
+	return th;
+}
+
+
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "EKF");

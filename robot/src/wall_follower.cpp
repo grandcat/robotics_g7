@@ -54,7 +54,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 	dist = sqrt((x_cmd-x)*(x_cmd-x)+(y_cmd-y)*(y_cmd-y));
 
-	if(flag)
+	if(!flag)
 	{
 		if((dist > 4) & ((-diff_ang > M_PI/20) | (-diff_ang < -M_PI/20)))
 		{
@@ -70,10 +70,21 @@ void receive_EKF(const EKF::ConstPtr &msg)
 }
 
 
-void receive_sensors(const Encoders::ConstPtr &msg)
+void receive_sensors(const AnalogC::ConstPtr &msg)
 {
 	// Obstacle
+	if(false)
+	{
+		flag = true;
+	}
+
 	// Rotate
+	if(false) // rotate left or right
+	{
+
+	}
+	// Rotate the robot
+	// send a message to EKF
 }
 
 

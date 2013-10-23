@@ -21,18 +21,18 @@ ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 
 
-const double rho = 5;
+const double rho = 10;
 const double alpha = 20;
 
-const double x_cmd_traj = 0.1;
+const double x_cmd_traj = 0.2;
 const double y_cmd_traj = 0.15;
 
-bool flag = true;
+bool flag = false;
 
 
 void receive_EKF(const EKF::ConstPtr &msg);
 
-void receive_sensors(const Encoders::ConstPtr &msg);
+void receive_sensors(const AnalogC::ConstPtr &msg);
 
 double angle(double theta);
 

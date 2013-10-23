@@ -20,6 +20,7 @@ ros::Subscriber sensors_sub;
 ros::Publisher EKF_pub;
 
 
+double x_true,y_true,theta_true;
 double x,y,theta,y_wall;
 double x_bar,y_bar,theta_bar,y_wall_bar;
 Matrix4d sigma,sigma_bar,K;
@@ -34,6 +35,10 @@ double normalRandom();
 void receive_enc(const Encoders::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
+
+void rotate(bool right);
+
+double angle(double theta);
 
 
 #endif /* EKF_H_ */
