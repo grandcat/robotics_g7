@@ -17,6 +17,7 @@ using namespace Eigen;
 
 ros::Subscriber enc_sub;
 ros::Subscriber sensors_sub;
+ros::Subscriber rotate_sub;
 ros::Publisher EKF_pub;
 
 
@@ -27,6 +28,9 @@ Matrix4d sigma,sigma_bar,K;
 Matrix4d R,Q;
 Matrix4d G,H;
 
+bool rotate = false;
+bool right;
+
 
 double uniformRandom();
 
@@ -35,6 +39,8 @@ double normalRandom();
 void receive_enc(const Encoders::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
+
+void receive_rotate(const Rotate::ConstPtr &msg);
 
 void rotate(bool right);
 

@@ -9,6 +9,7 @@
 #include <differential_drive/Speed.h>
 #include <differential_drive/AnalogC.h>
 #include "robot/EKF.h"
+#include "robot/Rotate.h"
 #include "headers/wall_follower.h"
 
 using namespace differential_drive;
@@ -54,16 +55,15 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 	dist = sqrt((x_cmd-x)*(x_cmd-x)+(y_cmd-y)*(y_cmd-y));
 
-	if(!flag)
+	if(!obstacle)
 	{
-		if((dist > 4) & ((-diff_ang > M_PI/20) | (-diff_ang < -M_PI/20)))
-		{
-			dist = 0;
-			diff_ang_cmd = 0;
-		}
-
 		speed.W1 = rho*dist-alpha*diff_ang;
 		speed.W2 = rho*dist+alpha*diff_ang;
+	}
+	else
+	{
+
+		if()
 	}
 
 	speed_pub.publish(speed);
@@ -75,7 +75,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	// Obstacle
 	if(false)
 	{
-		flag = true;
+		obstacle = true;
 	}
 
 	// Rotate
@@ -83,8 +83,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	{
 
 	}
-	// Rotate the robot
 	// send a message to EKF
+	Rotate r;
+	rotate_pub.publish(r);
+
+	// Rotate the robot
+
+
+	rotate_pub.publish(r);
 }
 
 
@@ -110,7 +116,8 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "wall_follower");
 	ros::NodeHandle nh;
-	speed_pub = nh.advertise<Speed>("/motion/Speed", 100);
+	speed_pub = nh.advertise<Speed>("/motion/Speed",100);
+	rotate_pub =nh.advertise<Rotate>("/motion/Rotate",100);
 	EKF_sub = nh.subscribe("/motion/EKF",1000,receive_EKF);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 

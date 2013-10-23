@@ -17,6 +17,7 @@ using namespace robot;
 
 
 ros::Publisher speed_pub;
+ros::Publisher rotate_pub;
 ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 
@@ -27,7 +28,8 @@ const double alpha = 20;
 const double x_cmd_traj = 0.2;
 const double y_cmd_traj = 0.15;
 
-bool flag = false;
+bool obstacle = false;
+bool right;
 
 
 void receive_EKF(const EKF::ConstPtr &msg);

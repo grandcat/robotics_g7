@@ -11,6 +11,7 @@
 #include <differential_drive/Speed.h>
 #include "Eigen/Dense"
 #include "robot/EKF.h"
+#include "robot/Rotate.h"
 #include "headers/EKF.h"
 #include "headers/parameters.h"
 
@@ -56,27 +57,30 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	int s3 = msg->ch3; // right
 	int s4 = msg->ch4;
 
-	// Prediction
-	sigma_bar = G*sigma*G.transpose() + R;
+	if(!flag)
+	{
+		// Prediction
+		sigma_bar = G*sigma*G.transpose() + R;
 
-	// Correction
-	double s1_hat = (y_wall_bar-y_bar)/cos(theta_bar);
+		// Correction
+		double s1_hat = (y_wall_bar-y_bar)/cos(theta_bar);
 
-	H(0,1) = -1/cos(theta_bar);
-	H(0,2) = (y_wall_bar-y_bar)*sin(theta_bar)/cos(theta_bar)/cos(theta_bar);
-	H(0,3) = 1/cos(theta_bar);
+		H(0,1) = -1/cos(theta_bar);
+		H(0,2) = (y_wall_bar-y_bar)*sin(theta_bar)/cos(theta_bar)/cos(theta_bar);
+		H(0,3) = 1/cos(theta_bar);
 
-	Matrix4d S = H*sigma_bar*H.transpose() + Q;
-	K = sigma_bar*H.transpose()*S.inverse();
+		Matrix4d S = H*sigma_bar*H.transpose() + Q;
+		K = sigma_bar*H.transpose()*S.inverse();
 
-	MatrixXd mu_bar(4,1);
-	mu_bar = K*(s1-s1_hat);
-	x_bar += mu_bar(0,0);
-	y_bar += mu_bar(1,0);
-	theta_bar += mu_bar(2,0);
-	y_wall += mu_bar(3,0);
+		MatrixXd mu_bar(4,1);
+		mu_bar = K*(s1-s1_hat);
+		x_bar += mu_bar(0,0);
+		y_bar += mu_bar(1,0);
+		theta_bar += mu_bar(2,0);
+		y_wall += mu_bar(3,0);
 
-	sigma_bar = (MatrixXd::Identity(4,4)-K*H)*sigma_bar;
+		sigma_bar = (MatrixXd::Identity(4,4)-K*H)*sigma_bar;
+	}
 
 	x = x_bar;
 	y = y_bar;
@@ -95,6 +99,13 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	ekf.theta = theta;
 	ekf.y_wall = y_wall;
 	EKF_pub.publish(ekf);
+}
+
+
+void receive_rotate(const Rotate::ConstPtr &msg)
+{
+	right = msg->right;
+	flag = !flag;
 }
 
 
@@ -154,8 +165,8 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 	enc_sub = nh.subscribe("/motion/Encoders",1000,receive_enc);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
+	rotate_sub = nh.subscribe("/motion/Rotate",1000,receive_rotate);
 	EKF_pub = nh.advertise<EKF>("/motion/EKF",100);
-
 
 	// Init
 	sigma = 1E-6 * MatrixXd::Identity(4,4);
