@@ -21,6 +21,9 @@ ros::Subscriber rotate_sub;
 ros::Publisher EKF_pub;
 
 
+// Sensors position
+const double x_s1 = -0.1, y_s1 = 0.1;
+
 double x_true,y_true,theta_true;
 double x,y,theta,y_wall;
 double x_bar,y_bar,theta_bar,y_wall_bar;

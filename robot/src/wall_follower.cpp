@@ -62,8 +62,12 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	}
 	else
 	{
-
 		if()
+		{
+
+		}
+		speed.W1 = 0;
+		speed.W2 = 0;
 	}
 
 	speed_pub.publish(speed);

@@ -63,10 +63,10 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		sigma_bar = G*sigma*G.transpose() + R;
 
 		// Correction
-		double s1_hat = (y_wall_bar-y_bar)/cos(theta_bar);
+		double s1_hat = (y_wall_bar-y_bar-x_s1*sin(theta)+y_s1*cos(theta))/cos(theta_bar);
 
 		H(0,1) = -1/cos(theta_bar);
-		H(0,2) = (y_wall_bar-y_bar)*sin(theta_bar)/cos(theta_bar)/cos(theta_bar);
+		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)+x_s1)/cos(theta_bar)/cos(theta_bar);
 		H(0,3) = 1/cos(theta_bar);
 
 		Matrix4d S = H*sigma_bar*H.transpose() + Q;
@@ -106,6 +106,12 @@ void receive_rotate(const Rotate::ConstPtr &msg)
 {
 	right = msg->right;
 	flag = !flag;
+
+	// Rotation done
+	if(!flag)
+	{
+		rotate(right);
+	}
 }
 
 
@@ -137,7 +143,7 @@ void rotate(bool right)
 	else {theta_true += M_PI/2;}
 	theta_true = angle(theta_true);
 
-	x = y = theta = 0;
+	x = y = theta = y_wall = 0;
 }
 
 
