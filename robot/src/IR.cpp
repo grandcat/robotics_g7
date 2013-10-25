@@ -1,7 +1,7 @@
 /*
- * EKF.cpp
+ * IR.cpp
  *
- *  Created on: Oct 16, 2013
+ *  Created on: Oct 25, 2013
  *      Author: robo
  */
 
@@ -36,5 +36,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-

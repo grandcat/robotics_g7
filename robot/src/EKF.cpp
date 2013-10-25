@@ -77,6 +77,10 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		y_wall += mu_bar(3,0);
 
 		sigma_bar = (MatrixXd::Identity(4,4)-K*H)*sigma_bar;
+
+		// Debug
+		printf("s1 = %f, s1_hat = %f\n",s1,s1_hat);
+		printf("K(0,0) = %f, K(1,0) = %f, K(2,0) = %f, K(3,0) = %f\n",K(0,0),K(1,0),K(2,0),K(3,0));
 	}
 
 	x = x_bar;

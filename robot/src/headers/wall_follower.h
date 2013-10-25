@@ -25,8 +25,8 @@ ros::Subscriber sensors_sub;
 const double rho = 10;
 const double alpha = 20;
 
-const double x_cmd_traj = 0.2;
-const double y_cmd_traj = 0.15;
+const double x_cmd_traj = 0.16;
+const double y_cmd_traj = 0.2;
 
 bool obstacle = false;
 bool right;
