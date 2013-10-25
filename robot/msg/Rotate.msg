@@ -1,1 +1,1 @@
-bool right;
+bool right

@@ -44,10 +44,38 @@ include CMakeFiles/ROSBUILD_genmsg_py.dir/progress.make
 
 CMakeFiles/ROSBUILD_genmsg_py: src/robot/msg/__init__.py
 
+src/robot/msg/__init__.py: src/robot/msg/_Rotate.py
 src/robot/msg/__init__.py: src/robot/msg/_EKF.py
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating src/robot/msg/__init__.py"
-	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --initpy /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg/EKF.msg
+	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --initpy /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg/Rotate.msg /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg/EKF.msg
+
+src/robot/msg/_Rotate.py: msg/Rotate.msg
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/roslib/bin/gendeps
+src/robot/msg/_Rotate.py: manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/roslang/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/roscpp/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/std_msgs/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/rospy/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/stacks/vision_opencv/opencv2/manifest.xml
+src/robot/msg/_Rotate.py: /home/robo/DD2425_2013/differential_drive/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/visualization_msgs/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/stacks/bullet/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/rosconsole/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/stacks/geometry/angles/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/rostest/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/roswtf/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/share/message_filters/manifest.xml
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/stacks/geometry/tf/manifest.xml
+src/robot/msg/_Rotate.py: /home/robo/DD2425_2013/differential_drive/msg_gen/generated
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
+src/robot/msg/_Rotate.py: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles $(CMAKE_PROGRESS_2)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating src/robot/msg/_Rotate.py"
+	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg/Rotate.msg
 
 src/robot/msg/_EKF.py: msg/EKF.msg
 src/robot/msg/_EKF.py: /opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py
@@ -72,12 +100,13 @@ src/robot/msg/_EKF.py: /opt/ros/fuerte/stacks/geometry/tf/manifest.xml
 src/robot/msg/_EKF.py: /home/robo/DD2425_2013/differential_drive/msg_gen/generated
 src/robot/msg/_EKF.py: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 src/robot/msg/_EKF.py: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles $(CMAKE_PROGRESS_3)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating src/robot/msg/_EKF.py"
 	/opt/ros/fuerte/share/rospy/rosbuild/scripts/genmsg_py.py --noinitpy /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg/EKF.msg
 
 ROSBUILD_genmsg_py: CMakeFiles/ROSBUILD_genmsg_py
 ROSBUILD_genmsg_py: src/robot/msg/__init__.py
+ROSBUILD_genmsg_py: src/robot/msg/_Rotate.py
 ROSBUILD_genmsg_py: src/robot/msg/_EKF.py
 ROSBUILD_genmsg_py: CMakeFiles/ROSBUILD_genmsg_py.dir/build.make
 .PHONY : ROSBUILD_genmsg_py

@@ -17,6 +17,9 @@ a61b939c0381206ff505f167d4fed8d4 CMakeFiles/test-results
 4957980d73e52ed34c74c655b846bb4c CMakeFiles/test-results-run
 4957980d73e52ed34c74c655b846bb4c CMakeFiles/tests
 03109c602b86066dab831085adfebe29 msg_gen/cpp/include/robot/EKF.h
+27066c29e2f6e9e72aa7e857ae1bf25d msg_gen/cpp/include/robot/Rotate.h
 f59972a2c1881452ebfe81b93dd3855c msg_gen/lisp/EKF.lisp
+1b9a9ba206628bd865e9583c83d4be3b msg_gen/lisp/Rotate.lisp
 914f6e49bfba39875aaf0895b4d591d6 src/robot/msg/_EKF.py
-57dd3f065c6a795eb69032419fac04ce src/robot/msg/__init__.py
+54799a9b5d2b90495498ae811b8c3b84 src/robot/msg/_Rotate.py
+96d8ce803f64e050e87ef87529a686e5 src/robot/msg/__init__.py

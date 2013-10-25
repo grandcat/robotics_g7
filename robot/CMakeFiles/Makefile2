@@ -66,7 +66,7 @@ all: CMakeFiles/EKF.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/EKF.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 8
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/EKF.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/EKF.dir/rule
@@ -85,19 +85,54 @@ clean: CMakeFiles/EKF.dir/clean
 .PHONY : clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/IR.dir
+
+# All Build rule for target.
+CMakeFiles/IR.dir/all: CMakeFiles/rosbuild_precompile.dir/all
+	$(MAKE) -f CMakeFiles/IR.dir/build.make CMakeFiles/IR.dir/depend
+	$(MAKE) -f CMakeFiles/IR.dir/build.make CMakeFiles/IR.dir/build
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  2
+	@echo "Built target IR"
+.PHONY : CMakeFiles/IR.dir/all
+
+# Include target in all.
+all: CMakeFiles/IR.dir/all
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/IR.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 8
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/IR.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
+.PHONY : CMakeFiles/IR.dir/rule
+
+# Convenience name for target.
+IR: CMakeFiles/IR.dir/rule
+.PHONY : IR
+
+# clean rule for target.
+CMakeFiles/IR.dir/clean:
+	$(MAKE) -f CMakeFiles/IR.dir/build.make CMakeFiles/IR.dir/clean
+.PHONY : CMakeFiles/IR.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/IR.dir/clean
+.PHONY : clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/ROSBUILD_genmsg_cpp.dir
 
 # All Build rule for target.
 CMakeFiles/ROSBUILD_genmsg_cpp.dir/all: CMakeFiles/rosbuild_premsgsrvgen.dir/all
 	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_cpp.dir/build.make CMakeFiles/ROSBUILD_genmsg_cpp.dir/depend
 	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_cpp.dir/build.make CMakeFiles/ROSBUILD_genmsg_cpp.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  2
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  3 4
 	@echo "Built target ROSBUILD_genmsg_cpp"
 .PHONY : CMakeFiles/ROSBUILD_genmsg_cpp.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ROSBUILD_genmsg_cpp.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ROSBUILD_genmsg_cpp.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/ROSBUILD_genmsg_cpp.dir/rule
@@ -122,13 +157,13 @@ clean: CMakeFiles/ROSBUILD_genmsg_cpp.dir/clean
 CMakeFiles/ROSBUILD_genmsg_lisp.dir/all: CMakeFiles/rosbuild_premsgsrvgen.dir/all
 	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_lisp.dir/build.make CMakeFiles/ROSBUILD_genmsg_lisp.dir/depend
 	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_lisp.dir/build.make CMakeFiles/ROSBUILD_genmsg_lisp.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  3
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  5 6
 	@echo "Built target ROSBUILD_genmsg_lisp"
 .PHONY : CMakeFiles/ROSBUILD_genmsg_lisp.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ROSBUILD_genmsg_lisp.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ROSBUILD_genmsg_lisp.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/ROSBUILD_genmsg_lisp.dir/rule
@@ -153,13 +188,13 @@ clean: CMakeFiles/ROSBUILD_genmsg_lisp.dir/clean
 CMakeFiles/ROSBUILD_genmsg_py.dir/all: CMakeFiles/rosbuild_premsgsrvgen.dir/all
 	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_py.dir/build.make CMakeFiles/ROSBUILD_genmsg_py.dir/depend
 	$(MAKE) -f CMakeFiles/ROSBUILD_genmsg_py.dir/build.make CMakeFiles/ROSBUILD_genmsg_py.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  4 5
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  7 8 9
 	@echo "Built target ROSBUILD_genmsg_py"
 .PHONY : CMakeFiles/ROSBUILD_genmsg_py.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ROSBUILD_genmsg_py.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 3
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ROSBUILD_genmsg_py.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/ROSBUILD_genmsg_py.dir/rule
@@ -277,7 +312,7 @@ clean: CMakeFiles/clean-test-results.dir/clean
 CMakeFiles/controller.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/controller.dir/build.make CMakeFiles/controller.dir/depend
 	$(MAKE) -f CMakeFiles/controller.dir/build.make CMakeFiles/controller.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  6
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  10
 	@echo "Built target controller"
 .PHONY : CMakeFiles/controller.dir/all
 
@@ -287,7 +322,7 @@ all: CMakeFiles/controller.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/controller.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 8
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/controller.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/controller.dir/rule
@@ -312,7 +347,7 @@ clean: CMakeFiles/controller.dir/clean
 CMakeFiles/keyboard.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/keyboard.dir/build.make CMakeFiles/keyboard.dir/depend
 	$(MAKE) -f CMakeFiles/keyboard.dir/build.make CMakeFiles/keyboard.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  7
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  11
 	@echo "Built target keyboard"
 .PHONY : CMakeFiles/keyboard.dir/all
 
@@ -322,7 +357,7 @@ all: CMakeFiles/keyboard.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/keyboard.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 8
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/keyboard.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/keyboard.dir/rule
@@ -347,7 +382,7 @@ clean: CMakeFiles/keyboard.dir/clean
 CMakeFiles/motors.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/motors.dir/build.make CMakeFiles/motors.dir/depend
 	$(MAKE) -f CMakeFiles/motors.dir/build.make CMakeFiles/motors.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  8
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  12
 	@echo "Built target motors"
 .PHONY : CMakeFiles/motors.dir/all
 
@@ -357,7 +392,7 @@ all: CMakeFiles/motors.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/motors.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 8
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/motors.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/motors.dir/rule
@@ -382,7 +417,7 @@ clean: CMakeFiles/motors.dir/clean
 CMakeFiles/odometry.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/odometry.dir/build.make CMakeFiles/odometry.dir/depend
 	$(MAKE) -f CMakeFiles/odometry.dir/build.make CMakeFiles/odometry.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  9
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  13
 	@echo "Built target odometry"
 .PHONY : CMakeFiles/odometry.dir/all
 
@@ -392,7 +427,7 @@ all: CMakeFiles/odometry.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/odometry.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 8
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/odometry.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/odometry.dir/rule
@@ -424,7 +459,7 @@ CMakeFiles/rosbuild_precompile.dir/all: CMakeFiles/rospack_genmsg_libexe.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/rosbuild_precompile.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 7
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/rosbuild_precompile.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/rosbuild_precompile.dir/rule
@@ -488,7 +523,7 @@ CMakeFiles/rospack_genmsg.dir/all: CMakeFiles/ROSBUILD_genmsg_cpp.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/rospack_genmsg.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 7
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/rospack_genmsg.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/rospack_genmsg.dir/rule
@@ -523,7 +558,7 @@ all: CMakeFiles/rospack_genmsg_all.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/rospack_genmsg_all.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 7
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/rospack_genmsg_all.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/rospack_genmsg_all.dir/rule
@@ -766,7 +801,7 @@ clean: CMakeFiles/tests.dir/clean
 CMakeFiles/wall_follower.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/depend
 	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  10
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  14
 	@echo "Built target wall_follower"
 .PHONY : CMakeFiles/wall_follower.dir/all
 
@@ -776,7 +811,7 @@ all: CMakeFiles/wall_follower.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/wall_follower.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 8
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/wall_follower.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
 .PHONY : CMakeFiles/wall_follower.dir/rule

@@ -87,6 +87,8 @@ Eigen/Dense
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/Eigen/Dense
 robot/EKF.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/robot/EKF.h
+robot/Rotate.h
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/robot/Rotate.h
 headers/EKF.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/EKF.h
 headers/parameters.h
@@ -1753,6 +1755,28 @@ ros/message_operations.h
 -
 
 msg_gen/cpp/include/robot/EKF.h
+string
+-
+vector
+-
+map
+-
+ostream
+-
+ros/serialization.h
+msg_gen/cpp/include/robot/ros/serialization.h
+ros/builtin_message_traits.h
+msg_gen/cpp/include/robot/ros/builtin_message_traits.h
+ros/message_operations.h
+msg_gen/cpp/include/robot/ros/message_operations.h
+ros/time.h
+msg_gen/cpp/include/robot/ros/time.h
+ros/macros.h
+msg_gen/cpp/include/robot/ros/macros.h
+ros/assert.h
+msg_gen/cpp/include/robot/ros/assert.h
+
+msg_gen/cpp/include/robot/Rotate.h
 string
 -
 vector

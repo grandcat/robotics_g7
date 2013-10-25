@@ -13,6 +13,7 @@
 
 using namespace differential_drive;
 using namespace Eigen;
+using namespace robot;
 
 
 ros::Subscriber enc_sub;
@@ -21,8 +22,11 @@ ros::Subscriber rotate_sub;
 ros::Publisher EKF_pub;
 
 
-// Sensors position
+// IR sensors position
 const double x_s1 = -0.1, y_s1 = 0.1;
+// IR sensors calibration
+const double a = 17.43215;
+const double b = -0.9035;
 
 double x_true,y_true,theta_true;
 double x,y,theta,y_wall;
@@ -31,7 +35,7 @@ Matrix4d sigma,sigma_bar,K;
 Matrix4d R,Q;
 Matrix4d G,H;
 
-bool rotate = false;
+bool flag = false;
 bool right;
 
 

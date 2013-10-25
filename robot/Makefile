@@ -109,6 +109,19 @@ EKF/fast:
 .PHONY : EKF/fast
 
 #=============================================================================
+# Target rules for targets named IR
+
+# Build rule for target.
+IR: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 IR
+.PHONY : IR
+
+# fast build rule for target.
+IR/fast:
+	$(MAKE) -f CMakeFiles/IR.dir/build.make CMakeFiles/IR.dir/build
+.PHONY : IR/fast
+
+#=============================================================================
 # Target rules for targets named ROSBUILD_genmsg_cpp
 
 # Build rule for target.
@@ -410,6 +423,21 @@ src/EKF.s:
 .PHONY : src/EKF.s
 
 # target to build an object file
+src/IR.o:
+	$(MAKE) -f CMakeFiles/IR.dir/build.make CMakeFiles/IR.dir/src/IR.o
+.PHONY : src/IR.o
+
+# target to preprocess a source file
+src/IR.i:
+	$(MAKE) -f CMakeFiles/IR.dir/build.make CMakeFiles/IR.dir/src/IR.i
+.PHONY : src/IR.i
+
+# target to generate assembly for a file
+src/IR.s:
+	$(MAKE) -f CMakeFiles/IR.dir/build.make CMakeFiles/IR.dir/src/IR.s
+.PHONY : src/IR.s
+
+# target to build an object file
 src/controller.o:
 	$(MAKE) -f CMakeFiles/controller.dir/build.make CMakeFiles/controller.dir/src/controller.o
 .PHONY : src/controller.o
@@ -491,6 +519,7 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... EKF"
+	@echo "... IR"
 	@echo "... ROSBUILD_genmsg_cpp"
 	@echo "... ROSBUILD_genmsg_lisp"
 	@echo "... ROSBUILD_genmsg_py"
@@ -518,6 +547,9 @@ help:
 	@echo "... src/EKF.o"
 	@echo "... src/EKF.i"
 	@echo "... src/EKF.s"
+	@echo "... src/IR.o"
+	@echo "... src/IR.i"
+	@echo "... src/IR.s"
 	@echo "... src/controller.o"
 	@echo "... src/controller.i"
 	@echo "... src/controller.s"

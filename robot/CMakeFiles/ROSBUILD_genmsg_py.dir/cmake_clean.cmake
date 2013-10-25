@@ -4,6 +4,7 @@ FILE(REMOVE_RECURSE
   "msg_gen"
   "CMakeFiles/ROSBUILD_genmsg_py"
   "src/robot/msg/__init__.py"
+  "src/robot/msg/_Rotate.py"
   "src/robot/msg/_EKF.py"
 )
 

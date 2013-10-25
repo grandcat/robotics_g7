@@ -62,7 +62,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	}
 	else
 	{
-		if()
+		if(false)
 		{
 
 		}

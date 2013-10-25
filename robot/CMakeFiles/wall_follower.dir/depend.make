@@ -62,4 +62,5 @@ CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/include/ros/wa
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/include/rosconsole/macros_generated.h
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/include/std_msgs/Header.h
 CMakeFiles/wall_follower.dir/src/wall_follower.o: msg_gen/cpp/include/robot/EKF.h
+CMakeFiles/wall_follower.dir/src/wall_follower.o: msg_gen/cpp/include/robot/Rotate.h
 
