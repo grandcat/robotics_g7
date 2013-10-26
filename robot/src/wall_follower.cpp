@@ -10,6 +10,7 @@
 #include <differential_drive/AnalogC.h>
 #include "robot/EKF.h"
 #include "robot/Rotate.h"
+#include "headers/parameters.h"
 #include "headers/wall_follower.h"
 
 using namespace differential_drive;
@@ -76,8 +77,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
+	double s3 = a_long*pow(msg->ch3,b_long);
+
 	// Obstacle
-	if(false)
+	if(s3 < 0.15)
 	{
 		obstacle = true;
 	}
@@ -88,13 +91,13 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 	}
 	// send a message to EKF
-	Rotate r;
-	rotate_pub.publish(r);
+	//Rotate r;
+	//rotate_pub.publish(r);
 
 	// Rotate the robot
 
 
-	rotate_pub.publish(r);
+	//rotate_pub.publish(r);
 }
 
 

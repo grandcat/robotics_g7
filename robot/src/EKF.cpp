@@ -52,7 +52,8 @@ void receive_enc(const Encoders::ConstPtr &msg)
 
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
-	double s1 = a*pow(msg->ch1,b);
+	double s1 = a_short*pow(msg->ch1,b_short); // left
+	double s2 = a_short*pow(msg->ch1,b_short); // right
 
 	if(!flag)
 	{
