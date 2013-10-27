@@ -33,6 +33,10 @@ ros/ros.h
 -
 differential_drive/AnalogC.h
 -
+headers/parameters.h
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
+
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
 ros/macros.h

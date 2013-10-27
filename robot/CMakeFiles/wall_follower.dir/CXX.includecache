@@ -74,6 +74,8 @@ ros/assert.h
 std_msgs/Header.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/std_msgs/Header.h
 
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
+
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/wall_follower.h
 ros/ros.h
 -
@@ -93,6 +95,8 @@ robot/EKF.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/robot/EKF.h
 robot/Rotate.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/robot/Rotate.h
+headers/parameters.h
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
 headers/wall_follower.h
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/wall_follower.h
 

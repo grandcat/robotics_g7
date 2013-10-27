@@ -3,6 +3,7 @@
 
 CMakeFiles/IR.dir/src/IR.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/AnalogC.h
 CMakeFiles/IR.dir/src/IR.o: src/IR.cpp
+CMakeFiles/IR.dir/src/IR.o: src/headers/parameters.h
 CMakeFiles/IR.dir/src/IR.o: /opt/ros/fuerte/include/XmlRpcDecl.h
 CMakeFiles/IR.dir/src/IR.o: /opt/ros/fuerte/include/XmlRpcValue.h
 CMakeFiles/IR.dir/src/IR.o: /opt/ros/fuerte/include/ros/advertise_options.h

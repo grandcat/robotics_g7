@@ -7,16 +7,17 @@
 
 #include <ros/ros.h>
 #include <differential_drive/AnalogC.h>
+#include "headers/parameters.h"
 
 using namespace differential_drive;
 
 
-const double a = 17.43215;
-const double b = -0.9035;
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
 	int s1 = msg->ch1;
-	printf("Range = %f\n",a*pow(s1,b));
+	printf("Range 1 = %f\n",a_short*pow(s1,b_short));
+	int s3 = msg->ch3;
+	printf("Range 3 = %f\n",a_long*pow(s3,b_long));
 }
 
 

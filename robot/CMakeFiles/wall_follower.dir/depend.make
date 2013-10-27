@@ -4,6 +4,7 @@
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/AnalogC.h
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Speed.h
+CMakeFiles/wall_follower.dir/src/wall_follower.o: src/headers/parameters.h
 CMakeFiles/wall_follower.dir/src/wall_follower.o: src/headers/wall_follower.h
 CMakeFiles/wall_follower.dir/src/wall_follower.o: src/wall_follower.cpp
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/include/XmlRpcDecl.h

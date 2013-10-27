@@ -43,7 +43,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 	x_bar += cos(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	y_bar += sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	theta_bar += -r/2/l*(delta_right-delta_left)/ticks_rev*2*M_PI;
-	y_wall_bar += 0;
+	//y_wall_bar += 0;
 
 	G(1,3) += -sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	G(2,3) += cos(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
@@ -61,10 +61,10 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		sigma_bar = G*sigma*G.transpose() + R;
 
 		// Correction
-		double s1_hat = (y_wall_bar-y_bar-x_s1*sin(theta)+y_s1*cos(theta))/cos(theta_bar);
+		double s1_hat = (y_wall_bar-y_bar+x_s1*sin(theta)-y_s1*cos(theta))/cos(theta_bar); // verif
 
 		H(0,1) = -1/cos(theta_bar);
-		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)+x_s1)/cos(theta_bar)/cos(theta_bar);
+		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)+x_s1)/cos(theta_bar)/cos(theta_bar); //verif
 		H(0,3) = 1/cos(theta_bar);
 
 		Matrix4d S = H*sigma_bar*H.transpose() + Q;
@@ -75,7 +75,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		x_bar += mu_bar(0,0);
 		y_bar += mu_bar(1,0);
 		theta_bar += mu_bar(2,0);
-		y_wall += mu_bar(3,0);
+		y_wall_bar += mu_bar(3,0);
 
 		sigma_bar = (MatrixXd::Identity(4,4)-K*H)*sigma_bar;
 
@@ -178,9 +178,11 @@ int main(int argc, char** argv)
 
 	// Init
 	sigma = 1E-6 * MatrixXd::Identity(4,4);
-	R = 1E-6 * MatrixXd::Identity(4,4);
-	Q = 1E-4 * MatrixXd::Identity(4,4);
+	R = 1E-4 * MatrixXd::Identity(4,4);
+	Q = 1E-2 * MatrixXd::Identity(4,4);
 	G = MatrixXd::Identity(4,4);
+
+	y_wall_bar = 0.2;
 
 
 	ros::Rate loop_rate(100);

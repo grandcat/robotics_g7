@@ -22,7 +22,7 @@ ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 
 
-const double rho = 10;
+const double rho = 12;
 const double alpha = 20;
 
 const double x_cmd_traj = 0.16;

@@ -18,7 +18,7 @@ const float ticks_rev = 360;
 
 // IR sensors
 // Position
-const double x_s1 = 0.1, y_s1 = 0.1;
+const double x_s1 = 0.058, y_s1 = 0.105;
 // Calibration short range
 const double a_short = 17.43215;
 const double b_short = -0.9035;
