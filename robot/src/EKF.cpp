@@ -43,7 +43,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 	x_bar += cos(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	y_bar += sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	theta_bar += -r/2/l*(delta_right-delta_left)/ticks_rev*2*M_PI;
-	//y_wall_bar += 0;
+	y_wall_bar += 0;
 
 	G(1,3) += -sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	G(2,3) += cos(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
@@ -55,16 +55,16 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s1 = a_short*pow(msg->ch1,b_short); // left
 	double s2 = a_short*pow(msg->ch1,b_short); // right
 
-	if(!flag)
+	if(!flag & (s1 < 0.3))
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;
 
 		// Correction
-		double s1_hat = (y_wall_bar-y_bar+x_s1*sin(theta)-y_s1*cos(theta))/cos(theta_bar); // verif
+		double s1_hat = (y_wall_bar-y_bar-x_s1*sin(theta)-y_s1*cos(theta))/cos(theta_bar);
 
 		H(0,1) = -1/cos(theta_bar);
-		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)+x_s1)/cos(theta_bar)/cos(theta_bar); //verif
+		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)-x_s1)/cos(theta_bar)/cos(theta_bar);
 		H(0,3) = 1/cos(theta_bar);
 
 		Matrix4d S = H*sigma_bar*H.transpose() + Q;
@@ -81,7 +81,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 		// Debug
 		printf("s1 = %f, s1_hat = %f\n",s1,s1_hat);
-		printf("K(0,0) = %f, K(1,0) = %f, K(2,0) = %f, K(3,0) = %f\n",K(0,0),K(1,0),K(2,0),K(3,0));
+		//printf("K(0,0) = %f, K(1,0) = %f, K(2,0) = %f, K(3,0) = %f\n",K(0,0),K(1,0),K(2,0),K(3,0));
 	}
 
 	x = x_bar;
@@ -107,13 +107,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 void receive_rotate(const Rotate::ConstPtr &msg)
 {
 	right = msg->right;
-	flag = !flag;
 
 	// Rotation done
-	if(!flag)
+	if(flag)
 	{
 		rotate(right);
 	}
+
+	flag = !flag;
 }
 
 
@@ -145,7 +146,8 @@ void rotate(bool right)
 	else {theta_true += M_PI/2;}
 	theta_true = angle(theta_true);
 
-	x = y = theta = y_wall = 0;
+	x = y = theta = 0;
+	y_wall = 0.25;
 }
 
 
@@ -176,12 +178,13 @@ int main(int argc, char** argv)
 	rotate_sub = nh.subscribe("/motion/Rotate",1000,receive_rotate);
 	EKF_pub = nh.advertise<EKF>("/motion/EKF",100);
 
+
 	// Init
 	sigma = 1E-6 * MatrixXd::Identity(4,4);
-	R = 1E-4 * MatrixXd::Identity(4,4);
-	Q = 1E-2 * MatrixXd::Identity(4,4);
+	R = 1E-6 * MatrixXd::Identity(4,4);
+	R(3,3) = 1E-2;
+	Q = 1E-4;
 	G = MatrixXd::Identity(4,4);
-
 	y_wall_bar = 0.2;
 
 

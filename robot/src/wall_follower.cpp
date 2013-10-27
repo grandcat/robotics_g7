@@ -63,12 +63,18 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	}
 	else
 	{
-		if(false)
-		{
+		double dtheta = theta_cmd - theta;
+		dtheta = angle(dtheta);
 
+		// Rotation done
+		if(dtheta*dtheta < 0.05)
+		{
+			obstacle = false;
+			rotate_pub.publish(r);
 		}
-		speed.W1 = 0;
-		speed.W2 = 0;
+
+		speed.W1 = alpha*dtheta;
+		speed.W2 = -alpha*dtheta;
 	}
 
 	speed_pub.publish(speed);
@@ -80,24 +86,17 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s3 = a_long*pow(msg->ch3,b_long);
 
 	// Obstacle
-	if(s3 < 0.15)
+	if((s3 < 0.15) & !obstacle)
 	{
-		//obstacle = true;
+		obstacle = true;
+		theta_cmd += M_PI/2;
+
+		// Send a message to EKF
+		right = true;
+		Rotate r;
+		r.right = right;
+		rotate_pub.publish(r);
 	}
-
-	// Rotate
-	if(false) // rotate left or right
-	{
-
-	}
-	// send a message to EKF
-	//Rotate r;
-	//rotate_pub.publish(r);
-
-	// Rotate the robot
-
-
-	//rotate_pub.publish(r);
 }
 
 
