@@ -55,13 +55,19 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s1 = a_short*pow(msg->ch1,b_short); // left
 	double s2 = a_short*pow(msg->ch1,b_short); // right
 
+	// Init
+	if(y_wall_bar == 0)
+	{
+		y_wall_bar = s1+y_s1;
+	}
+
 	if(!flag & (s1 < 0.3))
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;
 
 		// Correction
-		double s1_hat = (y_wall_bar-y_bar-x_s1*sin(theta)-y_s1*cos(theta))/cos(theta_bar);
+		double s1_hat = (y_wall_bar-y_bar-x_s1*sin(theta_bar)-y_s1*cos(theta_bar))/cos(theta_bar);
 
 		H(0,1) = -1/cos(theta_bar);
 		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)-x_s1)/cos(theta_bar)/cos(theta_bar);
@@ -146,8 +152,7 @@ void rotate(bool right)
 	else {theta_true += M_PI/2;}
 	theta_true = angle(theta_true);
 
-	x = y = theta = 0;
-	y_wall = 0.25;
+	x_bar = y_bar = theta_bar = y_wall_bar = 0;
 }
 
 
@@ -185,7 +190,6 @@ int main(int argc, char** argv)
 	R(3,3) = 1E-2;
 	Q = 1E-4;
 	G = MatrixXd::Identity(4,4);
-	y_wall_bar = 0.2;
 
 
 	ros::Rate loop_rate(100);
