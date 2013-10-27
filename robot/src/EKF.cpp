@@ -180,8 +180,8 @@ int main(int argc, char** argv)
 
 
 	// Init
-	sigma = 1E-6 * MatrixXd::Identity(4,4);
-	R = 1E-6 * MatrixXd::Identity(4,4);
+	sigma = 1E-8 * MatrixXd::Identity(4,4);
+	R = 1E-8 * MatrixXd::Identity(4,4);
 	R(3,3) = 1E-2;
 	Q = 1E-4;
 	G = MatrixXd::Identity(4,4);
