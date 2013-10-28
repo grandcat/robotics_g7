@@ -38,25 +38,39 @@ void receive_enc(const Encoders::ConstPtr &msg)
 
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
-	double s1 = a_short*pow(msg->ch1,b_short); // left
-	double s2 = a_short*pow(msg->ch1,b_short); // right
+	double s1 = a_short*pow(msg->ch1,b_short);
+	double s2 = a_short*pow(msg->ch2,b_short);
+
+	double s0,x_s0,y_s0;
+	if(s1 < s2)
+	{
+		s0 = s1;
+		x_s0 = x_s1;
+		y_s0 = y_s1;
+	}
+	else
+	{
+		s0 = -s2;
+		x_s0 = -x_s2;
+		y_s0 = -y_s2;
+	}
 
 	// Init
 	if(y_wall_bar == 0)
 	{
-		y_wall_bar = s1+y_s1;
+		y_wall_bar = s0 + y_s0;
 	}
 
-	if(!flag)
+	if(!flag & (s0*s0 < 0.2*0.2))
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;
 
 		// Correction
-		double s1_hat = (y_wall_bar-y_bar-x_s1*sin(theta_bar)-y_s1*cos(theta_bar))/cos(theta_bar);
+		double s0_hat = (y_wall_bar-y_bar-x_s0*sin(theta_bar)-y_s0*cos(theta_bar))/cos(theta_bar);
 
 		H(0,1) = -1/cos(theta_bar);
-		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)-x_s1)/cos(theta_bar)/cos(theta_bar);
+		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)-x_s0)/cos(theta_bar)/cos(theta_bar);
 		H(0,3) = 1/cos(theta_bar);
 
 		MatrixXd S = H*sigma_bar*H.transpose();
@@ -64,7 +78,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		K = sigma_bar*H.transpose()/s;
 
 		MatrixXd mu_bar(4,1);
-		mu_bar = K*(s1-s1_hat);
+		mu_bar = K*(s0-s0_hat);
 		x_bar += mu_bar(0,0);
 		y_bar += mu_bar(1,0);
 		theta_bar += mu_bar(2,0);

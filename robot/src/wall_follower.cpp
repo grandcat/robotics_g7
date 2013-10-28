@@ -37,7 +37,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	y_wall = msg->y_wall;
 
 	double x_cmd = x + x_cmd_traj;
-	double y_cmd = y_wall - y_cmd_traj;
+	double y_cmd;
+	if(y_wall > 0) {y_cmd = y_wall - y_cmd_traj;}
+	else {y_cmd = y_wall + y_cmd_traj;}
 
 	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
 	if((x_cmd-x) < 0)
@@ -86,16 +88,28 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
+	double s1 = a_short*pow(msg->ch1,b_short);
+	double s2 = a_short*pow(msg->ch2,b_short);
 	double s3 = a_long*pow(msg->ch3,b_long);
 
 	// Obstacle
 	if((s3 < 0.20) & !obstacle)
 	{
 		obstacle = true;
-		theta_cmd = -M_PI/2;
+
+		if(s1 < s2)
+		{
+			theta_cmd = -M_PI/2;
+			right = true;
+		}
+		else
+		{
+			theta_cmd = M_PI/2;
+			right = false;
+		}
+
 
 		// Send a message to EKF
-		right = true;
 		Rotate r;
 		r.right = right;
 		rotate_pub.publish(r);
