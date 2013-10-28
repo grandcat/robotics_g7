@@ -21,21 +21,6 @@ using namespace robot;
 using namespace Eigen;
 
 
-double uniformRandom()
-{
-	return (double)(rand())/(double)(RAND_MAX);
-}
-
-
-double normalRandom()
-{
-	// Box-Muller transform
-	double u1 = uniformRandom();
-	double u2 = uniformRandom();
-	return cos(2*M_PI*u2)*sqrt(-2.*log(u1));
-}
-
-
 void receive_enc(const Encoders::ConstPtr &msg)
 {
 	int delta_right = msg->delta_encoder2;
@@ -62,7 +47,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		y_wall_bar = s1+y_s1;
 	}
 
-	if(!flag & (s1 < 0.3))
+	if(!flag)
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;

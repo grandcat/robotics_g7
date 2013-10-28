@@ -35,10 +35,6 @@ bool flag = false;
 bool right;
 
 
-double uniformRandom();
-
-double normalRandom();
-
 void receive_enc(const Encoders::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
