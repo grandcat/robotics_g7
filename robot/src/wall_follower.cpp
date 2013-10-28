@@ -68,7 +68,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		printf("dtheta = %f\n",dtheta);
 
 		// Rotation done
-		if(dtheta*dtheta < 0.01)
+		if(dtheta*dtheta < M_PI*M_PI/180/180*5*5)
 		{
 			obstacle = false;
 			Rotate r;

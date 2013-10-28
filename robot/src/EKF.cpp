@@ -73,7 +73,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		sigma_bar = (MatrixXd::Identity(4,4)-K*H)*sigma_bar;
 
 		// Debug
-		printf("s1 = %f, s1_hat = %f\n",s1,s1_hat);
+		//printf("s1 = %f, s1_hat = %f\n",s1,s1_hat);
 		//printf("K(0,0) = %f, K(1,0) = %f, K(2,0) = %f, K(3,0) = %f\n",K(0,0),K(1,0),K(2,0),K(3,0));
 	}
 
@@ -148,6 +148,7 @@ void rotate(bool right)
 
 	// Reset
 	x_bar = y_bar = theta_bar = y_wall_bar = 0;
+	init();
 }
 
 
@@ -169,6 +170,16 @@ double angle(double th)
 }
 
 
+void init()
+{
+	sigma = 1E-8 * MatrixXd::Identity(4,4);
+	R = 1E-8 * MatrixXd::Identity(4,4);
+	R(3,3) = 1E-2;
+	Q = 1E-4;
+	G = MatrixXd::Identity(4,4);
+}
+
+
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "EKF");
@@ -181,11 +192,7 @@ int main(int argc, char** argv)
 
 
 	// Init
-	sigma = 1E-8 * MatrixXd::Identity(4,4);
-	R = 1E-8 * MatrixXd::Identity(4,4);
-	R(3,3) = 1E-2;
-	Q = 1E-4;
-	G = MatrixXd::Identity(4,4);
+	init();
 
 
 	ros::Rate loop_rate(100);

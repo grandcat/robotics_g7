@@ -45,5 +45,7 @@ void rotate(bool right);
 
 double angle(double theta);
 
+void init();
+
 
 #endif /* EKF_H_ */
