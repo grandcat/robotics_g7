@@ -44,15 +44,19 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s0,x_s0,y_s0;
 	if(s1 < s2)
 	{
+		if(!right_sensor) {init();}
 		s0 = s1;
 		x_s0 = x_s1;
 		y_s0 = y_s1;
+		right_sensor = false;
 	}
 	else
 	{
+		if(right_sensor) {init();}
 		s0 = -s2;
 		x_s0 = -x_s2;
 		y_s0 = -y_s2;
+		right_sensor = true;
 	}
 
 	// Init
@@ -161,8 +165,8 @@ void rotate(bool right)
 	Odometry_pub.publish(odometry);
 
 	// Reset
-	x_bar = y_bar = theta_bar = y_wall_bar = 0;
 	init();
+	x_bar = y_bar = theta_bar = 0;
 }
 
 
@@ -191,6 +195,7 @@ void init()
 	R(3,3) = 1E-2;
 	Q = 1E-4;
 	G = MatrixXd::Identity(4,4);
+	y_wall_bar = 0;
 }
 
 

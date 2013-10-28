@@ -31,8 +31,10 @@ Matrix4d R;
 double Q;
 Matrix4d G,H;
 
-bool flag = false;
-bool right;
+bool flag = false; // obstacle
+bool right; // rotation
+
+bool right_sensor;
 
 
 void receive_enc(const Encoders::ConstPtr &msg);
