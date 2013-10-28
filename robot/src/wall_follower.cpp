@@ -68,7 +68,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		printf("dtheta = %f\n",dtheta);
 
 		// Rotation done
-		if(dtheta*dtheta < 0.05)
+		if(dtheta*dtheta < 0.01)
 		{
 			obstacle = false;
 			Rotate r;
@@ -76,8 +76,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			rotate_pub.publish(r);
 		}
 
-		speed.W1 = alpha*dtheta/15;
-		speed.W2 = -alpha*dtheta/15;
+		speed.W1 = alpha*dtheta/10;
+		speed.W2 = -alpha*dtheta/10;
 	}
 
 	speed_pub.publish(speed);
@@ -89,7 +89,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s3 = a_long*pow(msg->ch3,b_long);
 
 	// Obstacle
-	if((s3 < 0.2) & !obstacle)
+	if((s3 < 0.20) & !obstacle)
 	{
 		obstacle = true;
 		theta_cmd = -M_PI/2;
