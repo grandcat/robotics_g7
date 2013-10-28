@@ -5,6 +5,6 @@
   <node pkg="robot" name="motors" type="motors" output="screen"/>
   <node pkg="rviz" name="plot" type="rviz"/>
   <node pkg="robot" name="EKF" type="EKF" output="screen"/>
-  <node pkg="robot" name="wall_follower" type="wall_follower"/>
+  <node pkg="robot" name="wall_follower" type="wall_follower" output="screen"/>
 
 </launch>

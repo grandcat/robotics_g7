@@ -50,6 +50,28 @@ ros/macros.h
 ros/assert.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
 
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Odometry.h
+string
+-
+vector
+-
+map
+-
+ostream
+-
+ros/serialization.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/serialization.h
+ros/builtin_message_traits.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/builtin_message_traits.h
+ros/message_operations.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/message_operations.h
+ros/time.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/time.h
+ros/macros.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/macros.h
+ros/assert.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
+
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Speed.h
 string
 -
@@ -82,6 +104,8 @@ differential_drive/Encoders.h
 differential_drive/AnalogC.h
 -
 differential_drive/Speed.h
+-
+differential_drive/Odometry.h
 -
 Eigen/Dense
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/Eigen/Dense

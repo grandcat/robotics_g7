@@ -20,13 +20,15 @@ ros::Subscriber enc_sub;
 ros::Subscriber sensors_sub;
 ros::Subscriber rotate_sub;
 ros::Publisher EKF_pub;
+ros::Publisher Odometry_pub;
 
 
 double x_true,y_true,theta_true;
 double x,y,theta,y_wall;
 double x_bar,y_bar,theta_bar,y_wall_bar;
 Matrix4d sigma,sigma_bar,K;
-Matrix4d R,Q;
+Matrix4d R;
+double Q;
 Matrix4d G,H;
 
 bool flag = false;

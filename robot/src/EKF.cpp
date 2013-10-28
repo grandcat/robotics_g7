@@ -9,6 +9,7 @@
 #include <differential_drive/Encoders.h>
 #include <differential_drive/AnalogC.h>
 #include <differential_drive/Speed.h>
+#include <differential_drive/Odometry.h>
 #include "Eigen/Dense"
 #include "robot/EKF.h"
 #include "robot/Rotate.h"
@@ -42,7 +43,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 
 	x_bar += cos(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
 	y_bar += sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
-	theta_bar += -r/2/l*(delta_right-delta_left)/ticks_rev*2*M_PI;
+	theta_bar += -r/l*(delta_right-delta_left)/ticks_rev*2*M_PI;
 	y_wall_bar += 0;
 
 	G(1,3) += -sin(theta)*r/2*(delta_right+delta_left)/ticks_rev*2*M_PI;
@@ -73,8 +74,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)-x_s1)/cos(theta_bar)/cos(theta_bar);
 		H(0,3) = 1/cos(theta_bar);
 
-		Matrix4d S = H*sigma_bar*H.transpose() + Q;
-		K = sigma_bar*H.transpose()*S.inverse();
+		MatrixXd S = H*sigma_bar*H.transpose();
+		double s = S(0,0) + Q;
+		K = sigma_bar*H.transpose()/s;
 
 		MatrixXd mu_bar(4,1);
 		mu_bar = K*(s1-s1_hat);
@@ -152,6 +154,14 @@ void rotate(bool right)
 	else {theta_true += M_PI/2;}
 	theta_true = angle(theta_true);
 
+	//Publish
+	Odometry odometry;
+	odometry.x = x_true;
+	odometry.y = y_true;
+	odometry.theta = theta_true;
+	Odometry_pub.publish(odometry);
+
+	// Reset
 	x_bar = y_bar = theta_bar = y_wall_bar = 0;
 }
 
@@ -182,6 +192,7 @@ int main(int argc, char** argv)
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 	rotate_sub = nh.subscribe("/motion/Rotate",1000,receive_rotate);
 	EKF_pub = nh.advertise<EKF>("/motion/EKF",100);
+	Odometry_pub = nh.advertise<EKF>("/motion/Odometry",100);
 
 
 	// Init
