@@ -115,6 +115,13 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	ekf.theta = theta;
 	ekf.y_wall = y_wall;
 	EKF_pub.publish(ekf);
+
+	//Publish
+	Odometry odometry;
+	odometry.x = x_true + x;
+	odometry.y = y_true + y;
+	odometry.theta = theta_true + theta;
+	Odometry_pub.publish(odometry);
 }
 
 
@@ -159,13 +166,6 @@ void rotate(bool right)
 	if(right) {theta_true -= M_PI/2;}
 	else {theta_true += M_PI/2;}
 	theta_true = angle(theta_true);
-
-	//Publish
-	Odometry odometry;
-	odometry.x = x_true;
-	odometry.y = y_true;
-	odometry.theta = theta_true;
-	Odometry_pub.publish(odometry);
 
 	// Reset
 	init();

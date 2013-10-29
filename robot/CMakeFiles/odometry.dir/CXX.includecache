@@ -6,6 +6,28 @@
 
 #IncludeRegexTransform: 
 
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/AnalogC.h
+string
+-
+vector
+-
+map
+-
+ostream
+-
+ros/serialization.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/serialization.h
+ros/builtin_message_traits.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/builtin_message_traits.h
+ros/message_operations.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/message_operations.h
+ros/time.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/time.h
+ros/macros.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/macros.h
+ros/assert.h
+/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
+
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/Encoders.h
 string
 -
@@ -50,44 +72,20 @@ ros/macros.h
 ros/assert.h
 /home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
 
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/PWM.h
-string
--
-vector
--
-map
--
-ostream
--
-ros/serialization.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/serialization.h
-ros/builtin_message_traits.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/builtin_message_traits.h
-ros/message_operations.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/message_operations.h
-ros/time.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/time.h
-ros/macros.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/macros.h
-ros/assert.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/ros/assert.h
-std_msgs/Header.h
-/home/robo/DD2425_2013/differential_drive/msg_gen/cpp/include/differential_drive/std_msgs/Header.h
-
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/odometry.h
 ros/ros.h
 -
 differential_drive/Encoders.h
+-
+differential_drive/Odometry.h
+-
+differential_drive/AnalogC.h
 -
 
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
 
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/odometry.cpp
 ros/ros.h
--
-differential_drive/PWM.h
--
-differential_drive/Encoders.h
 -
 differential_drive/Odometry.h
 -

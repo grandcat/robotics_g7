@@ -8,6 +8,7 @@
 #include <ros/ros.h>
 #include <differential_drive/Odometry.h>
 #include <visualization_msgs/Marker.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_datatypes.h>
 #include "headers/odometry.h"
 #include "headers/parameters.h"
@@ -84,22 +85,17 @@ void receive_encoder(const Encoders::ConstPtr &msg)
 
 void receive_odometry(const Odometry::ConstPtr &msg)
 {
-	double x,y,theta;
 	x = msg->x;
 	y = msg->y;
 	theta = msg->theta;
 
-	// Visualization
+	// Robot
 	uint32_t shape = visualization_msgs::Marker::ARROW;
 	visualization_msgs::Marker marker;
 	marker.header.frame_id = "/my_frame";
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "basic_shapes";
-
-	static int i;
-	marker.id = i;
-	i++;
-
+	marker.id = 0;
 	marker.type = shape;
 	marker.action = visualization_msgs::Marker::ADD;
 
@@ -124,6 +120,43 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 
 	marker.lifetime = ros::Duration();
 	marker_pub.publish(marker);
+
+
+	// Map
+	int mx = (x+map.info.origin.position.x)/map.info.resolution;
+	int my = (y+map.info.origin.position.y)/map.info.resolution;
+	for(int i = -10; i <= 10; i++)
+	{
+		for(int j = -10; j <= 10; j++)
+		{
+			map.data[(my+j)*map.info.width+(mx+i)] = 0;
+		}
+	}
+	map_pub.publish(map);
+}
+
+
+void receive_sensors(const AnalogC::ConstPtr &msg)
+{
+	double s1 = a_short*pow(msg->ch1,b_short);
+	double s2 = a_short*pow(msg->ch2,b_short);
+
+	// Wall
+	if(s1 < 0.3)
+	{
+		int wx = ((x+x_s1*cos(theta)-y_s1*sin(theta)-s1*sin(theta))+map.info.origin.position.x)/map.info.resolution;
+		int wy = ((y+x_s1*sin(theta)+y_s1*cos(theta)+s1*cos(theta))+map.info.origin.position.y)/map.info.resolution;
+		map.data[wy*map.info.width+wx] = 100;
+	}
+
+	if(s2 < 0.3)
+	{
+		int wx = ((x+x_s2*cos(theta)-y_s2*sin(theta)+s2*sin(theta))+map.info.origin.position.x)/map.info.resolution;
+		int wy = ((y+x_s2*sin(theta)+y_s2*cos(theta)-s2*cos(theta))+map.info.origin.position.y)/map.info.resolution;
+		map.data[wy*map.info.width+wx] = 100;
+	}
+
+	map_pub.publish(map);
 }
 
 
@@ -134,7 +167,22 @@ int main(int argc, char** argv)
 	//odom_pub = nh.advertise<Odometry>("/motion/Odometry", 100);
 	//enc_sub = nh.subscribe("/motion/Encoders",1000,receive_encoder);
 	odom_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
-	marker_pub = nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1);
+	marker_pub = nh.advertise<visualization_msgs::Marker>("/marker", 1);
+	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
+	map_pub = nh.advertise<nav_msgs::OccupancyGrid>("/map",1);
+
+
+	// Map init
+	map.header.frame_id = "/my_frame";
+	map.header.stamp = ros::Time::now();
+	// Map properties
+	map.info.resolution = 0.01;
+	map.info.origin.position.x = -2;
+	map.info.origin.position.y = -2;
+	map.info.height = 400;
+	map.info.width = 400;
+	map.data.resize(map.info.width*map.info.height);
+
 
 	ros::Rate loop_rate(100);
 
