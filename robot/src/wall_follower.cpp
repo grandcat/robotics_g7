@@ -78,8 +78,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			rotate_pub.publish(r);
 		}
 
-		speed.W1 = alpha*dtheta/3;
-		speed.W2 = -(alpha*dtheta/3);
+		speed.W1 = alpha*dtheta/2; //3
+		speed.W2 = -(alpha*dtheta/2); //3
 	}
 
 	speed_pub.publish(speed);
