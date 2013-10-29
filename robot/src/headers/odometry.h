@@ -11,6 +11,7 @@
 
 #include <ros/ros.h>
 #include <differential_drive/Encoders.h>
+#include <differential_drive/Odometry.h>
 
 using namespace differential_drive;
 
@@ -21,7 +22,7 @@ ros::Subscriber enc_sub;
 ros::Publisher marker_pub;
 
 
-void receive_encoder(const Encoders::ConstPtr &msg);
+//void receive_encoder(const Encoders::ConstPtr &msg);
 
 void receive_odometry(const Odometry::ConstPtr &msg);
 

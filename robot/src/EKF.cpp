@@ -68,7 +68,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	// Prediction
 	double s0_hat = (y_wall_bar-y_bar-x_s0*sin(theta_bar)-y_s0*cos(theta_bar))/cos(theta_bar);
 	double diff = s0 - s0_hat;
-	printf("diff = %f, y_wall = %f\n",diff,y_wall);
+	//printf("diff = %f, y_wall = %f\n",diff,y_wall);
 
 	if(!flag & (diff*diff < 0.03*0.03))
 	{

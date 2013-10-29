@@ -6,8 +6,6 @@
  */
 
 #include <ros/ros.h>
-#include <differential_drive/PWM.h>
-#include <differential_drive/Encoders.h>
 #include <differential_drive/Odometry.h>
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_datatypes.h>
@@ -97,7 +95,11 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 	marker.header.frame_id = "/my_frame";
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "basic_shapes";
-	marker.id = 0;
+
+	static int i;
+	marker.id = i;
+	i++;
+
 	marker.type = shape;
 	marker.action = visualization_msgs::Marker::ADD;
 
@@ -130,8 +132,8 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "odometry");
 	ros::NodeHandle nh;
 	//odom_pub = nh.advertise<Odometry>("/motion/Odometry", 100);
-	//enc_sub = nh.subscribe("/motion/Encoders/",1000,receive_encoder);
-	odom_sub = nh.subscribe("/motion/Odometry/",1000,receive_odometry);
+	//enc_sub = nh.subscribe("/motion/Encoders",1000,receive_encoder);
+	odom_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
 	marker_pub = nh.advertise<visualization_msgs::Marker>("/visualization_marker", 1);
 
 	ros::Rate loop_rate(100);
