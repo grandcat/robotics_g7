@@ -42,9 +42,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s2 = a_short*pow(msg->ch2,b_short);
 
 	double s0,x_s0,y_s0;
-	if(s1 < s2)
+	if((s1 < 0.2))
 	{
-		if(!right_sensor) {init();}
+		if(right_sensor) {init();}
 		s0 = s1;
 		x_s0 = x_s1;
 		y_s0 = y_s1;
@@ -52,10 +52,10 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	}
 	else
 	{
-		if(right_sensor) {init();}
+		if(!right_sensor) {init();}
 		s0 = -s2;
-		x_s0 = -x_s2;
-		y_s0 = -y_s2;
+		x_s0 = x_s2;
+		y_s0 = y_s2;
 		right_sensor = true;
 	}
 
@@ -65,14 +65,17 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		y_wall_bar = s0 + y_s0;
 	}
 
-	if(!flag & (s0*s0 < 0.2*0.2))
+	// Prediction
+	double s0_hat = (y_wall_bar-y_bar-x_s0*sin(theta_bar)-y_s0*cos(theta_bar))/cos(theta_bar);
+	double diff = s0 - s0_hat;
+	printf("diff = %f, y_wall = %f\n",diff,y_wall);
+
+	if(!flag & (diff*diff < 0.03*0.03))
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;
 
 		// Correction
-		double s0_hat = (y_wall_bar-y_bar-x_s0*sin(theta_bar)-y_s0*cos(theta_bar))/cos(theta_bar);
-
 		H(0,1) = -1/cos(theta_bar);
 		H(0,2) = ((y_wall_bar-y_bar)*sin(theta_bar)-x_s0)/cos(theta_bar)/cos(theta_bar);
 		H(0,3) = 1/cos(theta_bar);
@@ -91,7 +94,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		sigma_bar = (MatrixXd::Identity(4,4)-K*H)*sigma_bar;
 
 		// Debug
-		//printf("s1 = %f, s1_hat = %f\n",s1,s1_hat);
+		//printf("s0 = %f, s0_hat = %f\n",s0,s0_hat);
 		//printf("K(0,0) = %f, K(1,0) = %f, K(2,0) = %f, K(3,0) = %f\n",K(0,0),K(1,0),K(2,0),K(3,0));
 	}
 
@@ -191,9 +194,9 @@ double angle(double th)
 void init()
 {
 	sigma = 1E-8 * MatrixXd::Identity(4,4);
-	R = 1E-8 * MatrixXd::Identity(4,4);
-	R(3,3) = 1E-2;
-	Q = 1E-4;
+	R = 1E-12 * MatrixXd::Identity(4,4);
+	R(3,3) = 1E-12;
+	Q = 1E-12;
 	G = MatrixXd::Identity(4,4);
 	y_wall_bar = 0;
 }
@@ -207,7 +210,7 @@ int main(int argc, char** argv)
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 	rotate_sub = nh.subscribe("/motion/Rotate",1000,receive_rotate);
 	EKF_pub = nh.advertise<EKF>("/motion/EKF",100);
-	Odometry_pub = nh.advertise<EKF>("/motion/Odometry",100);
+	Odometry_pub = nh.advertise<Odometry>("/motion/Odometry",100);
 
 
 	// Init

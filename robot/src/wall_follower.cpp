@@ -67,7 +67,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	{
 		double dtheta = theta - theta_cmd;
 		dtheta = angle(dtheta);
-		printf("dtheta = %f\n",dtheta);
+		//printf("dtheta = %f\n",dtheta);
 
 		// Rotation done
 		if(dtheta*dtheta < M_PI*M_PI/180/180*5*5)
@@ -78,8 +78,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			rotate_pub.publish(r);
 		}
 
-		speed.W1 = alpha*dtheta/10;
-		speed.W2 = -alpha*dtheta/10;
+		speed.W1 = alpha*dtheta/3;
+		speed.W2 = -(alpha*dtheta/3);
 	}
 
 	speed_pub.publish(speed);
