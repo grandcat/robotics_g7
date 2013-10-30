@@ -177,10 +177,10 @@ int main(int argc, char** argv)
 	map.header.stamp = ros::Time::now();
 	// Map properties
 	map.info.resolution = 0.01;
-	map.info.origin.position.x = -2;
-	map.info.origin.position.y = -2;
-	map.info.height = 400;
-	map.info.width = 400;
+	map.info.origin.position.x = -4;
+	map.info.origin.position.y = -4;
+	map.info.height = 800;
+	map.info.width = 800;
 	map.data.resize(map.info.width*map.info.height);
 
 
