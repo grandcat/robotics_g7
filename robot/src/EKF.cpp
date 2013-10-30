@@ -70,7 +70,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double diff = s0 - s0_hat;
 	//printf("diff = %f, y_wall = %f\n",diff,y_wall);
 
-	if(!flag & (diff*diff < 0.03*0.03))
+	//if(!flag & (diff*diff < 0.03*0.03))
+	if(!flag & ((s1 < 0.2) | (s2 < 0.2)))
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;
