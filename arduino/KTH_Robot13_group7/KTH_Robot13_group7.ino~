@@ -173,7 +173,7 @@ void setup()  {
          nh.subscribe(subServo);  // Subscribe
 
 	 // Primesense starting position
-	 servo[i].write(91);
+	 servo[7].write(91);
 	 
          
          /* Advertise booting */

@@ -194,6 +194,19 @@ void loop()  {
   static boolean low_batt = false ;
   nh.spinOnce();
 
+  /* Watchdog timer */
+  if(millis()-wdtime > 2000)  { 
+    digitalWrite(ChA_CFb, LOW);  // No brake
+    digitalWrite(ChA_Dir, HIGH);
+    analogWrite(ChA_Pwm,0);
+
+    digitalWrite(ChB_CFb, LOW);  // No brake
+    digitalWrite(ChB_Dir, HIGH);
+    analogWrite(ChB_Pwm,0);
+
+    wdtime = millis();
+  }
+
   /* Read IR sensors value every 100ms */
   if(millis()-t_ADC>100)
   { 
