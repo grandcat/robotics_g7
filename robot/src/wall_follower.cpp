@@ -23,8 +23,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	double theta;
 
 	double diff_ang = 0;
-	double diff_ang_cmd = 0;
-	double dtheta = 0;
 	double dist = 0;
 
 	Speed speed;
@@ -38,8 +36,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 	double x_cmd = x + x_cmd_traj;
 	double y_cmd;
-	if(y_wall > 0) {y_cmd = y_wall - y_cmd_traj;}
+	if(msg->right_sensor) {y_cmd = y_wall - y_cmd_traj;}
 	else {y_cmd = y_wall + y_cmd_traj;}
+	if(msg->wall) {y_cmd = y;}
 
 	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
 	if((x_cmd-x) < 0)
@@ -70,7 +69,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		//printf("dtheta = %f\n",dtheta);
 
 		// Rotation done
-		if(dtheta*dtheta < M_PI*M_PI/180/180*5*5)
+		if(dtheta*dtheta < M_PI*M_PI/180/180*theta_error*theta_error)
 		{
 			obstacle = false;
 			Rotate r;
@@ -93,7 +92,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s3 = a_long*pow(msg->ch3,b_long);
 
 	// Obstacle
-	if((s3 < 0.20) & !obstacle)
+	if((s3 < dist_obstacle) & !obstacle)
 	{
 		obstacle = true;
 

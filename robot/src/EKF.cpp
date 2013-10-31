@@ -42,21 +42,23 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s2 = a_short*pow(msg->ch2,b_short);
 
 	double s0,x_s0,y_s0;
-	if((s1 < 0.2))
+	if((s1 < 0.2) & !wall)
 	{
-		if(right_sensor) {init();}
+		init();
 		s0 = s1;
 		x_s0 = x_s1;
 		y_s0 = y_s1;
 		right_sensor = false;
+		wall = true;
 	}
-	else
+	if((s2 < 0.2) & !wall)
 	{
-		if(!right_sensor) {init();}
+		init();
 		s0 = -s2;
 		x_s0 = x_s2;
 		y_s0 = y_s2;
 		right_sensor = true;
+		wall = true;
 	}
 
 	// Init
@@ -68,10 +70,17 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	// Prediction
 	double s0_hat = (y_wall_bar-y_bar-x_s0*sin(theta_bar)-y_s0*cos(theta_bar))/cos(theta_bar);
 	double diff = s0 - s0_hat;
-	//printf("diff = %f, y_wall = %f\n",diff,y_wall);
+	printf("diff = %f, y_wall = %f\n",diff,y_wall);
+
+	if(diff*diff > 0.04*0.04)
+	{
+		wall = false;
+	}
 
 	//if(!flag & (diff*diff < 0.04*0.04))
-	if(!flag & ((s1 < 0.2) | (s2 < 0.2)) & (diff*diff < 0.03*0.03)) // diff if tricky
+	//if(!flag & ((s1 < 0.2) | (s2 < 0.2)) & (diff*diff < 0.03*0.03))
+
+	if(!flag & wall)
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;
@@ -115,12 +124,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	ekf.y = y;
 	ekf.theta = theta;
 	ekf.y_wall = y_wall;
+	ekf.right_sensor = right_sensor;
+	ekf.wall = wall;
 	EKF_pub.publish(ekf);
 
 	//Publish
 	Odometry odometry;
-	odometry.x = x_true + x;
-	odometry.y = y_true + y;
+	odometry.x = x_true + x*cos(theta_true) - y*sin(theta_true);
+	odometry.y = y_true + x*sin(theta_true) + y*cos(theta_true);
 	odometry.theta = theta_true + theta;
 	Odometry_pub.publish(odometry);
 }
@@ -143,26 +154,8 @@ void receive_rotate(const Rotate::ConstPtr &msg)
 void rotate(bool right)
 {
 	// Save true values
-	if(theta_true == 0)
-	{
-		x_true += x;
-		y_true += y;
-	}
-	if(theta_true == M_PI/2)
-	{
-		x_true += -y;
-		y_true += x;
-	}
-	if(theta_true == -M_PI/2)
-	{
-		x_true += y;
-		y_true += -x;
-	}
-	if(theta_true == M_PI)
-	{
-		x_true += -x;
-		y_true += -y;
-	}
+	x_true += x*cos(theta_true) - y*sin(theta_true);
+	y_true += x*sin(theta_true) + y*cos(theta_true);
 
 	if(right) {theta_true -= M_PI/2;}
 	else {theta_true += M_PI/2;}
@@ -195,9 +188,9 @@ double angle(double th)
 void init()
 {
 	sigma = 1E-8 * MatrixXd::Identity(4,4);
-	R = 1E-8 * MatrixXd::Identity(4,4); //12
-	R(3,3) = 1E-8; //12
-	Q = 1E-8; //12
+	R = 1E-8 * MatrixXd::Identity(4,4);
+	R(3,3) = 1E-8;
+	Q = 1E-8;
 	G = MatrixXd::Identity(4,4);
 	y_wall_bar = 0;
 }

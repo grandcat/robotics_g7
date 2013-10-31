@@ -35,6 +35,7 @@ bool flag = false; // obstacle
 bool right; // rotation
 
 bool right_sensor;
+bool wall = false;
 
 
 void receive_enc(const Encoders::ConstPtr &msg);

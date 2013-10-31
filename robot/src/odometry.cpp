@@ -123,8 +123,8 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 
 	/*
 	// Robot
-	int mx = (x+map.info.origin.position.x)/map.info.resolution;
-	int my = (y+map.info.origin.position.y)/map.info.resolution;
+	int mx = (x-map.info.origin.position.x)/map.info.resolution;
+	int my = (y-map.info.origin.position.y)/map.info.resolution;
 	for(int i = -10; i <= 10; i++)
 	{
 		for(int j = -10; j <= 10; j++)
@@ -146,15 +146,15 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	// Wall
 	if(s1 < 0.3)
 	{
-		int wx = ((x+x_s1*cos(theta)-y_s1*sin(theta)-s1*sin(theta))+map.info.origin.position.x)/map.info.resolution;
-		int wy = ((y+x_s1*sin(theta)+y_s1*cos(theta)+s1*cos(theta))+map.info.origin.position.y)/map.info.resolution;
+		int wx = ((x+x_s1*cos(theta)-y_s1*sin(theta)-s1*sin(theta))-map.info.origin.position.x)/map.info.resolution;
+		int wy = ((y+x_s1*sin(theta)+y_s1*cos(theta)+s1*cos(theta))-map.info.origin.position.y)/map.info.resolution;
 		map.data[wy*map.info.width+wx] = 100;
 	}
 
 	if(s2 < 0.3)
 	{
-		int wx = ((x+x_s2*cos(theta)-y_s2*sin(theta)+s2*sin(theta))+map.info.origin.position.x)/map.info.resolution;
-		int wy = ((y+x_s2*sin(theta)+y_s2*cos(theta)-s2*cos(theta))+map.info.origin.position.y)/map.info.resolution;
+		int wx = ((x+x_s2*cos(theta)-y_s2*sin(theta)+s2*sin(theta))-map.info.origin.position.x)/map.info.resolution;
+		int wy = ((y+x_s2*sin(theta)+y_s2*cos(theta)-s2*cos(theta))-map.info.origin.position.y)/map.info.resolution;
 		map.data[wy*map.info.width+wx] = 100;
 	}
 
