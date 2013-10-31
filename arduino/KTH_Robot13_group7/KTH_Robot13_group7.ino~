@@ -170,7 +170,11 @@ void setup()  {
          nh.advertise(sensor);  // advertise on sensor
          
          nh.subscribe(subPWM);  // Subscribe 
-         nh.subscribe(subServo);  // Subscribe 
+         nh.subscribe(subServo);  // Subscribe
+
+	 // Primesense starting position
+	 servo[i].write(91);
+	 
          
          /* Advertise booting */
          hello_world();
