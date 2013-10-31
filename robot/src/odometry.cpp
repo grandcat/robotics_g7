@@ -121,8 +121,8 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 	marker.lifetime = ros::Duration();
 	marker_pub.publish(marker);
 
-
-	// Map
+	/*
+	// Robot
 	int mx = (x+map.info.origin.position.x)/map.info.resolution;
 	int my = (y+map.info.origin.position.y)/map.info.resolution;
 	for(int i = -10; i <= 10; i++)
@@ -133,11 +133,13 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 		}
 	}
 	map_pub.publish(map);
+	*/
 }
 
 
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
+	/*
 	double s1 = a_short*pow(msg->ch1,b_short);
 	double s2 = a_short*pow(msg->ch2,b_short);
 
@@ -157,6 +159,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	}
 
 	map_pub.publish(map);
+	*/
 }
 
 

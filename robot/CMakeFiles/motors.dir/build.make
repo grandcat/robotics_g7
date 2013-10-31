@@ -57,6 +57,7 @@ CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/stacks/vision_opencv/opencv2
 CMakeFiles/motors.dir/src/motors.o: /home/robo/DD2425_2013/differential_drive/manifest.xml
 CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
 CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/share/visualization_msgs/manifest.xml
+CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/share/nav_msgs/manifest.xml
 CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/stacks/bullet/manifest.xml
 CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
 CMakeFiles/motors.dir/src/motors.o: /opt/ros/fuerte/share/rosconsole/manifest.xml

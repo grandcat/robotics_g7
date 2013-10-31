@@ -19,6 +19,8 @@ CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/geometry_msgs/Tr
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/geometry_msgs/TransformStamped.h
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/geometry_msgs/Vector3.h
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/geometry_msgs/Vector3Stamped.h
+CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/nav_msgs/MapMetaData.h
+CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/nav_msgs/OccupancyGrid.h
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/ros/advertise_options.h
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/ros/advertise_service_options.h
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/include/ros/assert.h

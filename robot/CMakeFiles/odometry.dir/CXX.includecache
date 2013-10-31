@@ -81,6 +81,8 @@ differential_drive/Odometry.h
 -
 differential_drive/AnalogC.h
 -
+nav_msgs/OccupancyGrid.h
+-
 
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/src/headers/parameters.h
 
@@ -90,6 +92,8 @@ ros/ros.h
 differential_drive/Odometry.h
 -
 visualization_msgs/Marker.h
+-
+nav_msgs/OccupancyGrid.h
 -
 tf/transform_datatypes.h
 -
@@ -300,6 +304,44 @@ ros/message_operations.h
 std_msgs/Header.h
 -
 geometry_msgs/Vector3.h
+-
+
+/opt/ros/fuerte/include/nav_msgs/MapMetaData.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+geometry_msgs/Pose.h
+-
+
+/opt/ros/fuerte/include/nav_msgs/OccupancyGrid.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+std_msgs/Header.h
+-
+nav_msgs/MapMetaData.h
 -
 
 /opt/ros/fuerte/include/ros/advertise_options.h

@@ -57,6 +57,7 @@ CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/stacks/vision_opencv/ope
 CMakeFiles/odometry.dir/src/odometry.o: /home/robo/DD2425_2013/differential_drive/manifest.xml
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/share/visualization_msgs/manifest.xml
+CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/share/nav_msgs/manifest.xml
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/stacks/bullet/manifest.xml
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
 CMakeFiles/odometry.dir/src/odometry.o: /opt/ros/fuerte/share/rosconsole/manifest.xml

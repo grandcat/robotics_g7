@@ -70,8 +70,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double diff = s0 - s0_hat;
 	//printf("diff = %f, y_wall = %f\n",diff,y_wall);
 
-	//if(!flag & (diff*diff < 0.03*0.03))
-	if(!flag & ((s1 < 0.2) | (s2 < 0.2)))
+	//if(!flag & (diff*diff < 0.04*0.04))
+	if(!flag & ((s1 < 0.2) | (s2 < 0.2)) & (diff*diff < 0.03*0.03)) // diff if tricky
 	{
 		// Prediction
 		sigma_bar = G*sigma*G.transpose() + R;
@@ -195,9 +195,9 @@ double angle(double th)
 void init()
 {
 	sigma = 1E-8 * MatrixXd::Identity(4,4);
-	R = 1E-10 * MatrixXd::Identity(4,4); //12
-	R(3,3) = 1E-10; //12
-	Q = 1E-6; //12
+	R = 1E-8 * MatrixXd::Identity(4,4); //12
+	R(3,3) = 1E-8; //12
+	Q = 1E-8; //12
 	G = MatrixXd::Identity(4,4);
 	y_wall_bar = 0;
 }

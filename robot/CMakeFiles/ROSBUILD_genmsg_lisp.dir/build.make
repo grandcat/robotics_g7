@@ -61,6 +61,7 @@ msg_gen/lisp/Rotate.lisp: /opt/ros/fuerte/stacks/vision_opencv/opencv2/manifest.
 msg_gen/lisp/Rotate.lisp: /home/robo/DD2425_2013/differential_drive/manifest.xml
 msg_gen/lisp/Rotate.lisp: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
 msg_gen/lisp/Rotate.lisp: /opt/ros/fuerte/share/visualization_msgs/manifest.xml
+msg_gen/lisp/Rotate.lisp: /opt/ros/fuerte/share/nav_msgs/manifest.xml
 msg_gen/lisp/Rotate.lisp: /opt/ros/fuerte/stacks/bullet/manifest.xml
 msg_gen/lisp/Rotate.lisp: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
 msg_gen/lisp/Rotate.lisp: /opt/ros/fuerte/share/rosconsole/manifest.xml
@@ -92,6 +93,7 @@ msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/stacks/vision_opencv/opencv2/manifest.xml
 msg_gen/lisp/EKF.lisp: /home/robo/DD2425_2013/differential_drive/manifest.xml
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/share/visualization_msgs/manifest.xml
+msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/share/nav_msgs/manifest.xml
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/stacks/bullet/manifest.xml
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/share/rosconsole/manifest.xml

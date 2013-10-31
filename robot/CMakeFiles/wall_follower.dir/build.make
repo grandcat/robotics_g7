@@ -57,6 +57,7 @@ CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/stacks/vision_
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /home/robo/DD2425_2013/differential_drive/manifest.xml
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/share/visualization_msgs/manifest.xml
+CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/share/nav_msgs/manifest.xml
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/stacks/bullet/manifest.xml
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
 CMakeFiles/wall_follower.dir/src/wall_follower.o: /opt/ros/fuerte/share/rosconsole/manifest.xml
