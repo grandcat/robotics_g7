@@ -20,4 +20,5 @@ msg_gen
 CMakeCache.txt
 CMakeFiles
 Makefile
-
+.project
+.cproject
