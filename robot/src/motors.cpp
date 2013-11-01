@@ -27,9 +27,9 @@ int avg;
 const int n = 5;
 double T;
 
-const double k = 10; //5
-const double kI = 20; //10
-const double kD = 0.00015; // 0.0001
+const double k = 10; //5 //10
+const double kI = 20; //10 //20
+const double kD = 0.00015; //0.0001 //0.00015
 const double int_max = 130;
 double integral1, integral2;
 double p_error1, p_error2;
