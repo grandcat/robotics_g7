@@ -6,17 +6,18 @@ import struct
 
 
 class EKF(genpy.Message):
-  _md5sum = "5d9ce42a66b2094acde32a1b566e7ecd"
+  _md5sum = "55db70fe710cb462a76f2e14eff90744"
   _type = "robot/EKF"
   _has_header = False #flag to mark the presence of a Header object
   _full_text = """float32 x
 float32 y
 float32 theta
 float32 y_wall
-
+bool wall
+bool right_sensor
 """
-  __slots__ = ['x','y','theta','y_wall']
-  _slot_types = ['float32','float32','float32','float32']
+  __slots__ = ['x','y','theta','y_wall','wall','right_sensor']
+  _slot_types = ['float32','float32','float32','float32','bool','bool']
 
   def __init__(self, *args, **kwds):
     """
@@ -26,7 +27,7 @@ float32 y_wall
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       x,y,theta,y_wall
+       x,y,theta,y_wall,wall,right_sensor
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -43,11 +44,17 @@ float32 y_wall
         self.theta = 0.
       if self.y_wall is None:
         self.y_wall = 0.
+      if self.wall is None:
+        self.wall = False
+      if self.right_sensor is None:
+        self.right_sensor = False
     else:
       self.x = 0.
       self.y = 0.
       self.theta = 0.
       self.y_wall = 0.
+      self.wall = False
+      self.right_sensor = False
 
   def _get_types(self):
     """
@@ -62,7 +69,7 @@ float32 y_wall
     """
     try:
       _x = self
-      buff.write(_struct_4f.pack(_x.x, _x.y, _x.theta, _x.y_wall))
+      buff.write(_struct_4f2B.pack(_x.x, _x.y, _x.theta, _x.y_wall, _x.wall, _x.right_sensor))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -75,8 +82,10 @@ float32 y_wall
       end = 0
       _x = self
       start = end
-      end += 16
-      (_x.x, _x.y, _x.theta, _x.y_wall,) = _struct_4f.unpack(str[start:end])
+      end += 18
+      (_x.x, _x.y, _x.theta, _x.y_wall, _x.wall, _x.right_sensor,) = _struct_4f2B.unpack(str[start:end])
+      self.wall = bool(self.wall)
+      self.right_sensor = bool(self.right_sensor)
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -90,7 +99,7 @@ float32 y_wall
     """
     try:
       _x = self
-      buff.write(_struct_4f.pack(_x.x, _x.y, _x.theta, _x.y_wall))
+      buff.write(_struct_4f2B.pack(_x.x, _x.y, _x.theta, _x.y_wall, _x.wall, _x.right_sensor))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -104,11 +113,13 @@ float32 y_wall
       end = 0
       _x = self
       start = end
-      end += 16
-      (_x.x, _x.y, _x.theta, _x.y_wall,) = _struct_4f.unpack(str[start:end])
+      end += 18
+      (_x.x, _x.y, _x.theta, _x.y_wall, _x.wall, _x.right_sensor,) = _struct_4f2B.unpack(str[start:end])
+      self.wall = bool(self.wall)
+      self.right_sensor = bool(self.right_sensor)
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
-_struct_4f = struct.Struct("<4f")
+_struct_4f2B = struct.Struct("<4f2B")

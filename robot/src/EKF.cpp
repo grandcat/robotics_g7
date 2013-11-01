@@ -45,7 +45,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	if((s1 < 0.2) & !wall)
 	{
 		init();
-		s0 = s1;
 		x_s0 = x_s1;
 		y_s0 = y_s1;
 		right_sensor = false;
@@ -54,15 +53,24 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	if((s2 < 0.2) & !wall)
 	{
 		init();
-		s0 = -s2;
 		x_s0 = x_s2;
 		y_s0 = y_s2;
 		right_sensor = true;
 		wall = true;
 	}
 
+	// Sensor measurement
+	if(wall & right_sensor)
+	{
+		s0 = -s2;
+	}
+	if(wall & !right_sensor)
+	{
+		s0 = s1;
+	}
+
 	// Init
-	if(y_wall_bar == 0)
+	if((y_wall_bar == 0) & (wall == true))
 	{
 		y_wall_bar = s0 + y_s0;
 	}
@@ -72,7 +80,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double diff = s0 - s0_hat;
 	printf("diff = %f, y_wall = %f\n",diff,y_wall);
 
-	if(diff*diff > 0.04*0.04)
+	if(diff*diff > 0.05*0.05 | y_wall > 0.3)
 	{
 		wall = false;
 	}
@@ -187,10 +195,10 @@ double angle(double th)
 
 void init()
 {
-	sigma = 1E-8 * MatrixXd::Identity(4,4);
-	R = 1E-8 * MatrixXd::Identity(4,4);
-	R(3,3) = 1E-8;
-	Q = 1E-8;
+	sigma = 1E-6 * MatrixXd::Identity(4,4);
+	R = 1E-6 * MatrixXd::Identity(4,4);
+	R(3,3) = 1E-6;
+	Q = 1E-6;
 	G = MatrixXd::Identity(4,4);
 	y_wall_bar = 0;
 }

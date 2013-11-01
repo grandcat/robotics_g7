@@ -28,7 +28,13 @@ ros::Publisher map_pub;
 
 double x,y,theta;
 
+// Map parameters
 nav_msgs::OccupancyGrid map;
+const double resolution = 0.02;
+const double position_x = -4;
+const double position_y = -4;
+const double height = 400;
+const double width = 400;
 
 
 //void receive_encoder(const Encoders::ConstPtr &msg);

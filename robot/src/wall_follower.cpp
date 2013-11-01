@@ -36,26 +36,14 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 	double x_cmd = x + x_cmd_traj;
 	double y_cmd;
-	if(msg->right_sensor) {y_cmd = y_wall - y_cmd_traj;}
-	else {y_cmd = y_wall + y_cmd_traj;}
+	if(msg->right_sensor) {y_cmd = y_wall + y_cmd_traj;}
+	else {y_cmd = y_wall - y_cmd_traj;}
 	if(msg->wall) {y_cmd = y;}
 
 	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
-	if((x_cmd-x) < 0)
-	{
-		if((y_cmd-y) > 0)
-		{
-			diff_ang += M_PI;
-		}
-		else
-		{
-			diff_ang -= M_PI;
-		}
-
-	}
 	diff_ang = angle(diff_ang);
 
-	dist = sqrt((x_cmd-x)*(x_cmd-x)+(y_cmd-y)*(y_cmd-y));
+	dist = x_cmd_traj;
 
 	if(!obstacle)
 	{

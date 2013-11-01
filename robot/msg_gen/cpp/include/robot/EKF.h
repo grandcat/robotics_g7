@@ -26,6 +26,8 @@ struct EKF_ {
   , y(0.0)
   , theta(0.0)
   , y_wall(0.0)
+  , wall(false)
+  , right_sensor(false)
   {
   }
 
@@ -34,6 +36,8 @@ struct EKF_ {
   , y(0.0)
   , theta(0.0)
   , y_wall(0.0)
+  , wall(false)
+  , right_sensor(false)
   {
   }
 
@@ -48,6 +52,12 @@ struct EKF_ {
 
   typedef float _y_wall_type;
   float y_wall;
+
+  typedef uint8_t _wall_type;
+  uint8_t wall;
+
+  typedef uint8_t _right_sensor_type;
+  uint8_t right_sensor;
 
 
   typedef boost::shared_ptr< ::robot::EKF_<ContainerAllocator> > Ptr;
@@ -78,12 +88,12 @@ template<class ContainerAllocator>
 struct MD5Sum< ::robot::EKF_<ContainerAllocator> > {
   static const char* value() 
   {
-    return "5d9ce42a66b2094acde32a1b566e7ecd";
+    return "55db70fe710cb462a76f2e14eff90744";
   }
 
   static const char* value(const  ::robot::EKF_<ContainerAllocator> &) { return value(); } 
-  static const uint64_t static_value1 = 0x5d9ce42a66b2094aULL;
-  static const uint64_t static_value2 = 0xcde32a1b566e7ecdULL;
+  static const uint64_t static_value1 = 0x55db70fe710cb462ULL;
+  static const uint64_t static_value2 = 0xa76f2e14eff90744ULL;
 };
 
 template<class ContainerAllocator>
@@ -104,7 +114,8 @@ struct Definition< ::robot::EKF_<ContainerAllocator> > {
 float32 y\n\
 float32 theta\n\
 float32 y_wall\n\
-\n\
+bool wall\n\
+bool right_sensor\n\
 ";
   }
 
@@ -128,6 +139,8 @@ template<class ContainerAllocator> struct Serializer< ::robot::EKF_<ContainerAll
     stream.next(m.y);
     stream.next(m.theta);
     stream.next(m.y_wall);
+    stream.next(m.wall);
+    stream.next(m.right_sensor);
   }
 
   ROS_DECLARE_ALLINONE_SERIALIZER;
@@ -153,6 +166,10 @@ struct Printer< ::robot::EKF_<ContainerAllocator> >
     Printer<float>::stream(s, indent + "  ", v.theta);
     s << indent << "y_wall: ";
     Printer<float>::stream(s, indent + "  ", v.y_wall);
+    s << indent << "wall: ";
+    Printer<uint8_t>::stream(s, indent + "  ", v.wall);
+    s << indent << "right_sensor: ";
+    Printer<uint8_t>::stream(s, indent + "  ", v.right_sensor);
   }
 };
 

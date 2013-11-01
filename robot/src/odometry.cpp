@@ -185,11 +185,11 @@ int main(int argc, char** argv)
 	map.header.frame_id = "/my_frame";
 	map.header.stamp = ros::Time::now();
 	// Map properties
-	map.info.resolution = 0.01;
-	map.info.origin.position.x = -4;
-	map.info.origin.position.y = -4;
-	map.info.height = 800;
-	map.info.width = 800;
+	map.info.resolution = resolution;
+	map.info.origin.position.x = position_x;
+	map.info.origin.position.y = position_y;
+	map.info.height = height;
+	map.info.width = width;
 	map.data.resize(map.info.width*map.info.height);
 
 
