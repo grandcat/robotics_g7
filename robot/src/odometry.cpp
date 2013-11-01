@@ -89,7 +89,7 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 	y = msg->y;
 	theta = msg->theta;
 
-	// Robot
+	// Robot marker
 	uint32_t shape = visualization_msgs::Marker::ARROW;
 	visualization_msgs::Marker marker;
 	marker.header.frame_id = "/my_frame";
@@ -121,7 +121,7 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 	marker.lifetime = ros::Duration();
 	marker_pub.publish(marker);
 
-	/*
+
 	// Robot
 	int rx = (x-map.info.origin.position.x)/map.info.resolution;
 	int ry = (y-map.info.origin.position.y)/map.info.resolution;
@@ -136,13 +136,11 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 		}
 	}
 	map_pub.publish(map);
-	*/
 }
 
 
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
-	/*
 	double s1 = a_short*pow(msg->ch1,b_short);
 	double s2 = a_short*pow(msg->ch2,b_short);
 
@@ -168,7 +166,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	}
 
 	map_pub.publish(map);
-	*/
 }
 
 
