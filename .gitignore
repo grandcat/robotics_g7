@@ -11,3 +11,13 @@
 *.lai
 *.la
 *.a
+
+# ROS and cmake specific OS-depending cache files
+build
+bin
+lib
+msg_gen
+CMakeCache.txt
+CMakeFiles
+Makefile
+
