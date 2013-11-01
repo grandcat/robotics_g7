@@ -80,7 +80,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double diff = s0 - s0_hat;
 	printf("diff = %f, y_wall = %f\n",diff,y_wall);
 
-	if(diff*diff > 0.05*0.05 | y_wall > 0.3)
+	if(diff*diff > 0.03*0.03 | y_wall > 0.3)
 	{
 		wall = false;
 	}
@@ -198,7 +198,7 @@ void init()
 	sigma = 1E-6 * MatrixXd::Identity(4,4);
 	R = 1E-6 * MatrixXd::Identity(4,4);
 	R(3,3) = 1E-6;
-	Q = 1E-6;
+	Q = 1E-8;
 	G = MatrixXd::Identity(4,4);
 	y_wall_bar = 0;
 }

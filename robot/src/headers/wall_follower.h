@@ -23,7 +23,7 @@ ros::Subscriber sensors_sub;
 
 
 const double rho = 12;
-const double alpha = 15;
+const double alpha = 7;
 
 const double x_cmd_traj = 0.16;
 const double y_cmd_traj = 0.18;

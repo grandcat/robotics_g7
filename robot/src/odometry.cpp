@@ -80,7 +80,7 @@ void receive_encoder(const Encoders::ConstPtr &msg)
 	marker.lifetime = ros::Duration();
 	marker_pub.publish(marker);
 }
-*/
+ */
 
 
 void receive_odometry(const Odometry::ConstPtr &msg)
@@ -125,9 +125,9 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 	// Robot
 	int rx = (x-map.info.origin.position.x)/map.info.resolution;
 	int ry = (y-map.info.origin.position.y)/map.info.resolution;
-	for(int i = -10; i <= 10; i++)
+	for(int i = -2; i <= 2; i++)
 	{
-		for(int j = -10; j <= 10; j++)
+		for(int j = -2; j <= 2; j++)
 		{
 			if(((ry+j)*map.info.width+(rx+i) >= 0) | ((ry+j)*map.info.width+(rx+i) < map.info.width*map.info.height))
 			{
@@ -191,6 +191,11 @@ int main(int argc, char** argv)
 	map.info.height = height;
 	map.info.width = width;
 	map.data.resize(map.info.width*map.info.height);
+
+	for(int i = 0; i < map.info.width*map.info.height; i++)
+	{
+		map.data[i] = -1;
+	}
 
 
 	ros::Rate loop_rate(100);
