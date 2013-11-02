@@ -45,6 +45,9 @@ include CMakeFiles/ROSBUILD_genmsg_lisp.dir/progress.make
 CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/Rotate.lisp
 CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/_package.lisp
 CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/_package_Rotate.lisp
+CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/SpeedVW.lisp
+CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/_package.lisp
+CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/_package_SpeedVW.lisp
 CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/EKF.lisp
 CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/_package.lisp
 CMakeFiles/ROSBUILD_genmsg_lisp: msg_gen/lisp/_package_EKF.lisp
@@ -81,6 +84,38 @@ msg_gen/lisp/_package.lisp: msg_gen/lisp/Rotate.lisp
 
 msg_gen/lisp/_package_Rotate.lisp: msg_gen/lisp/Rotate.lisp
 
+msg_gen/lisp/SpeedVW.lisp: msg/SpeedVW.msg
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/roslisp/rosbuild/scripts/genmsg_lisp.py
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/roslib/bin/gendeps
+msg_gen/lisp/SpeedVW.lisp: manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/roslang/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/roscpp/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/std_msgs/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/rospy/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/stacks/vision_opencv/opencv2/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /home/robo/DD2425_2013/differential_drive/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/visualization_msgs/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/nav_msgs/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/stacks/bullet/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/rosconsole/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/stacks/geometry/angles/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/rostest/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/roswtf/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/share/message_filters/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/stacks/geometry/tf/manifest.xml
+msg_gen/lisp/SpeedVW.lisp: /home/robo/DD2425_2013/differential_drive/msg_gen/generated
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
+msg_gen/lisp/SpeedVW.lisp: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles $(CMAKE_PROGRESS_2)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating msg_gen/lisp/SpeedVW.lisp, msg_gen/lisp/_package.lisp, msg_gen/lisp/_package_SpeedVW.lisp"
+	/opt/ros/fuerte/share/roslisp/rosbuild/scripts/genmsg_lisp.py /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg/SpeedVW.msg
+
+msg_gen/lisp/_package.lisp: msg_gen/lisp/SpeedVW.lisp
+
+msg_gen/lisp/_package_SpeedVW.lisp: msg_gen/lisp/SpeedVW.lisp
+
 msg_gen/lisp/EKF.lisp: msg/EKF.msg
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/share/roslisp/rosbuild/scripts/genmsg_lisp.py
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/share/roslib/bin/gendeps
@@ -105,7 +140,7 @@ msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/stacks/geometry/tf/manifest.xml
 msg_gen/lisp/EKF.lisp: /home/robo/DD2425_2013/differential_drive/msg_gen/generated
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
 msg_gen/lisp/EKF.lisp: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles $(CMAKE_PROGRESS_3)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating msg_gen/lisp/EKF.lisp, msg_gen/lisp/_package.lisp, msg_gen/lisp/_package_EKF.lisp"
 	/opt/ros/fuerte/share/roslisp/rosbuild/scripts/genmsg_lisp.py /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg/EKF.msg
 
@@ -117,6 +152,9 @@ ROSBUILD_genmsg_lisp: CMakeFiles/ROSBUILD_genmsg_lisp
 ROSBUILD_genmsg_lisp: msg_gen/lisp/Rotate.lisp
 ROSBUILD_genmsg_lisp: msg_gen/lisp/_package.lisp
 ROSBUILD_genmsg_lisp: msg_gen/lisp/_package_Rotate.lisp
+ROSBUILD_genmsg_lisp: msg_gen/lisp/SpeedVW.lisp
+ROSBUILD_genmsg_lisp: msg_gen/lisp/_package.lisp
+ROSBUILD_genmsg_lisp: msg_gen/lisp/_package_SpeedVW.lisp
 ROSBUILD_genmsg_lisp: msg_gen/lisp/EKF.lisp
 ROSBUILD_genmsg_lisp: msg_gen/lisp/_package.lisp
 ROSBUILD_genmsg_lisp: msg_gen/lisp/_package_EKF.lisp

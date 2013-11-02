@@ -9,6 +9,7 @@
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles/controller.dir
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles/keyboard.dir
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles/motors.dir
+/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles/motorsVW.dir
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles/odometry.dir
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles/rosbuild_precompile.dir
 /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles/rosbuild_premsgsrvgen.dir

@@ -239,6 +239,19 @@ motors/fast:
 .PHONY : motors/fast
 
 #=============================================================================
+# Target rules for targets named motorsVW
+
+# Build rule for target.
+motorsVW: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 motorsVW
+.PHONY : motorsVW
+
+# fast build rule for target.
+motorsVW/fast:
+	$(MAKE) -f CMakeFiles/motorsVW.dir/build.make CMakeFiles/motorsVW.dir/build
+.PHONY : motorsVW/fast
+
+#=============================================================================
 # Target rules for targets named odometry
 
 # Build rule for target.
@@ -483,6 +496,21 @@ src/motors.s:
 .PHONY : src/motors.s
 
 # target to build an object file
+src/motorsVW.o:
+	$(MAKE) -f CMakeFiles/motorsVW.dir/build.make CMakeFiles/motorsVW.dir/src/motorsVW.o
+.PHONY : src/motorsVW.o
+
+# target to preprocess a source file
+src/motorsVW.i:
+	$(MAKE) -f CMakeFiles/motorsVW.dir/build.make CMakeFiles/motorsVW.dir/src/motorsVW.i
+.PHONY : src/motorsVW.i
+
+# target to generate assembly for a file
+src/motorsVW.s:
+	$(MAKE) -f CMakeFiles/motorsVW.dir/build.make CMakeFiles/motorsVW.dir/src/motorsVW.s
+.PHONY : src/motorsVW.s
+
+# target to build an object file
 src/odometry.o:
 	$(MAKE) -f CMakeFiles/odometry.dir/build.make CMakeFiles/odometry.dir/src/odometry.o
 .PHONY : src/odometry.o
@@ -530,6 +558,7 @@ help:
 	@echo "... edit_cache"
 	@echo "... keyboard"
 	@echo "... motors"
+	@echo "... motorsVW"
 	@echo "... odometry"
 	@echo "... rebuild_cache"
 	@echo "... rosbuild_precompile"
@@ -559,6 +588,9 @@ help:
 	@echo "... src/motors.o"
 	@echo "... src/motors.i"
 	@echo "... src/motors.s"
+	@echo "... src/motorsVW.o"
+	@echo "... src/motorsVW.i"
+	@echo "... src/motorsVW.s"
 	@echo "... src/odometry.o"
 	@echo "... src/odometry.i"
 	@echo "... src/odometry.s"

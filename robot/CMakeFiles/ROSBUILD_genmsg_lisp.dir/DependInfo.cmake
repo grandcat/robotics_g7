@@ -8,6 +8,7 @@ SET(CMAKE_MULTIPLE_OUTPUT_PAIRS
   "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/_package.lisp" "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/Rotate.lisp"
   "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/_package_EKF.lisp" "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/EKF.lisp"
   "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/_package_Rotate.lisp" "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/Rotate.lisp"
+  "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/_package_SpeedVW.lisp" "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/msg_gen/lisp/SpeedVW.lisp"
   )
 
 

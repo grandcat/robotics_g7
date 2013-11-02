@@ -6,6 +6,8 @@
   :components ((:file "_package")
     (:file "Rotate" :depends-on ("_package_Rotate"))
     (:file "_package_Rotate" :depends-on ("_package"))
+    (:file "SpeedVW" :depends-on ("_package_SpeedVW"))
+    (:file "_package_SpeedVW" :depends-on ("_package"))
     (:file "EKF" :depends-on ("_package_EKF"))
     (:file "_package_EKF" :depends-on ("_package"))
   ))

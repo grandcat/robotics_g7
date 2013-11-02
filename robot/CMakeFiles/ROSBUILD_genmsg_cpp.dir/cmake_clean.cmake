@@ -4,6 +4,7 @@ FILE(REMOVE_RECURSE
   "msg_gen"
   "CMakeFiles/ROSBUILD_genmsg_cpp"
   "msg_gen/cpp/include/robot/Rotate.h"
+  "msg_gen/cpp/include/robot/SpeedVW.h"
   "msg_gen/cpp/include/robot/EKF.h"
 )
 

@@ -3,6 +3,8 @@
   (:export
    "<ROTATE>"
    "ROTATE"
+   "<SPEEDVW>"
+   "SPEEDVW"
    "<EKF>"
    "EKF"
   ))

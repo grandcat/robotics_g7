@@ -42,7 +42,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s2 = a_short*pow(msg->ch2,b_short);
 
 	double s0,x_s0,y_s0;
-	if((s1 < 0.15) & !wall)
+	if((s1 < 0.2) & !wall & (s1 < s2))
 	{
 		init();
 		x_s0 = x_s1;
@@ -50,7 +50,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		right_sensor = false;
 		wall = true;
 	}
-	if((s2 < 0.15) & !wall)
+	if((s2 < 0.2) & !wall & (s2 < s1))
 	{
 		init();
 		x_s0 = x_s2;
@@ -195,10 +195,10 @@ double angle(double th)
 
 void init()
 {
-	sigma = 1E-6 * MatrixXd::Identity(4,4);
+	sigma = 1E-8 * MatrixXd::Identity(4,4);
 	R = 1E-8 * MatrixXd::Identity(4,4);
 	R(3,3) = 1E-8;
-	Q = 1E-10;
+	Q = 1E-8;
 	G = MatrixXd::Identity(4,4);
 	y_wall_bar = 0;
 }

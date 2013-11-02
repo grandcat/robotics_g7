@@ -38,7 +38,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	double y_cmd;
 	if(msg->right_sensor) {y_cmd = y_wall + y_cmd_traj;}
 	else {y_cmd = y_wall - y_cmd_traj;}
-	if(msg->wall) {y_cmd = y;}
+	if(!msg->wall) {y_cmd = y;}
 
 	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
 	diff_ang = angle(diff_ang);
