@@ -55,27 +55,30 @@ void receive_enc(const Encoders::ConstPtr &msg)
 
 		// Motor 1
 		double errorV = speed_instructionV - speedV;
-		integralV += kI*errorV*T;
+		integralV += kI/r*errorV*T;
 		double derivativeV = (errorV-p_errorV)/T;
 		p_errorV = errorV;
-		//printf("errorV = %f, deriv = %f, current = %f, int = %f\n",errorV,derivativeV,speedV,integralV);
+
+		printf("errorV = %f, deriv = %f, current = %f, int = %f\n",errorV,derivativeV,speedV,integralV);
 
 		if(integralV > int_max) {integralV = int_max;}
 		else if(integralV < -int_max)  {integralV = -int_max;}
 
-		double V = k*errorV + integralV + kD*derivativeV;
+		double V = k/r*errorV + integralV + kD/r*derivativeV;
 
 
 		// Motor 2
 		double errorW = speed_instructionW - speedW;
-		integralW += kI*errorW*T;
+		integralW += kI*l/r/2*errorW*T;
 		double derivativeW = (errorW-p_errorW)/T;
 		p_errorW = errorW;
+
+		printf("errorW = %f, deriv = %f, current = %f, int = %f\n",errorW,derivativeW,speedW,integralW);
 
 		if(integralW > int_max) {integralW = int_max;}
 		else if(integralW < -int_max)  {integralW = -int_max;}
 
-		double W = k*errorW + integralW + kD*derivativeW;
+		double W = k*l/r/2*errorW + integralW + kD*l/r/2*derivativeW;
 
 
 		double u1 = V/r + W*l/r/2;
@@ -121,7 +124,7 @@ void receive_speed(const SpeedVW::ConstPtr &msg)
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "motors");
+	ros::init(argc, argv, "motorsVW");
 	ros::NodeHandle nh;
 	pwm_pub = nh.advertise<PWM>("/motion/PWM", 1);
 	speed_sub = nh.subscribe("/motion/SpeedVW",1000,receive_speed);

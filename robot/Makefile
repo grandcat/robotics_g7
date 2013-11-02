@@ -226,6 +226,19 @@ keyboard/fast:
 .PHONY : keyboard/fast
 
 #=============================================================================
+# Target rules for targets named keyboardVW
+
+# Build rule for target.
+keyboardVW: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 keyboardVW
+.PHONY : keyboardVW
+
+# fast build rule for target.
+keyboardVW/fast:
+	$(MAKE) -f CMakeFiles/keyboardVW.dir/build.make CMakeFiles/keyboardVW.dir/build
+.PHONY : keyboardVW/fast
+
+#=============================================================================
 # Target rules for targets named motors
 
 # Build rule for target.
@@ -481,6 +494,21 @@ src/keyboard.s:
 .PHONY : src/keyboard.s
 
 # target to build an object file
+src/keyboardVW.o:
+	$(MAKE) -f CMakeFiles/keyboardVW.dir/build.make CMakeFiles/keyboardVW.dir/src/keyboardVW.o
+.PHONY : src/keyboardVW.o
+
+# target to preprocess a source file
+src/keyboardVW.i:
+	$(MAKE) -f CMakeFiles/keyboardVW.dir/build.make CMakeFiles/keyboardVW.dir/src/keyboardVW.i
+.PHONY : src/keyboardVW.i
+
+# target to generate assembly for a file
+src/keyboardVW.s:
+	$(MAKE) -f CMakeFiles/keyboardVW.dir/build.make CMakeFiles/keyboardVW.dir/src/keyboardVW.s
+.PHONY : src/keyboardVW.s
+
+# target to build an object file
 src/motors.o:
 	$(MAKE) -f CMakeFiles/motors.dir/build.make CMakeFiles/motors.dir/src/motors.o
 .PHONY : src/motors.o
@@ -557,6 +585,7 @@ help:
 	@echo "... controller"
 	@echo "... edit_cache"
 	@echo "... keyboard"
+	@echo "... keyboardVW"
 	@echo "... motors"
 	@echo "... motorsVW"
 	@echo "... odometry"
@@ -585,6 +614,9 @@ help:
 	@echo "... src/keyboard.o"
 	@echo "... src/keyboard.i"
 	@echo "... src/keyboard.s"
+	@echo "... src/keyboardVW.o"
+	@echo "... src/keyboardVW.i"
+	@echo "... src/keyboardVW.s"
 	@echo "... src/motors.o"
 	@echo "... src/motors.i"
 	@echo "... src/motors.s"

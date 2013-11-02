@@ -376,13 +376,48 @@ clean: CMakeFiles/keyboard.dir/clean
 .PHONY : clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/keyboardVW.dir
+
+# All Build rule for target.
+CMakeFiles/keyboardVW.dir/all: CMakeFiles/rosbuild_precompile.dir/all
+	$(MAKE) -f CMakeFiles/keyboardVW.dir/build.make CMakeFiles/keyboardVW.dir/depend
+	$(MAKE) -f CMakeFiles/keyboardVW.dir/build.make CMakeFiles/keyboardVW.dir/build
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  15
+	@echo "Built target keyboardVW"
+.PHONY : CMakeFiles/keyboardVW.dir/all
+
+# Include target in all.
+all: CMakeFiles/keyboardVW.dir/all
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/keyboardVW.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 11
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/keyboardVW.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles 0
+.PHONY : CMakeFiles/keyboardVW.dir/rule
+
+# Convenience name for target.
+keyboardVW: CMakeFiles/keyboardVW.dir/rule
+.PHONY : keyboardVW
+
+# clean rule for target.
+CMakeFiles/keyboardVW.dir/clean:
+	$(MAKE) -f CMakeFiles/keyboardVW.dir/build.make CMakeFiles/keyboardVW.dir/clean
+.PHONY : CMakeFiles/keyboardVW.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/keyboardVW.dir/clean
+.PHONY : clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/motors.dir
 
 # All Build rule for target.
 CMakeFiles/motors.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/motors.dir/build.make CMakeFiles/motors.dir/depend
 	$(MAKE) -f CMakeFiles/motors.dir/build.make CMakeFiles/motors.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  15
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  16
 	@echo "Built target motors"
 .PHONY : CMakeFiles/motors.dir/all
 
@@ -417,7 +452,7 @@ clean: CMakeFiles/motors.dir/clean
 CMakeFiles/motorsVW.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/motorsVW.dir/build.make CMakeFiles/motorsVW.dir/depend
 	$(MAKE) -f CMakeFiles/motorsVW.dir/build.make CMakeFiles/motorsVW.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  16
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  17
 	@echo "Built target motorsVW"
 .PHONY : CMakeFiles/motorsVW.dir/all
 
@@ -452,7 +487,7 @@ clean: CMakeFiles/motorsVW.dir/clean
 CMakeFiles/odometry.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/odometry.dir/build.make CMakeFiles/odometry.dir/depend
 	$(MAKE) -f CMakeFiles/odometry.dir/build.make CMakeFiles/odometry.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  17
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  18
 	@echo "Built target odometry"
 .PHONY : CMakeFiles/odometry.dir/all
 
@@ -836,7 +871,7 @@ clean: CMakeFiles/tests.dir/clean
 CMakeFiles/wall_follower.dir/all: CMakeFiles/rosbuild_precompile.dir/all
 	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/depend
 	$(MAKE) -f CMakeFiles/wall_follower.dir/build.make CMakeFiles/wall_follower.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  18
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/robo/DD2425_2013/fuerte_workspace/robotics_g7/robot/CMakeFiles  19
 	@echo "Built target wall_follower"
 .PHONY : CMakeFiles/wall_follower.dir/all
 
