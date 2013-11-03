@@ -13,12 +13,12 @@
 *.a
 
 # ROS and cmake specific OS-depending cache files
-build
-bin
-lib
-msg_gen
+build/
+bin/
+lib/
+msg_gen/
 CMakeCache.txt
-CMakeFiles
+CMakeFiles/
 Makefile
 .project
 .cproject
