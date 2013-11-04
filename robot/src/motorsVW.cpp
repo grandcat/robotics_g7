@@ -28,10 +28,18 @@ int avg;
 const int n = 5;
 double T;
 
-const double k = 10;
-const double kI = 20;
-const double kD = 0.00015;
+
+const double k_V = 10;
+const double kI_V = 20;
+const double kD_V = 0.00015;
+
+const double k_W = 10;
+const double kI_W = 20;
+const double kD_W = 0.00015;
+
+
 const double int_max = 130;
+
 double integralV, integralW;
 double p_errorV, p_errorW;
 
@@ -53,9 +61,9 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		// Control the speed
 		PWM pwm;
 
-		// Motor 1
+		// V
 		double errorV = speed_instructionV - speedV;
-		integralV += kI/r*errorV*T;
+		integralV += kI_V*errorV*T;
 		double derivativeV = (errorV-p_errorV)/T;
 		p_errorV = errorV;
 
@@ -64,12 +72,12 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		if(integralV > int_max) {integralV = int_max;}
 		else if(integralV < -int_max)  {integralV = -int_max;}
 
-		double V = k/r*errorV + integralV + kD/r*derivativeV;
+		double V = k_V*errorV + integralV + kD_V*derivativeV;
 
 
-		// Motor 2
+		// W
 		double errorW = speed_instructionW - speedW;
-		integralW += kI*l/r/2*errorW*T;
+		integralW += kI_W*errorW*T;
 		double derivativeW = (errorW-p_errorW)/T;
 		p_errorW = errorW;
 
@@ -78,7 +86,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		if(integralW > int_max) {integralW = int_max;}
 		else if(integralW < -int_max)  {integralW = -int_max;}
 
-		double W = k*l/r/2*errorW + integralW + kD*l/r/2*derivativeW;
+		double W = k_W*errorW + integralW + kD_W*derivativeW;
 
 
 		double u1 = V/r + W*l/r/2;
