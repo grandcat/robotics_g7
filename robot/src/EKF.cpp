@@ -196,10 +196,12 @@ double angle(double th)
 
 void init()
 {
-	sigma = 1E-4 * MatrixXd::Identity(4,4);
-	R = 1E-6 * MatrixXd::Identity(4,4);
-	R(3,3) = 1E-6;
-	Q = 1E-10;
+	sigma = 1E-10 * MatrixXd::Identity(4,4);
+	sigma(2,2) = 1E-4;
+	sigma(3,3) = 1E-6;
+	R = 1E-8 * MatrixXd::Identity(4,4);
+	R(3,3) = 1E-8;
+	Q = 1E-8;
 	G = MatrixXd::Identity(4,4);
 	y_wall_bar = 0;
 }
