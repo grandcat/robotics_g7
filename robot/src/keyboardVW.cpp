@@ -74,7 +74,7 @@ void arrowsCmd(ros::Publisher cmd_pub,ros::Publisher pwm_pub)
 			break;
 		case KEYCODE_U:
 			ROS_DEBUG("UP");
-			cmd.V = 0.1;
+			cmd.V = 0.05;
 			cmd.W = 0;
 			dirty = true;
 			break;

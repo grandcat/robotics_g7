@@ -42,7 +42,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s2 = a_short*pow(msg->ch2,b_short);
 
 	double s0,x_s0,y_s0;
-	if((s1 < 0.2) & !wall & (s1 < s2))
+	if((s1 < 0.23) & !wall & (s1 < s2))
 	{
 		init();
 		x_s0 = x_s1;
@@ -50,7 +50,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		right_sensor = false;
 		wall = true;
 	}
-	if((s2 < 0.2) & !wall & (s2 < s1))
+	if((s2 < 0.23) & !wall & (s2 < s1))
 	{
 		init();
 		x_s0 = x_s2;
@@ -80,7 +80,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double diff = s0 - s0_hat;
 	printf("diff = %f, y_wall = %f\n",diff,y_wall);
 
-	if(diff*diff > 0.03*0.03 | y_wall > 0.3)
+	if(diff*diff > 0.05*0.05 | y_wall > 0.35)
 	{
 		wall = false;
 	}
