@@ -17,6 +17,11 @@ using namespace differential_drive;
 using namespace robot;
 
 
+/**
+ * Receive the robot and wall position
+ * Follow the wall or rotate
+ * @param msg
+ */
 void receive_EKF(const EKF::ConstPtr &msg)
 {
 	double x,y,y_wall;
@@ -73,6 +78,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 }
 
 
+/**
+ * Check if there is an obstacle
+ * @param msg
+ */
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
 	double s1 = a_short*pow(msg->ch1,b_short);

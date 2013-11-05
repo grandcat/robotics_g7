@@ -31,9 +31,9 @@ int averageDepthAtPos(IplImage *img_depth, int x, int y) {
 	int nAvg = 0;
 	for (int i = 0; i <= 10; i++) {
 		for (int j = 0; j <= 10; j++) {
-			if ((((x + j - 5) < img_depth->height) & ((y + i - 5) < img_depth->width))
-					&& (((x + j - 5) >= 0) & ((y + i - 5) >= 0))) {
-				float curDepth = cvGetReal2D(img_depth, x + j - 5, y + i - 5);
+			if ((((y + j - 5) < img_depth->height) & ((x + i - 5) < img_depth->width))
+					&& (((y + j - 5) >= 0) & ((x + i - 5) >= 0))) {
+				float curDepth = cvGetReal2D(img_depth, y + j - 5, x + i - 5);
 				if (!isnan(curDepth)) {
 					sumDistance += curDepth;
 					++nAvg;
