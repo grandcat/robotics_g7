@@ -69,7 +69,7 @@ public:
 		ROS_INFO("Starting imageConverter.");
 //		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
 		image_sub_depth_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCb_depth, this);
-		ROS_INFO("Suscribed to depth image.");
+		ROS_INFO("Subscribed to depth image.");
 	}
 
 	~ImageConverter()
@@ -95,6 +95,7 @@ public:
 		// Get closest pixels
 		int depthPos = averageDepthAtPos(img_depth, img_depth->width / 2, img_depth->height / 2);
 		ROS_INFO("Depth in middle: %i", depthPos);
+		ROS_INFO("Resolution: %i", img_depth->depth);
 
 //		object_depth(img_depth);
 
