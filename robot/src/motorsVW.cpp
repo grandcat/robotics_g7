@@ -25,17 +25,17 @@ double speed_instructionV, speed_instructionW;
 double speed1, speed2;
 
 int avg;
-const int n = 5;
+const int n = 3;
 double T;
 
 
-const double k_V = 10;
-const double kI_V = 20;
-const double kD_V = 0.00015;
+const double k_V = 1;
+const double kI_V = 30;
+const double kD_V = 0.0005;
 
-const double k_W = 10;
-const double kI_W = 20;
-const double kD_W = 0.00015;
+const double k_W = 5;
+const double kI_W = 50;
+const double kD_W = 0.0005;
 
 
 const double int_max = 130;
@@ -67,7 +67,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		double derivativeV = (errorV-p_errorV)/T;
 		p_errorV = errorV;
 
-		printf("errorV = %f, deriv = %f, current = %f, int = %f\n",errorV,derivativeV,speedV,integralV);
+		//printf("errorV = %f, deriv = %f, current = %f, int = %f\n",errorV,derivativeV,speedV,integralV);
 
 		if(integralV > int_max) {integralV = int_max;}
 		else if(integralV < -int_max)  {integralV = -int_max;}
@@ -81,7 +81,7 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		double derivativeW = (errorW-p_errorW)/T;
 		p_errorW = errorW;
 
-		printf("errorW = %f, deriv = %f, current = %f, int = %f\n",errorW,derivativeW,speedW,integralW);
+		//printf("errorW = %f, deriv = %f, current = %f, int = %f\n",errorW,derivativeW,speedW,integralW);
 
 		if(integralW > int_max) {integralW = int_max;}
 		else if(integralW < -int_max)  {integralW = -int_max;}
