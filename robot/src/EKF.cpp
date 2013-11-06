@@ -21,6 +21,10 @@ using namespace robot;
 using namespace Eigen;
 
 
+/**
+ * Compute the odometry and the G matrix for the EKF
+ * @param msg
+ */
 void receive_enc(const Encoders::ConstPtr &msg)
 {
 	int delta_right = msg->delta_encoder2;
@@ -36,13 +40,18 @@ void receive_enc(const Encoders::ConstPtr &msg)
 }
 
 
+/**
+ * Compute the EKF algorithm if there is a wall
+ * Publish the odometry and wall position
+ * @param msg
+ */
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
 	double s1 = a_short*pow(msg->ch1,b_short);
 	double s2 = a_short*pow(msg->ch2,b_short);
 
-	double s0,x_s0,y_s0;
-	if((s1 < 0.23) & !wall & (s1 < s2))
+	static double s0,x_s0,y_s0;
+	if((s1 < 0.2) & !wall & (s1 < s2))
 	{
 		init();
 		x_s0 = x_s1;
@@ -50,7 +59,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		right_sensor = false;
 		wall = true;
 	}
-	if((s2 < 0.23) & !wall & (s2 < s1))
+	if((s2 < 0.2) & !wall & (s2 < s1))
 	{
 		init();
 		x_s0 = x_s2;
@@ -79,14 +88,16 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s0_hat = (y_wall_bar-y_bar-x_s0*sin(theta_bar)-y_s0*cos(theta_bar))/cos(theta_bar);
 	double diff = s0 - s0_hat;
 
-	if(diff*diff > 0.05*0.05 | y_wall > 0.35)
+	if((diff*diff > 0.05*0.05) | (y_wall*y_wall > 0.3*0.3))
+	//if(s0*s0 > 0.2*0.2)
 	{
 		wall = false;
 	}
 
 
 	// Debug
-	printf("wall = %s, y_wall = %f, y = %f\n",(wall)?"true":"false",y_wall,y);
+	//printf("wall = %s, y_wall = %f, y_bar = %f, diff = %f, y_wall_bar = %f\n",(wall)?"true":"false",y_wall,y_bar,diff,y_wall_bar);
+	//printf("s0 = %f, s0_hat = %f, d = %f\n",s0,s0_hat,y_wall_bar-y_bar-x_s0*sin(theta_bar)-y_s0*cos(theta_bar));
 
 
 	if(!flag & wall)
@@ -137,7 +148,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	ekf.wall = wall;
 	EKF_pub.publish(ekf);
 
-	//Publish
+	// Publish odometry to visualize it
 	Odometry odometry;
 	odometry.x = x_true + x*cos(theta_true) - y*sin(theta_true);
 	odometry.y = y_true + x*sin(theta_true) + y*cos(theta_true);
@@ -146,6 +157,13 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 }
 
 
+/**
+ * Receive a message to stop the EKF
+ * First message means that there is an obstacle
+ * Second message means that the rotation is done, and we can restart the EKF
+ *
+ * @param msg Rotation
+ */
 void receive_rotate(const Rotate::ConstPtr &msg)
 {
 	right = msg->right;
@@ -160,6 +178,10 @@ void receive_rotate(const Rotate::ConstPtr &msg)
 }
 
 
+/**
+ * Save the odometry before reinitialising
+ * @param right Rotation
+ */
 void rotate(bool right)
 {
 	// Save true values
@@ -176,6 +198,11 @@ void rotate(bool right)
 }
 
 
+/**
+ * Angle between ]-pi,pi]
+ * @param th
+ * @return
+ */
 double angle(double th)
 {
 	while((th > M_PI) | (th <= -M_PI))
@@ -199,7 +226,7 @@ void init()
 	sigma = 1E-10 * MatrixXd::Identity(4,4);
 	sigma(2,2) = 1E-4;
 	sigma(3,3) = 1E-6;
-	R = 1E-8 * MatrixXd::Identity(4,4);
+	R = 1E-10 * MatrixXd::Identity(4,4);
 	R(3,3) = 1E-8;
 	Q = 1E-8;
 	G = MatrixXd::Identity(4,4);

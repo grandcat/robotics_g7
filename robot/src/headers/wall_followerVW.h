@@ -1,12 +1,12 @@
 /*
- * wall_follower.h
+ * wall_followerVW.h
  *
  *  Created on: Oct 16, 2013
  *      Author: robo
  */
 
-#ifndef WALL_FOLLOWER_H_
-#define WALL_FOLLOWER_H_
+#ifndef WALL_FOLLOWERVW_H_
+#define WALL_FOLLOWERVW_H_
 
 #include <ros/ros.h>
 #include <differential_drive/Encoders.h>
@@ -43,4 +43,4 @@ void receive_sensors(const AnalogC::ConstPtr &msg);
 double angle(double theta);
 
 
-#endif /* WALL_FOLLOWER_H_ */
+#endif /* WALL_FOLLOWERVW_H_ */

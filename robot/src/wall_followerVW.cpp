@@ -1,17 +1,17 @@
 /*
- * wall_follower.cpp
+ * wall_followerVW.cpp
  *
  *  Created on: Oct 16, 2013
  *      Author: robo
  */
 
 #include <ros/ros.h>
-#include <differential_drive/Speed.h>
+#include "robot/SpeedVW.h"
 #include <differential_drive/AnalogC.h>
 #include "robot/EKF.h"
 #include "robot/Rotate.h"
 #include "headers/parameters.h"
-#include "headers/wall_follower.h"
+#include "headers/wall_followerVW.h"
 
 using namespace differential_drive;
 using namespace robot;
@@ -30,9 +30,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	double diff_ang = 0;
 	double dist = 0;
 
-	Speed speed;
-	speed.W1 = 0;
-	speed.W2 = 0;
+	SpeedVW speed;
+	speed.V = 0;
+	speed.W = 0;
 
 	x = msg->x;
 	y = msg->y;
@@ -52,8 +52,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 	if(!obstacle)
 	{
-		speed.W1 = rho*dist-alpha*diff_ang;
-		speed.W2 = rho*dist+alpha*diff_ang;
+		speed.V = rho*dist*r;
+		speed.W = -2*r/l*alpha*diff_ang;
 	}
 	else
 	{
@@ -70,8 +70,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			rotate_pub.publish(r);
 		}
 
-		speed.W1 = alpha*dtheta/4;
-		speed.W2 = -(alpha*dtheta/4);
+		speed.V = 0;
+		speed.W = 2*r/l*alpha*dtheta/4;
 	}
 
 	speed_pub.publish(speed);
@@ -113,6 +113,11 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 }
 
 
+/**
+ * Angle between ]-pi,pi]
+ * @param th
+ * @return
+ */
 double angle(double theta)
 {
 	while((theta > M_PI) | (theta <= -M_PI))
@@ -133,9 +138,9 @@ double angle(double theta)
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "wall_follower");
+	ros::init(argc, argv, "wall_followerVW");
 	ros::NodeHandle nh;
-	speed_pub = nh.advertise<Speed>("/motion/Speed",100);
+	speed_pub = nh.advertise<SpeedVW>("/motion/SpeedVW",100);
 	rotate_pub =nh.advertise<Rotate>("/motion/Rotate",100);
 	EKF_sub = nh.subscribe("/motion/EKF",1000,receive_EKF);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
