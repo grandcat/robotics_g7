@@ -25,15 +25,16 @@ namespace enc = sensor_msgs::image_encodings;
 
 using namespace std;
 
-int averageDepthAtPos(IplImage *img_depth, int x, int y) {
+int averageDepthAtPos(cv::Mat &img_depth, int y, int x) {
 	int depth;
 	float sumDistance = 0;
 	int nAvg = 0;
 	for (int i = 0; i <= 10; i++) {
 		for (int j = 0; j <= 10; j++) {
-			if ((((y + j - 5) < img_depth->height) & ((x + i - 5) < img_depth->width))
+			if ((((y + j - 5) < img_depth.rows) & ((x + i - 5) < img_depth.cols))
 					&& (((y + j - 5) >= 0) & ((x + i - 5) >= 0))) {
-				float curDepth = cvGetReal2D(img_depth, y + j - 5, x + i - 5);
+				float curDepth = img_depth.at<float>(y + j - 5, x + i - 5);
+//				ROS_INFO("Raw value: %f", curDepth);
 				if (!isnan(curDepth)) {
 					sumDistance += curDepth;
 					++nAvg;
@@ -50,6 +51,37 @@ int averageDepthAtPos(IplImage *img_depth, int x, int y) {
 	return depth;
 }
 
+void computeDepthLine(cv::Mat &img_depth, int height) {
+	// Move horizontal on given height and
+	int sumDepth = 0, count = 0;
+	for (int curPos = 5; curPos < img_depth.cols; curPos += 5) {
+		int depthPos = averageDepthAtPos(img_depth, height, curPos);
+		sumDepth += depthPos;
+		if (depthPos != 0)
+			++count;
+		ROS_INFO("Pos %i --> Val: %i (c: %i)", curPos, depthPos, count);
+	}
+	// Create line with relative deviation
+	if (count == 0)
+		return;
+	int avgDepth = sumDepth / count;
+
+	cv::Mat img = cv::Mat::zeros(480, 640, CV_8UC3);
+	for (int curPos = 5; curPos < img_depth.cols; curPos += 5) {
+		int relVal = averageDepthAtPos(img_depth, height, curPos) - avgDepth + img_depth.rows / 2;
+		cv::circle(img, cv::Point(curPos, relVal), 1, cv::Scalar(0, 255, 0), 2, 8, 0);
+	}
+
+	cv::imshow("Depth line", img);
+}
+
+void drawDepthLine() {
+	cv::Mat img = cv::Mat::zeros(480, 640, CV_8UC3);
+//	cv::line(img, cv::Point(20, 40), cv::Point(80, 20), cv::Scalar(0, 255, 0), 2, 8);
+
+	cv::imshow("Depth line", img);
+}
+
 class ImageConverter
 {
 	ros::NodeHandle nh_;
@@ -59,7 +91,7 @@ class ImageConverter
 
 public:
 	IplImage* img;
-	IplImage* img_depth;
+//	IplImage* img_depth;
 	IplImage* hsv_image;
 	IplImage* hsv_mask;
 
@@ -74,8 +106,8 @@ public:
 
 	~ImageConverter()
 	{
-		cvReleaseImage(&img);
-		cvReleaseImage(&img_depth);
+//		cvReleaseImage(&img);
+//		cvReleaseImage(&img_depth);
 	}
 
 	void imageCb_depth(const sensor_msgs::ImageConstPtr& msg)
@@ -91,15 +123,16 @@ public:
 			return;
 		}
 
-		img_depth = new IplImage(cv_ptr->image);
+//		img_depth = new IplImage(cv_ptr->image);
 		// Get closest pixels
-		int depthPos = averageDepthAtPos(img_depth, img_depth->width / 2, img_depth->height / 2);
+		// DEBUG
+		ROS_INFO("Get depth: %i", cv_ptr->image.depth());
+		int depthPos = averageDepthAtPos(cv_ptr->image, cv_ptr->image.rows / 2, cv_ptr->image.cols / 2);
 		ROS_INFO("Depth in middle: %i", depthPos);
-		ROS_INFO("Resolution: %i", img_depth->depth);
+//		ROS_INFO("Resolution: %i", img_depth->depth);
+		computeDepthLine(cv_ptr->image, cv_ptr->image.rows - 100);
 
-//		object_depth(img_depth);
-
-		cvNamedWindow("hsv-msk2",1); cvShowImage("hsv-msk2", img_depth);
+		cv::imshow("depth image", cv_ptr->image);
 		cvWaitKey(10);
 	}
 
