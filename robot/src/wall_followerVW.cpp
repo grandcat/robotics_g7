@@ -24,7 +24,7 @@ using namespace robot;
  */
 void receive_EKF(const EKF::ConstPtr &msg)
 {
-	double x,y,y_wall;
+	double y,y_wall;
 	double theta;
 
 	double diff_ang = 0;
@@ -48,14 +48,51 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
 	diff_ang = angle(diff_ang);
 
-	dist = x_cmd_traj/1.3;
+	dist = x_cmd_traj;
 
-	if(!obstacle)
+
+	if(hurt_wall)
+	{
+		// Go backward
+		y_cmd = y;
+		dist = x-x_collision-0.1;
+
+		// Done
+		if(dist*dist < x_error)
+		{
+			backward = true;
+		}
+
+		// Rotate 90
+		if(backward)
+		{
+			obstacle = true;
+		}
+
+		// Rotate 90
+		if(backward & !obstacle)
+		{
+			obstacle = true;
+
+			// Send a message to EKF
+			right = true;
+			Rotate r;
+			r.right = right;
+			rotate_pub.publish(r);
+
+			// Re-init
+			backward = false;
+			hurt_wall = false;
+		}
+	}
+
+	if(!obstacle & !hurt_wall)
 	{
 		speed.V = rho*dist*r;
 		speed.W = -2*r/l*alpha*diff_ang;
 	}
-	else
+
+	if(obstacle)
 	{
 		double dtheta = theta - theta_cmd;
 		dtheta = angle(dtheta);
@@ -74,6 +111,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		speed.W = 2*r/l*alpha*dtheta/4;
 	}
 
+
 	speed_pub.publish(speed);
 }
 
@@ -84,12 +122,31 @@ void receive_EKF(const EKF::ConstPtr &msg)
  */
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
+	// IR sensor
 	double s1 = a_short*pow(msg->ch1,b_short);
 	double s2 = a_short*pow(msg->ch2,b_short);
 	double s3 = a_long*pow(msg->ch3,b_long);
 
+	// Bumpers
+	bool s6 = (msg->ch6 > bumper_threshold);
+	bool s7 = (msg->ch7 > bumper_threshold);
+	bool s8 = (msg->ch8 > bumper_threshold);
+
+	// Hurt a wall
+	if((s6 | s7 | s8) & !obstacle & !hurt_wall)
+	{
+		hurt_wall = true;
+		x_collision = x;
+
+		// Send a message to EKF
+		right = true;
+		Rotate r;
+		r.right = right;
+		rotate_pub.publish(r);
+	}
+
 	// Obstacle
-	if((s3 < dist_obstacle) & !obstacle)
+	if((s3 < dist_obstacle) & !obstacle & !hurt_wall)
 	{
 		obstacle = true;
 
