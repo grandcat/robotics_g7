@@ -27,6 +27,7 @@ const double alpha = 10;
 
 const double x_cmd_traj = 0.2;
 const double y_cmd_traj = 0.20;
+const double x_backward_dist = 0.05;
 const double dist_obstacle = 0.22;
 double x;
 double x_collision;

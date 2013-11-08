@@ -55,7 +55,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	{
 		// Go backward
 		y_cmd = y;
-		dist = x-x_collision-0.1;
+		dist = x-x_collision-x_backward_dist;
 
 		// Done
 		if(dist*dist < x_error)
