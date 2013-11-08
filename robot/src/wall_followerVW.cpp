@@ -43,10 +43,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	double y_cmd;
 	if(msg->right_sensor) {y_cmd = y_wall + y_cmd_traj;}
 	else {y_cmd = y_wall - y_cmd_traj;}
-	if(!msg->wall) {y_cmd = y;}
-
-	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
-	diff_ang = angle(diff_ang);
+	if(!msg->wall | hurt_wall) {y_cmd = y;}
 
 	dist = x_cmd_traj;
 
@@ -54,19 +51,20 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	if(hurt_wall)
 	{
 		// Go backward
-		y_cmd = y;
-		dist = x-x_collision-x_backward_dist;
+		dist = x_collision-x-x_backward_dist;
+		x_cmd = x - x_cmd_traj;
 
 		// Done
-		if(dist*dist < x_error)
+		if((dist*dist < x_error*x_error) & !backward)
 		{
 			backward = true;
 		}
 
 		// Rotate 90
-		if(backward)
+		if(backward & !first_rotation)
 		{
 			obstacle = true;
+			first_rotation = true;
 		}
 
 		// Rotate 90
@@ -83,13 +81,26 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// Re-init
 			backward = false;
 			hurt_wall = false;
+			first_rotation = false;
 		}
 	}
+
+
+	diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
+	diff_ang = angle(diff_ang);
+
 
 	if(!obstacle & !hurt_wall)
 	{
 		speed.V = rho*dist*r;
 		speed.W = -2*r/l*alpha*diff_ang;
+	}
+
+	if(!obstacle & hurt_wall)
+	{
+		speed.V = 5*rho*dist*r;
+		speed.W = -2*r/l*alpha*diff_ang;
+		//printf("Backward\n");
 	}
 
 	if(obstacle)
@@ -113,6 +124,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 	speed_pub.publish(speed);
+
+
+	//printf("obstacle = %s, hurt_wall = %s\n",(obstacle)?"true":"false",(hurt_wall)?"true":"false");
 }
 
 
@@ -137,6 +151,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	{
 		hurt_wall = true;
 		x_collision = x;
+
+		theta_cmd = -M_PI/2;
 
 		// Send a message to EKF
 		right = true;

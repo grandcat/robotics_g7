@@ -28,7 +28,7 @@ const double a_long = 65.48559;
 const double b_long = -1.0321;
 
 // Bumper threshold
-const int bumper_threshold = 127;
+const int bumper_threshold = 500;
 
 
 #endif /* PARAMETERS_H_ */

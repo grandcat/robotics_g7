@@ -40,6 +40,7 @@ bool obstacle = false;
 bool right;
 bool hurt_wall = false;
 bool backward = false;
+bool first_rotation = false;
 
 
 void receive_EKF(const EKF::ConstPtr &msg);
