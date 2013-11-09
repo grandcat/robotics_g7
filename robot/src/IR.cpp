@@ -14,10 +14,10 @@ using namespace differential_drive;
 
 void receive_sensors(const AnalogC::ConstPtr &msg)
 {
-	int s1 = msg->ch2;
+	int s1 = msg->ch1;
 	printf("Range 1 = %f\n",a_short*pow(s1,b_short));
 	int s3 = msg->ch3;
-	//printf("Range 3 = %f\n",a_long*pow(s3,b_long));
+	printf("Range 3 = %f\n",a_long*pow(s3,b_long));
 }
 
 

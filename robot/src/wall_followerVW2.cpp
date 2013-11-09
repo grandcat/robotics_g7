@@ -55,6 +55,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 		speed.V = rho*dist*r;
 		speed.W = -2*r/l*alpha*diff_ang;
+
+		//printf("Wall following\n");
 	}
 
 
@@ -69,8 +71,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// Stop EKF
 			Stop_EKF s;
 			s.stop = true;
-			if(current_action.n == rotation) {s.rotation_angle = current_action.parameter;}
-			else {s.rotation_angle = 0;}
 			stop_EKF_pub.publish(s);
 		}
 
@@ -80,6 +80,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// Rotation
 			if(current_action.n == rotation)
 			{
+				theta_cmd = current_action.parameter;
 				double dtheta = theta - theta_cmd;
 				dtheta = angle(dtheta);
 
@@ -102,6 +103,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Re-init y_cmd_change
 				y_cmd_change = 0;
 
+				//printf("Rotation\n");
 			}
 
 
@@ -119,7 +121,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 				// Done
-				if((dist*dist < x_error*x_error) & !backward)
+				if(dist*dist < x_error*x_error)
 				{
 					actions.pop_front();
 					busy = false;
@@ -130,6 +132,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					s.rotation_angle = 0;
 					stop_EKF_pub.publish(s);
 				}
+
+				//printf("Backward\n");
 			}
 
 
@@ -168,27 +172,27 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s3 = a_long*pow(msg->ch3,b_long); // center
 
 	// Bumpers
-	bool s6 = (msg->ch6 > bumper_threshold); // left
+	bool s6 = (msg->ch6 > bumper_threshold); // center
 	bool s7 = (msg->ch7 > bumper_threshold); // right
-	bool s8 = (msg->ch8 > bumper_threshold); // center
+	bool s8 = (msg->ch8 > bumper_threshold); // left
 
-	if(!busy)
+	if(actions.empty())
 	{
 		// Hurt a wall
-		if(s6 | s7)
+		if(s7 | s8)
 		{
 			x_collision = x;
 
 			Action action;
 			action.n = 1; action.parameter = x_backward_dist;
 			actions.push_back(action);
-			action.n = 4; action.parameter = 0.05;
+			action.n = 4; action.parameter = 0.04;
 			actions.push_back(action);
 
 			return;
 		}
 
-		if(s8)
+		if(s6)
 		{
 			x_collision = x;
 
