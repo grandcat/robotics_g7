@@ -137,7 +137,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					stop_EKF_pub.publish(s);
 				}
 
-				//printf("Backward\n");
+				//printf("Backward %f\n",dist);
 			}
 
 
@@ -188,9 +188,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			x_collision = x;
 
 			Action action;
-			action.n = 1; action.parameter = x_backward_dist;
+			action.n = backward; action.parameter = x_backward_dist;
 			actions.push_back(action);
-			action.n = 4; action.parameter = 0.04;
+			action.n = change_y_cmd_traj; action.parameter = 0.04;
 			actions.push_back(action);
 
 			return;
@@ -201,9 +201,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			x_collision = x;
 
 			Action action;
-			action.n = 1; action.parameter = x_backward_dist;
+			action.n = backward; action.parameter = x_backward_dist;
 			actions.push_back(action);
-			action.n = 2; action.parameter = -M_PI;
+			action.n = rotation; action.parameter = -M_PI;
 			actions.push_back(action);
 
 			return;
@@ -213,8 +213,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		if(s3 < dist_front_wall)
 		{
 			Action action;
-			if(s1 < s2){action.n = 2; action.parameter = -M_PI/2;}
-			else {action.n = 2; action.parameter = M_PI/2;}
+			if(s1 < s2){action.n = rotation; action.parameter = -M_PI/2;}
+			else {action.n = rotation; action.parameter = M_PI/2;}
 			actions.push_back(action);
 
 			return;
