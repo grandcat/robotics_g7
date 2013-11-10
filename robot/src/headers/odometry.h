@@ -18,9 +18,7 @@
 using namespace differential_drive;
 
 
-ros::Publisher odom_pub;
 ros::Subscriber odom_sub;
-ros::Subscriber enc_sub;
 ros::Publisher marker_pub;
 ros::Subscriber sensors_sub;
 ros::Publisher map_pub;
