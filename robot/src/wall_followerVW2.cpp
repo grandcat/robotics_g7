@@ -84,6 +84,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				double dtheta = theta - theta_cmd;
 				dtheta = angle(dtheta);
 
+				// Rotation saturation
+				if(dtheta > M_PI/2) {dtheta = M_PI/2;}
+				if(dtheta < -M_PI/2) {dtheta = -M_PI/2;}
+
 				speed.V = 0;
 				speed.W = 2*r/l*alpha*dtheta/4;
 

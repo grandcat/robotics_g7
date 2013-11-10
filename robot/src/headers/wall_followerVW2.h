@@ -54,10 +54,9 @@ std::list<Action> actions;
 Action current_action;
 
 // Actions
-const int forward = 0;
 const int backward = 1;
 const int rotation = 2;
-const int change_y_cmd_traj = 4;
+const int change_y_cmd_traj = 3;
 
 
 void receive_EKF(const EKF::ConstPtr &msg);

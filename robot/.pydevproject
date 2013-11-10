@@ -10,11 +10,11 @@
 <path>/opt/ros/fuerte/stacks/geometry/tf/src</path>
 <path>/opt/ros/fuerte/stacks/geometry/tf/lib</path>
 <path>/opt/ros/fuerte/stacks/geometry/angles/lib</path>
-<path>/home/findus/DD2425_2013/differential_drive/src</path>
-<path>/home/findus/DD2425_2013/robotics_g7/robot/src</path>
+<path>/home/robo/DD2425_2013/differential_drive/src</path>
+<path>/home/robo/ros_workspace/robotics_g7/robot/src</path>
 <path>/opt/ros/fuerte/share/ros/core/mk</path>
 <path>/opt/ros/fuerte/lib/python2.7/dist-packages</path>
-<path>/home/findus/DD2425_2013/robotics_g7/robot</path>
+<path>/home/robo/ros_workspace/robotics_g7/robot</path>
 <path>/usr/lib/python2.7</path>
 <path>/usr/lib/python2.7/plat-linux2</path>
 <path>/usr/lib/python2.7/lib-tk</path>
@@ -26,6 +26,11 @@
 <path>/usr/lib/python2.7/dist-packages/gtk-2.0</path>
 <path>/usr/lib/pymodules/python2.7</path>
 <path>/usr/lib/python2.7/dist-packages/ubuntu-sso-client</path>
+<path>/usr/lib/python2.7/dist-packages/ubuntuone-client</path>
+<path>/usr/lib/python2.7/dist-packages/ubuntuone-control-panel</path>
+<path>/usr/lib/python2.7/dist-packages/ubuntuone-couch</path>
+<path>/usr/lib/python2.7/dist-packages/ubuntuone-installer</path>
+<path>/usr/lib/python2.7/dist-packages/ubuntuone-storage-protocol</path>
 <path>/usr/lib/python2.7/dist-packages/wx-2.8-gtk2-unicode</path>
 </pydev_pathproperty>
 </pydev_project>
