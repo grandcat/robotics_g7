@@ -1,3 +1,5 @@
+// Used for testing on images
+
 #include <ros/ros.h>
 #include <opencv/cv.h>
 #include <image_transport/image_transport.h>
@@ -40,7 +42,7 @@ struct IdImg
 
 
 //static const char WINDOW[] = "Image window";
-const int trainSize = 4;
+const int trainSize = 6;
 IdImg testImg[trainSize];
 
 
@@ -71,9 +73,9 @@ ImgHist colorDetection(Mat matImg)
 
 
 /*
- * Perform Canny Edge Detection on the image
+ * Perform Canny Edge Detection on the image (Not used)
  */
-Mat edgeDetection(Mat img)
+/*Mat edgeDetection(Mat img)
 {
 	//noise reduction with gaussian filter
 	Mat edges;
@@ -94,7 +96,7 @@ Mat edgeDetection(Mat img)
 	//imshow("Edge map", finalImg);
 
 	return finalImg;
-}
+}*/
 
 
 /*
@@ -127,7 +129,7 @@ Features featureDetector(Mat img)
  */
 void identifyObject(ImgHist hist, Features feat)
 {
-	int bestMatch = 0;
+	int bestColorMatch = 0;
 	double diff = 0.3;
 	for(int i=0; i < trainSize; ++i) {
 		double resB = compareHist(hist.bHist, testImg[i].colorHist.bHist, 3);
@@ -135,22 +137,42 @@ void identifyObject(ImgHist hist, Features feat)
 		double resR = compareHist(hist.rHist, testImg[i].colorHist.rHist, 3);
 
 		if(resB < diff && resG < diff && resR < diff) {
-			bestMatch = testImg[i].obj;
-			std::cout << "Best match: " << bestMatch << std::endl;
+			bestColorMatch = testImg[i].obj;
+			std::cout << "Best match color: " << bestColorMatch << std::endl;
 			std::cout << "Histogram compare B,G,R: " << resG << ", " << resB << ", " << resR << std::endl;
 		}
 	}
 
-	if(bestMatch == 0) {
+	if(bestColorMatch == 0) {
 		std::cout << "No match" << std::endl;
 	}
 
-	// matching descriptors
-	BFMatcher matcher(cv::NORM_L2, true);
-	vector<cv::DMatch> matches;
-	matcher.match(feat.descriptors, testImg[0].feat.descriptors, matches);
+	int bestDescriptMatch = 0;
+	int nrKeypoints = 10;
+	for(int i=0; i < trainSize; ++i) {
+		// matching descriptors
+		BFMatcher matcher(cv::NORM_L2, true);
+		vector<cv::DMatch> matches;
+		matcher.match(feat.descriptors, testImg[i].feat.descriptors, matches);
 
-	std::cout << "Matches: " << matches.size() << std::endl;
+		if(matches.size() > nrKeypoints) {
+			bestDescriptMatch = testImg[i].obj;
+			std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
+			std::cout << "Nr matches: " << matches.size() << std::endl;
+
+			if(bestDescriptMatch == bestColorMatch) {
+				std::cout << "Best match: " << bestDescriptMatch << std::endl;
+				break;
+			}
+		}
+	}
+
+	if(bestDescriptMatch != bestColorMatch && bestColorMatch != 0) {
+		std::cout << "Best match: " << bestColorMatch << std::endl;
+	} else if(bestColorMatch == 0) {
+		std::cout << "Best match: " << bestDescriptMatch << std::endl;
+	}
+
 }
 
 
@@ -164,10 +186,10 @@ void train()
 	testImg[0] = { imread("src/testimages/1_1.jpg"), 1, dummyHist, edgeDummy };
 	testImg[1] = { imread("src/testimages/2_1.jpg"), 2, dummyHist, edgeDummy };
 	testImg[2] = { imread("src/testimages/3_1.jpg"), 3, dummyHist, edgeDummy };
-	//testImg[3] = { imread("src/testimages/3_2.jpg"), 3, dummyHist, edgeDummy };
+	testImg[3] = { imread("src/testimages/3_2.jpg"), 3, dummyHist, edgeDummy };
 	//testImg[4] = { imread("src/testimages/3_3.jpg"), 3, dummyHist, edgeDummy };
-	testImg[3] = { imread("src/testimages/4_1.jpg"), 4, dummyHist, edgeDummy };
-	//testImg[6] = { imread("src/testimages/4_2.jpg"), 4, dummyHist, edgeDummy };
+	testImg[4] = { imread("src/testimages/4_1.jpg"), 4, dummyHist, edgeDummy };
+	testImg[5] = { imread("src/testimages/4_2.jpg"), 4, dummyHist, edgeDummy };
 	//testImg[7] = { imread("src/testimages/4_3.jpg"), 4, dummyHist, edgeDummy };
 
 	Mat img = imread( "src/testimage.jpg" );
@@ -209,10 +231,10 @@ int main( int argc, char** argv )
 	Features feat = featureDetector(src);
 
 	/// Convert the image to grayscale
-	cvtColor( src, src, CV_BGR2GRAY );
+	//cvtColor( src, src, CV_BGR2GRAY );
 
 	// Canny Edge Detector
-	Mat edges = edgeDetection(src);
+//	Mat edges = edgeDetection(src);
 
 	// Identify object
 	identifyObject(hist, feat);

@@ -1,3 +1,5 @@
+// Used for testing on images
+
 #include <ros/ros.h>
 #include <opencv/cv.h>
 #include <image_transport/image_transport.h>
@@ -14,7 +16,6 @@
 using namespace cv;
 namespace enc = sensor_msgs::image_encodings;
 
-static const char WINDOW[] = "Image window";
 
 struct ImgHist 
 {
@@ -34,16 +35,17 @@ struct IdImg
 	Mat img;
 	int obj;
 	ImgHist colorHist;
+	//Mat edges;
 	Features feat;
 };
 
+
+
+//static const char WINDOW[] = "Image window";
 const int trainSize = 6;
 IdImg testImg[trainSize];
 
 
-/*
- * Make a color histogram for the image
- */
 ImgHist colorDetection(Mat matImg)
 {
 	//Split image into planes (B, G, R)
@@ -68,6 +70,33 @@ ImgHist colorDetection(Mat matImg)
 	ImgHist hist = {bHist, gHist, rHist};
 	return hist;
 }
+
+
+/*
+ * Perform Canny Edge Detection on the image (Not used)
+ */
+/*Mat edgeDetection(Mat img)
+{
+	//noise reduction with gaussian filter
+	Mat edges;
+	int ksize = 5;
+	blur(img, edges, Size(ksize, ksize));
+
+	// set tresholds
+	int lowThreshold = 100;
+	int upperThreshold = lowThreshold*3;
+
+	// Canny Edge Detection
+	Canny(edges, edges, lowThreshold, upperThreshold, ksize);
+	Mat finalImg;
+	finalImg.create( img.size(), img.type() );
+	finalImg = Scalar::all(0);
+	img.copyTo(finalImg, edges);
+
+	//imshow("Edge map", finalImg);
+
+	return finalImg;
+}*/
 
 
 /*
@@ -100,7 +129,6 @@ Features featureDetector(Mat img)
  */
 void identifyObject(ImgHist hist, Features feat)
 {
-	// matching color histogram
 	int bestColorMatch = 0;
 	double diff = 0.3;
 	for(int i=0; i < trainSize; ++i) {
@@ -114,15 +142,15 @@ void identifyObject(ImgHist hist, Features feat)
 			std::cout << "Histogram compare B,G,R: " << resG << ", " << resB << ", " << resR << std::endl;
 		}
 	}
+
 	if(bestColorMatch == 0) {
 		std::cout << "No match" << std::endl;
 	}
 
-
-	// matching descriptors
 	int bestDescriptMatch = 0;
 	int nrKeypoints = 10;
 	for(int i=0; i < trainSize; ++i) {
+		// matching descriptors
 		BFMatcher matcher(cv::NORM_L2, true);
 		vector<cv::DMatch> matches;
 		matcher.match(feat.descriptors, testImg[i].feat.descriptors, matches);
@@ -171,85 +199,16 @@ void train()
 		testImg[i].colorHist = colorDetection(testImg[i].img);
 
 		testImg[i].feat = featureDetector(testImg[i].img);
+
+		/*cvtColor( testImg[i].img, testImg[i].img, CV_BGR2GRAY );
+		testImg[i].edges = edgeDetection(testImg[i].img);*/
 	}
 }
 
 
-
-
-class ImageConverter
+int main( int argc, char** argv )
 {
-  ros::NodeHandle nh_;
-  image_transport::ImageTransport it_;
-  image_transport::Subscriber image_sub_;
-  //image_transport::Publisher image_pub_;
-	image_transport::Subscriber image_sub_depth_;
-
-public:
-  IplImage* img;
-	IplImage* img_depth;
-	IplImage* hsv_image;
-	IplImage* hsv_mask;
-
-  ImageConverter()
-    : it_(nh_)
-  {
-
-	image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
-	//image_sub_depth_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCb_depth, this);
-
-    cv::namedWindow(WINDOW);
-  }
-
-  ~ImageConverter()
-  {
-    cv::destroyWindow(WINDOW);
-  }
-
-  void imageCb(const sensor_msgs::ImageConstPtr& msg)
-  {
-    cv_bridge::CvImagePtr cv_ptr;
-    try
-    {
-      cv_ptr = cv_bridge::toCvCopy(msg, enc::BGR8);	//RGB image
-    }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
-      return;
-    }
-
-    //cv_ptr has image now, identify object
-		img = new IplImage(cv_ptr->image);
-		Mat src(img); 
-		
-		Mat refSize = imread( "src/testimage.jpg" );	
-		resize(src, src, refSize.size());
-
-		// Detect if objects through feature detection
-		if(featureDetector(src).keypoints.size() > 20) {
-			// Color detection
-			ImgHist hist = colorDetection(src);
-
-			//Feature detection
-			Features feat = featureDetector(src);
-
-			// Identify object
-			identifyObject(hist, feat);
-		}
-
-    cv::imshow(WINDOW, cv_ptr->image);
-    cv::waitKey(3);
-
-    //image_pub_.publish(cv_ptr->toImageMsg());
-  }
-};
-
-
-int main(int argc, char** argv)
-{
-  //ros::init(argc, argv, "image_converter");
-	ros::init(argc, argv, "object_recognition");
+	ros::init(argc, argv, "recognition");
 	ros::NodeHandle n;
 
 	initModule_nonfree();
@@ -257,8 +216,43 @@ int main(int argc, char** argv)
 	// Train on test images
 	train();
 
-  ImageConverter ic;
-  ros::spin();
-  return 0;
-}
+	// Load an image
+	Mat img = imread( "src/testimage.jpg" );
+	Mat src = imread( argv[1] );
+	resize(src, src, img.size());
 
+	if( !src.data )
+	{ return -1; }
+
+	// Color detection
+	ImgHist hist = colorDetection(src);
+
+	//Feature detection
+	Features feat = featureDetector(src);
+
+	/// Convert the image to grayscale
+	cvtColor( src, src, CV_BGR2GRAY );
+
+	// Canny Edge Detector
+//	Mat edges = edgeDetection(src);
+
+	// Identify object
+	identifyObject(hist, feat);
+
+
+	// matching descriptors
+	/*BFMatcher matcher(cv::NORM_L2, true);
+	vector<cv::DMatch> matches;
+	matcher.match(feat.descriptors, testImg[0].feat.descriptors, matches);
+
+	// drawing the results
+	namedWindow("matches", 1);
+	Mat img_matches;
+	drawMatches(src, feat.keypoints, testImg[0].img, testImg[0].feat.keypoints, matches, img_matches);
+	imshow("matches", img_matches);*/
+
+	/// Wait until user exit program by pressing a key
+	waitKey(0);
+
+	return 0;
+}
