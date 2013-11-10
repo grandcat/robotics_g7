@@ -15,10 +15,16 @@
 using namespace differential_drive;
 using namespace robot;
 
+// Actions
+enum EACTIONS {
+	ACTION_BACKWARD = 1,
+	ACTION_ROTATION,
+	ACTION_CHANGE_Y_CMD_TRAJ,
+};
 
 struct Action
 {
-	int n;
+	enum EACTIONS n;
 	double parameter;
 };
 
@@ -53,7 +59,6 @@ bool busy = false;
 std::list<Action> actions;
 Action current_action;
 
-// Actions
 const int backward = 1;
 const int rotation = 2;
 const int change_y_cmd_traj = 3;

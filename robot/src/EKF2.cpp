@@ -178,7 +178,7 @@ void receive_stop(const Stop_EKF::ConstPtr &msg)
 
 /**
  * Save the odometry before reinitialising
- * @param right Rotation
+ * @param rotation_angle Rotation
  */
 void rotate(double rotation_angle)
 {

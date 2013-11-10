@@ -78,7 +78,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		else
 		{
 			// Rotation
-			if(current_action.n == rotation)
+			if(current_action.n == ACTION_ROTATION)
 			{
 				theta_cmd = current_action.parameter;
 				double dtheta = theta - theta_cmd;
@@ -112,7 +112,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 			// Go backward
-			if(current_action.n == backward)
+			if(current_action.n == ACTION_BACKWARD)
 			{
 				double x_cmd = x - x_cmd_traj;
 				double y_cmd = y;
@@ -142,7 +142,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 			// Change y_cmd_traj
-			if(current_action.n == change_y_cmd_traj)
+			if(current_action.n == ACTION_CHANGE_Y_CMD_TRAJ)
 			{
 				y_cmd_change = current_action.parameter;
 
@@ -188,9 +188,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			x_collision = x;
 
 			Action action;
-			action.n = backward; action.parameter = x_backward_dist;
+			action.n = ACTION_BACKWARD; action.parameter = x_backward_dist;
 			actions.push_back(action);
-			action.n = change_y_cmd_traj; action.parameter = 0.04;
+			action.n = ACTION_CHANGE_Y_CMD_TRAJ; action.parameter = 0.04;
 			actions.push_back(action);
 
 			return;
@@ -201,9 +201,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			x_collision = x;
 
 			Action action;
-			action.n = backward; action.parameter = x_backward_dist;
+			action.n = ACTION_BACKWARD; action.parameter = x_backward_dist;
 			actions.push_back(action);
-			action.n = rotation; action.parameter = -M_PI;
+			action.n = ACTION_ROTATION; action.parameter = -M_PI;
 			actions.push_back(action);
 
 			return;
@@ -213,8 +213,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		if(s3 < dist_front_wall)
 		{
 			Action action;
-			if(s1 < s2){action.n = rotation; action.parameter = -M_PI/2;}
-			else {action.n = rotation; action.parameter = M_PI/2;}
+			if(s1 < s2){action.n = ACTION_ROTATION; action.parameter = -M_PI/2;}
+			else {action.n = ACTION_ROTATION; action.parameter = M_PI/2;}
 			actions.push_back(action);
 
 			return;
