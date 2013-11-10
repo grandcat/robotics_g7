@@ -25,13 +25,21 @@ double speed_instructionV, speed_instructionW;
 double speed1, speed2;
 
 int avg;
-const int n = 5;
+const int n = 3;
 double T;
 
-const double k = 10;
-const double kI = 20;
-const double kD = 0.00015;
+
+const double k_V = 1;
+const double kI_V = 30;
+const double kD_V = 0.0005;
+
+const double k_W = 5;
+const double kI_W = 50;
+const double kD_W = 0.0005;
+
+
 const double int_max = 130;
+
 double integralV, integralW;
 double p_errorV, p_errorW;
 
@@ -53,32 +61,32 @@ void receive_enc(const Encoders::ConstPtr &msg)
 		// Control the speed
 		PWM pwm;
 
-		// Motor 1
+		// V
 		double errorV = speed_instructionV - speedV;
-		integralV += kI/r*errorV*T;
+		integralV += kI_V*errorV*T;
 		double derivativeV = (errorV-p_errorV)/T;
 		p_errorV = errorV;
 
-		printf("errorV = %f, deriv = %f, current = %f, int = %f\n",errorV,derivativeV,speedV,integralV);
+		//printf("errorV = %f, deriv = %f, current = %f, int = %f\n",errorV,derivativeV,speedV,integralV);
 
 		if(integralV > int_max) {integralV = int_max;}
 		else if(integralV < -int_max)  {integralV = -int_max;}
 
-		double V = k/r*errorV + integralV + kD/r*derivativeV;
+		double V = k_V*errorV + integralV + kD_V*derivativeV;
 
 
-		// Motor 2
+		// W
 		double errorW = speed_instructionW - speedW;
-		integralW += kI*l/r/2*errorW*T;
+		integralW += kI_W*errorW*T;
 		double derivativeW = (errorW-p_errorW)/T;
 		p_errorW = errorW;
 
-		printf("errorW = %f, deriv = %f, current = %f, int = %f\n",errorW,derivativeW,speedW,integralW);
+		//printf("errorW = %f, deriv = %f, current = %f, int = %f\n",errorW,derivativeW,speedW,integralW);
 
 		if(integralW > int_max) {integralW = int_max;}
 		else if(integralW < -int_max)  {integralW = -int_max;}
 
-		double W = k*l/r/2*errorW + integralW + kD*l/r/2*derivativeW;
+		double W = k_W*errorW + integralW + kD_W*derivativeW;
 
 
 		double u1 = V/r + W*l/r/2;

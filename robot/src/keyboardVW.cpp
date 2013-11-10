@@ -51,7 +51,7 @@ void arrowsCmd(ros::Publisher cmd_pub,ros::Publisher pwm_pub)
 		}
 
 		SpeedVW cmd;
-		cmd.V = cmd.V = 0;
+		cmd.V = cmd.W = 0;
 
 		PWM pwm;
 		pwm.PWM1 = pwm.PWM2 = 0;
@@ -63,18 +63,18 @@ void arrowsCmd(ros::Publisher cmd_pub,ros::Publisher pwm_pub)
 		case KEYCODE_L:
 			ROS_DEBUG("LEFT");
 			cmd.V = 0;
-			cmd.W = 0.3;
+			cmd.W = 1;
 			dirty = true;
 			break;
 		case KEYCODE_R:
 			ROS_DEBUG("RIGHT");
 			cmd.V = 0;
-			cmd.W = -0.3;
+			cmd.W = -1;
 			dirty = true;
 			break;
 		case KEYCODE_U:
 			ROS_DEBUG("UP");
-			cmd.V = 0.1;
+			cmd.V = 0.3;
 			cmd.W = 0;
 			dirty = true;
 			break;

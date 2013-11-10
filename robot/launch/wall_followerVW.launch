@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
+  <node pkg="robot" name="odometry" type="odometry" output="screen"/>
+  <node pkg="robot" name="motorsVW" type="motorsVW" output="screen"/>
+  <node pkg="robot" name="EKF" type="EKF" output="screen"/>
+  <node pkg="robot" name="wall_followerVW" type="wall_followerVW" output="screen"/>
+
+</launch>

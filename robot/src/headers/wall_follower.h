@@ -23,11 +23,11 @@ ros::Subscriber sensors_sub;
 
 
 const double rho = 12;
-const double alpha = 12;
+const double alpha = 10;
 
 const double x_cmd_traj = 0.2;
-const double y_cmd_traj = 0.17;
-const double dist_obstacle = 0.20;
+const double y_cmd_traj = 0.20;
+const double dist_obstacle = 0.22;
 double theta_cmd;
 
 const double theta_error = 5;
