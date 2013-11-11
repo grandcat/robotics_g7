@@ -173,7 +173,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	// IR sensor
 	double s1 = a_short*pow(msg->ch1,b_short); // left
 	double s2 = a_short*pow(msg->ch2,b_short); // right
-	double s3 = a_long*pow(msg->ch3,b_long); // center
+	double s3 = a_short*pow(msg->ch3,b_short); // center
 
 	// Bumpers
 	bool s6 = (msg->ch6 > bumper_threshold); // center

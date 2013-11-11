@@ -59,10 +59,6 @@ bool busy = false;
 std::list<Action> actions;
 Action current_action;
 
-const int backward = 1;
-const int rotation = 2;
-const int change_y_cmd_traj = 3;
-
 
 void receive_EKF(const EKF::ConstPtr &msg);
 
