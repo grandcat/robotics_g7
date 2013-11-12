@@ -176,9 +176,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s3 = a_short*pow(msg->ch3,b_short); // center
 
 	// Bumpers
-	bool s6 = (msg->ch6 > bumper_threshold); // center
-	bool s7 = (msg->ch7 > bumper_threshold); // right
-	bool s8 = (msg->ch8 > bumper_threshold); // left
+	//bool s6 = (msg->ch6 > bumper_threshold); // center
+	//bool s7 = (msg->ch7 > bumper_threshold); // right
+	//bool s8 = (msg->ch8 > bumper_threshold); // left
+	bool s6 = false;
+	bool s7 = false;
+	bool s8 = false;
 
 	if(actions.empty())
 	{
