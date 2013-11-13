@@ -94,6 +94,10 @@ ImgHist colorDetection(Mat matImg)
 	calcHist(&planes[1], 1, 0, Mat(), gHist, 1, &histSize, &histRange, uniform, accumulate);
 	calcHist(&planes[2], 1, 0, Mat(), rHist, 1, &histSize, &histRange, uniform, accumulate);
 
+	bHist.at<float>(0) = 0;
+	gHist.at<float>(0) = 0;
+	rHist.at<float>(0) = 0;
+
 // Draw the histograms for B, G and R
   int hist_w = 512; int hist_h = 400;
   int bin_w = cvRound( (double) hist_w/histSize );
@@ -160,29 +164,27 @@ void identifyObject(ImgHist hist, Features feat)
 {
 	// matching color histogram
 	int bestColorMatch = 0;
-	double bMatch = 1;
-	double gMatch = 1;
-	double rMatch = 1;
+	double bestRes = 0.1;
 	for(int i=0; i < trainSize; ++i) {
-		double resB = compareHist(hist.bHist, testImg[i].colorHist.bHist, 3);
-		double resG = compareHist(hist.gHist, testImg[i].colorHist.gHist, 3);
-		double resR = compareHist(hist.rHist, testImg[i].colorHist.rHist, 3);
+		double resB = compareHist(hist.bHist, testImg[i].colorHist.bHist, CV_COMP_CORREL);
+		double resG = compareHist(hist.gHist, testImg[i].colorHist.gHist, CV_COMP_CORREL);
+		double resR = compareHist(hist.rHist, testImg[i].colorHist.rHist, CV_COMP_CORREL);
 
-		if(resB < bMatch && resG < gMatch && resR < rMatch) {
-			bMatch = resB;
-			gMatch = resG;
-			rMatch = resR;
+		double res = resB*resB + resG*resG + resR*resR;
+		std::cout << res << std::endl;
+		if(res > bestRes) {
+			bestRes = res;
 			bestColorMatch = testImg[i].obj;
 			/*std::cout << "Best match color: " << bestColorMatch << std::endl;
 			std::cout << "Histogram compare B,G,R: " << resG << ", " << resB << ", " << resR << std::endl;*/
 		}
 	}
-	if(bestColorMatch == 0) {
+	/*if(bestColorMatch == 0) {
 		std::cout << "No color match" << std::endl;
 	} else {
 			std::cout << "Best match color: " << bestColorMatch << std::endl;
-			std::cout << "Histogram compare B,G,R: " << rMatch << ", " << bMatch << ", " << rMatch << std::endl;
-	}
+			//std::cout << "Histogram compare B,G,R: " << rMatch << ", " << bMatch << ", " << rMatch << std::endl;
+	}*/
 
 	// matching descriptors
 	int bestDescriptMatch = 0;
@@ -202,10 +204,7 @@ void identifyObject(ImgHist hist, Features feat)
 
 	if(bestDescriptMatch == bestColorMatch) {
 		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
-	}
-	if(bestDescriptMatch != bestColorMatch && bestColorMatch != 0) {
-		std::cout << "Best match: " << objects[bestColorMatch-1] << std::endl;
-	} else if(bestColorMatch == 0 && bestDescriptMatch != 0) {
+	} else if(bestDescriptMatch != bestColorMatch && bestDescriptMatch != 0) {
 		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
 	} else if(bestDescriptMatch == 0) {
 		std::cout << "No match" << std::endl;
@@ -229,13 +228,8 @@ void train()
 	testImg[4] = { imread("src/trainimages/3_2.jpg"), 3, dummyHist, edgeDummy };
 	testImg[5] = { imread("src/trainimages/3_3.jpg"), 3, dummyHist, edgeDummy };
 
-
-	Mat img = imread( "src/testimage.jpg" );
 	for(int i=0; i < trainSize; ++i) {
-		resize(testImg[i].img, testImg[i].img, img.size());
-
 		testImg[i].colorHist = colorDetection(testImg[i].img);
-
 		testImg[i].feat = featureDetector(testImg[i].img);
 	}
 }
@@ -294,14 +288,14 @@ public:
 
 		// Detect objects through feature detection
 		int featSize = featureDetector(src).keypoints.size();
+
+		Mat bgMask = subtractBackground(src);
+		Mat maskedImg;
+		src.copyTo(maskedImg, bgMask);
+
 		//std::cout << "Nr keypoints: " << featSize << std::endl;
-		if(featSize > 100) {
+		if(featSize > 10) {
 			std::cout << "OBJECT!" << std::endl;
-
-			Mat bgMask = subtractBackground(src);
-
-			Mat maskedImg;
-			src.copyTo(maskedImg, bgMask);
 
 			// Color detection
 			ImgHist hist = colorDetection(maskedImg);
