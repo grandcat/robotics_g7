@@ -32,6 +32,7 @@ ros::Publisher speed_pub;
 ros::Publisher stop_EKF_pub;
 ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
+ros::Subscriber object_detection_sub;
 
 
 // Control filter parameters
@@ -63,6 +64,8 @@ Action current_action;
 void receive_EKF(const EKF::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
+
+void receive_object_detection(const AnalogC::ConstPtr &msg);
 
 double angle(double theta);
 

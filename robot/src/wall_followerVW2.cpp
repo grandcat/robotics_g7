@@ -226,6 +226,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 }
 
 
+void receive_object_detection(const AnalogC::ConstPtr &msg)
+{
+
+}
+
+
 /**
  * Angle between ]-pi,pi]
  * @param th
@@ -257,6 +263,7 @@ int main(int argc, char** argv)
 	stop_EKF_pub =nh.advertise<Stop_EKF>("/motion/Stop_EKF",100);
 	EKF_sub = nh.subscribe("/motion/EKF",1000,receive_EKF);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
+	object_detection_sub = nh.subscribe("/object_detection",1000,receive_object_detection);
 
 	ros::Rate loop_rate(100);
 
