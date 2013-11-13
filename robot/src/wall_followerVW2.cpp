@@ -10,6 +10,7 @@
 #include <differential_drive/AnalogC.h>
 #include "robot/EKF.h"
 #include "robot/Stop_EKF.h"
+#include "robot/Object.h"
 #include "headers/parameters.h"
 #include "headers/wall_followerVW2.h"
 
@@ -155,6 +156,12 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				s.rotation_angle = 0;
 				stop_EKF_pub.publish(s);
 			}
+
+			// STOP
+			if(current_action.n == ACTION_STOP)
+			{
+
+			}
 		}
 	}
 
@@ -226,9 +233,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 }
 
 
-void receive_object_detection(const AnalogC::ConstPtr &msg)
+void receive_object_detection(const Object::ConstPtr &msg)
 {
-
+	if(actions.empty())
+	{
+		Action action;
+		action.n = ACTION_STOP;
+		actions.push_back(action);
+	}
 }
 
 

@@ -20,6 +20,7 @@ enum EACTIONS {
 	ACTION_BACKWARD = 1,
 	ACTION_ROTATION,
 	ACTION_CHANGE_Y_CMD_TRAJ,
+	ACTION_STOP,
 };
 
 struct Action
@@ -65,7 +66,7 @@ void receive_EKF(const EKF::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
 
-void receive_object_detection(const AnalogC::ConstPtr &msg);
+void receive_object_detection(const Object::ConstPtr &msg);
 
 double angle(double theta);
 
