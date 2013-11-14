@@ -38,7 +38,7 @@ ros::Publisher servo_pub;
 
 
 // Control filter parameters
-const double rho = 9;
+const double rho = 13; // 9
 const double alpha = 10;
 
 // Distances
