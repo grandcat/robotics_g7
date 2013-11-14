@@ -13,6 +13,7 @@
 #include "robot/Object.h"
 #include "headers/parameters.h"
 #include "headers/wall_followerVW2.h"
+#include <differential_drive/Servomotors.h>
 
 using namespace differential_drive;
 using namespace robot;
@@ -160,7 +161,14 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// STOP
 			if(current_action.n == ACTION_STOP)
 			{
+				Servomotors servo;
+				servo.servoangle[7] = 80;
+				servo_pub.publish(servo);
 				
+				ros::Duration(5).sleep();
+
+				servo.servoangle[7] = 91;
+				servo_pub.publish(servo);
 			}
 		}
 	}
@@ -278,6 +286,7 @@ int main(int argc, char** argv)
 	EKF_sub = nh.subscribe("/motion/EKF",1000,receive_EKF);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 	object_detection_sub = nh.subscribe("/object_detection",1000,receive_object_detection);
+	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 
 	ros::Rate loop_rate(100);
 

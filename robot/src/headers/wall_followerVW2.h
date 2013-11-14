@@ -34,6 +34,7 @@ ros::Publisher stop_EKF_pub;
 ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 ros::Subscriber object_detection_sub;
+ros::Publisher servo_pub;
 
 
 // Control filter parameters
