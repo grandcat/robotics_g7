@@ -28,6 +28,7 @@ namespace enc = sensor_msgs::image_encodings;
 
 using namespace std;
 using namespace camera;
+using namespace robot;
 
 
 double uniformRandom()
@@ -100,11 +101,13 @@ double evaluate(int x, int y, IplImage* img)
 		}
 	}
 
-	if(sum > 0.7*sx*sy)
+	if(sum > 0.2*sx*sy)
 	{
 		Object object;
 		object.n = 1;
-		object_detection_sub.publish(object);
+		object_detection_pub.publish(object);
+
+		//printf("OBJECT\n");
 	}
 
 	return sum/sx/sy;
@@ -219,6 +222,8 @@ public:
 		CvScalar  bgr_max = cvScalar(50, 50, 150, 0);
 		cvInRangeS (img, bgr_min, bgr_max, filtered_img);
 
+		if(init > 50)
+		{
 		// Filter
 		particle_filter(filtered_img);
 
@@ -231,6 +236,8 @@ public:
 		// Print
 		showParticle(filtered_img);
 		showCoord(filtered_img);
+		}
+		else {init++;}
 
 		cvNamedWindow("filtered_img",1); cvShowImage("filtered_img", filtered_img);
 		cvWaitKey(10);
@@ -244,7 +251,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 	pos_pub = nh.advertise<Position>("/pos",100);
 
-	ros::Publisher object_detection_sub = nh.subscribe<Object>("/object_detection",100);
+	object_detection_pub = nh.advertise<Object>("/object_detection",100);
 
 	init_part();
 	object_coordinate();

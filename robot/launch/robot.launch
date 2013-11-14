@@ -4,7 +4,7 @@
   </include>
 
   <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
-  <node pkg="camera" name="recognition" type="recognition"/>
+  <node pkg="camera" name="recognition" type="recognition" output="screen"/>
   <node pkg="robot" name="odometry" type="odometry"/>
   <node pkg="robot" name="motorsVW" type="motorsVW"/>
   <node pkg="robot" name="EKF2" type="EKF2"/>

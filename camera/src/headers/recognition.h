@@ -10,14 +10,18 @@
 
 // Publisher
 ros::Publisher pos_pub;
+ros::Publisher object_detection_pub;
+
+//
+int init;
 
 // Size
 int height = 480;
 int width = 640;
 
 // Detector frame size
-int sx = 100;
-int sy = 100;
+int sx = 50;
+int sy = 50;
 
 // Object coordinate
 int x;
