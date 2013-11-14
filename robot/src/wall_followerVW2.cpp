@@ -161,14 +161,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// STOP
 			if(current_action.n == ACTION_STOP)
 			{
-				Servomotors servo;
-				servo.servoangle[7] = 80;
-				servo_pub.publish(servo);
-				
-				ros::Duration(5).sleep();
 
-				servo.servoangle[7] = 91;
-				servo_pub.publish(servo);
 			}
 		}
 	}
@@ -248,6 +241,10 @@ void receive_object_detection(const Object::ConstPtr &msg)
 		Action action;
 		action.n = ACTION_STOP;
 		actions.push_back(action);
+
+		Servomotors servo;
+		servo.servoangle[7] = 60;
+		servo_pub.publish(servo);
 
 		printf("Tomato detected !\n");
 	}

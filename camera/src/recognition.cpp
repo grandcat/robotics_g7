@@ -219,7 +219,7 @@ public:
 		CvSize sz = cvGetSize(img);
 		filtered_img = cvCreateImage( sz, 8, 1);
 		CvScalar  bgr_min = cvScalar(0, 0, 50, 0);
-		CvScalar  bgr_max = cvScalar(50, 50, 150, 0);
+		CvScalar  bgr_max = cvScalar(50, 50, 255, 0);
 		cvInRangeS (img, bgr_min, bgr_max, filtered_img);
 
 		if(init > 50)
