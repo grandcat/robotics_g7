@@ -160,7 +160,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// STOP
 			if(current_action.n == ACTION_STOP)
 			{
-				
+				printf("Tomato detected !\n");
 			}
 		}
 	}
@@ -240,8 +240,6 @@ void receive_object_detection(const Object::ConstPtr &msg)
 		Action action;
 		action.n = ACTION_STOP;
 		actions.push_back(action);
-
-		printf("Tomato detected !\n");
 	}
 }
 
