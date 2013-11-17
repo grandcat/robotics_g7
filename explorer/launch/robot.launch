@@ -1,0 +1,13 @@
+<launch>
+
+  <include file="$(find openni_launch)/launch/openni.launch">
+  </include>
+
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
+  <node pkg="robot" name="odometry" type="odometry"/>
+  <node pkg="robot" name="motors" type="motors"/>
+  <node pkg="robot" name="EKF" type="EKF"/>
+  <node pkg="robot" name="wall_follower" type="wall_follower" output="screen"/>
+  <node pkg="robot" name="phidgets" type="phidgets" output="screen"/>
+
+</launch>

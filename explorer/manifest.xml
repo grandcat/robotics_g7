@@ -1,0 +1,20 @@
+<package>
+  <description brief="explorer">
+
+     explorer
+
+  </description>
+  <author>robo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/explorer</url>
+  <depend package="roscpp"/>
+  <depend package="differential_drive"/>
+  <depend package="visualization_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="tf"/>
+  <depend package="sensor_msgs"/>
+
+</package>
+
+
