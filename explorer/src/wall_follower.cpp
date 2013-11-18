@@ -212,7 +212,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// Catch wall
 			if(current_action.n == ACTION_CATCH_WALL)
 			{
-				double x_cmd = x + 0.15;
+				double x_cmd = x + x_catch_wall;
 				double y_cmd = y;
 
 				dist = x_pb + 0.15 - x;
