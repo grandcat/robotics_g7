@@ -7,7 +7,7 @@
   <node pkg="explorer" name="odometry" type="odometry"/>
   <node pkg="explorer" name="motors" type="motors"/>
   <node pkg="explorer" name="EKF" type="EKF"/>
-  <node pkg="explorer" name="wall_follower" type="wall_follower" output="screen"/>
+  <node pkg="explorer" name="controller" type="controller" output="screen"/>
   <node pkg="explorer" name="phidgets" type="phidgets" output="screen"/>
 
 </launch>

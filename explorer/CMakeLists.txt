@@ -30,7 +30,7 @@ rosbuild_genmsg()
 
 rosbuild_add_executable(odometry src/odometry.cpp)
 rosbuild_add_executable(motors src/motors.cpp)
-rosbuild_add_executable(wall_follower src/wall_follower.cpp)
+rosbuild_add_executable(controller src/controller.cpp)
 rosbuild_add_executable(EKF src/EKF.cpp)
 rosbuild_add_executable(phidgets src/phidgets.cpp)
 
