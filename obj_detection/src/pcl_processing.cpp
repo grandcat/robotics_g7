@@ -25,7 +25,7 @@
 #include <string.h>
 #include <sstream>
 
-#define VOXEL_LEAF_SIZE 0.001
+#define VOXEL_LEAF_SIZE 0.005
 
 using namespace std;
 
@@ -69,7 +69,7 @@ void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
 //  pclOutlierFilter.filter(*cloudNoiseFree);
 
   // Determine plane surfaces (only vertical walls)
-  Eigen::Vector3f axisSidePlanes = Eigen::Vector3f(1.0, 0.0, 0.0);
+  Eigen::Vector3f axisSidePlanes = Eigen::Vector3f(0.0, 0.0, 1.0);
 
   pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inlierIndices(new pcl::PointIndices);
@@ -80,14 +80,14 @@ void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
   pclSegmentation.setMethodType(pcl::SAC_RANSAC);
   pclSegmentation.setAxis(axisSidePlanes);
   pclSegmentation.setEpsAngle(15.0f * (M_PI/180.0f));
-  pclSegmentation.setDistanceThreshold(0.01); //< how close point must be to object to be inlier
+  pclSegmentation.setDistanceThreshold(0.02); //< how close point must be to object to be inlier
   pclSegmentation.setMaxIterations(1000);
   pclSegmentation.segment(*inlierIndices, *coefficients);
   // Remove points of possible walls
   pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
   pclObstacle.setInputCloud(pclFiltered);
   pclObstacle.setIndices(inlierIndices);
-  pclObstacle.setNegative(false);    // inverse: remove walls
+  pclObstacle.setNegative(true);    // inverse: remove walls
   pclObstacle.filter(*pclProcessed);
 
   // Generate debugging output for rViz
