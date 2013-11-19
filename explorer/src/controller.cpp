@@ -96,12 +96,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Rotation done
 				if(dtheta*dtheta < M_PI*M_PI/180/180*theta_error*theta_error)
 				{
-					if(!back)
-					{
-						create_node(x_true,y_true);
-					}
+					create_node(x_true,y_true);
 
-					if((s1 > 0.2) & !back)
+					if(s1 > 0.2)
 					{
 						x_pb = x;
 
@@ -180,7 +177,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Done
 				if(dist*dist < x_error*x_error)
 				{
-					if((s1 > 0.2) & !back)
+					if(s1 > 0.2)
 					{
 						Action action;
 						action.n = ACTION_ROTATION;
@@ -244,61 +241,51 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				}
 				diff_ang = angle(diff_ang);
 
-				// Saturation
-				if(dist > x_cmd_traj)
+
+				static bool init;
+				if(!init)
 				{
-					dist = x_cmd_traj;
+					init = true;
+					rotation = diff_ang;
 				}
 
-				// Rotation
 
-
-
-
-
-				speed.V = rho*dist*r;
-				speed.W = -2*r/l*alpha*diff_ang;
-
-				// Done
-				if(dist*dist < x_error*x_error)
+				// Rotate first if needed
+				if(fabs(diff_ang) > M_PI/180*10)
 				{
-					actions.pop_front();
-					busy = false;
+					// Rotation saturation
+					if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
+					if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
 
-					// Relaunch EKF
-					Stop_EKF s;
-					s.stop = false;
-					s.rotation_angle = 0;
-					stop_EKF_pub.publish(s);
+					speed.V = 0;
+					speed.W = 2*r/l*alpha*diff_ang/4;
 				}
-			}
-
-
-			// Rotation with true odometry
-			if(current_action.n == ACTION_ROTATION_TRUE)
-			{
-				theta_cmd = current_action.parameter2;
-				double dtheta = theta_true - theta_cmd;
-				dtheta = angle(dtheta);
-
-				// Rotation saturation
-				if(dtheta > M_PI/2) {dtheta = M_PI/2;}
-				if(dtheta < -M_PI/2) {dtheta = -M_PI/2;}
-
-				speed.V = 0;
-				speed.W = 2*r/l*alpha*dtheta/4;
-
-				// Rotation done
-				if(dtheta*dtheta < M_PI*M_PI/180/180*theta_error*theta_error)
+				else
 				{
-					actions.pop_front();
-					busy = false;
+					// Saturation
+					if(dist > x_cmd_traj)
+					{
+						dist = x_cmd_traj;
+					}
 
-					// Relaunch EKF
-					Stop_EKF s;
-					s.stop = false;
-					s.rotation_angle = current_action.parameter1;
-					stop_EKF_pub.publish(s);
+
+					speed.V = rho*dist*r;
+					speed.W = -2*r/l*alpha*diff_ang;
+
+					// Done
+					if(dist*dist < x_error*x_error)
+					{
+						actions.pop_front();
+						busy = false;
+
+						// Relaunch EKF
+						Stop_EKF s;
+						s.stop = false;
+						s.rotation_angle = 0;
+						stop_EKF_pub.publish(s);
+
+						init = false;
+					}
 				}
 			}
 		}
@@ -318,7 +305,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 {
 	// IR sensor
 	s1 = a_short*pow(msg->ch1,b_short); // left
-	double s2 = a_short*pow(msg->ch2,b_short); // right
+	s2 = a_short*pow(msg->ch2,b_short); // right
 	double s3 = a_short*pow(msg->ch3,b_short); // center
 
 	// Bumpers
@@ -410,7 +397,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 void path_finding()
 {
 	// Go back to the base;
-	back = true;
 	std::list<Node> back_map = discrete_map;
 	back_map.pop_back();
 

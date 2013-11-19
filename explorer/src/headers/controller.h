@@ -66,6 +66,7 @@ const double x_catch_wall = 0.17;
 double x;
 double x_pb;
 double theta_cmd;
+double rotation;
 
 // Odometry
 double x_true,y_true,theta_true;
@@ -84,12 +85,10 @@ const int obstacle = 3;
 int cmpt;
 
 // IR sensor value
-double s1;
+double s1,s2;
 
-
-// MAP
+// Map
 std::list<Node> discrete_map;
-bool back = false;
 
 
 void receive_EKF(const EKF::ConstPtr &msg);
