@@ -49,7 +49,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		double x_cmd = x + x_cmd_traj;
 		double y_cmd;
 		if(!msg->wall) {y_cmd = y;}
-		else {y_cmd = y_wall + y_cmd_traj - y_cmd_change;}
+		else {y_cmd = y_wall - y_cmd_traj + y_cmd_change;}
 
 		dist = x_cmd_traj;
 		diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
@@ -82,7 +82,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// Rotation
 			if(current_action.n == ACTION_ROTATION)
 			{
-				theta_cmd = current_action.parameter;
+				theta_cmd = current_action.parameter1;
 				double dtheta = theta - theta_cmd;
 				dtheta = angle(dtheta);
 
@@ -98,7 +98,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				{
 					if(!back)
 					{
-						create_node(current_action.parameter);
+						create_node(x_true,y_true);
 					}
 
 					if((s1 > 0.2) & !back)
@@ -107,7 +107,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 						Action action;
 						action.n = ACTION_FORWARD;
-						action.parameter = x_forward_dist;
+						action.parameter1 = x_forward_dist;
 						actions.push_back(action);
 					}
 
@@ -117,7 +117,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					// Relaunch EKF
 					Stop_EKF s;
 					s.stop = false;
-					s.rotation_angle = current_action.parameter;
+					s.rotation_angle = current_action.parameter1;
 					stop_EKF_pub.publish(s);
 				}
 
@@ -164,7 +164,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				double x_cmd = x + x_cmd_traj;
 				double y_cmd = y;
 
-				dist = x_pb-x+current_action.parameter;
+				dist = x_pb-x+current_action.parameter1;
 				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
 				diff_ang = angle(diff_ang);
 
@@ -184,7 +184,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					{
 						Action action;
 						action.n = ACTION_ROTATION;
-						action.parameter = M_PI/2;
+						action.parameter1 = M_PI/2;
 						actions.push_back(action);
 					}
 
@@ -203,7 +203,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// Change y_cmd_traj
 			if(current_action.n == ACTION_CHANGE_Y_CMD_TRAJ)
 			{
-				y_cmd_change = current_action.parameter;
+				y_cmd_change = current_action.parameter1;
 
 				actions.pop_front();
 				busy = false;
@@ -220,6 +220,86 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			if(current_action.n == ACTION_STOP)
 			{
 
+			}
+
+
+			// GOTO with true odometry
+			if(current_action.n == ACTION_GOTO)
+			{
+				double x_cmd = current_action.parameter1;
+				double y_cmd = current_action.parameter2;
+
+				dist = x_cmd;
+				diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
+				if((x_cmd-x_true) < 0)
+				{
+					if((y_cmd-y_true) > 0)
+					{
+						diff_ang += M_PI;
+					}
+					else
+					{
+						diff_ang -= M_PI;
+					}
+				}
+				diff_ang = angle(diff_ang);
+
+				// Saturation
+				if(dist > x_cmd_traj)
+				{
+					dist = x_cmd_traj;
+				}
+
+				// Rotation
+
+
+
+
+
+				speed.V = rho*dist*r;
+				speed.W = -2*r/l*alpha*diff_ang;
+
+				// Done
+				if(dist*dist < x_error*x_error)
+				{
+					actions.pop_front();
+					busy = false;
+
+					// Relaunch EKF
+					Stop_EKF s;
+					s.stop = false;
+					s.rotation_angle = 0;
+					stop_EKF_pub.publish(s);
+				}
+			}
+
+
+			// Rotation with true odometry
+			if(current_action.n == ACTION_ROTATION_TRUE)
+			{
+				theta_cmd = current_action.parameter2;
+				double dtheta = theta_true - theta_cmd;
+				dtheta = angle(dtheta);
+
+				// Rotation saturation
+				if(dtheta > M_PI/2) {dtheta = M_PI/2;}
+				if(dtheta < -M_PI/2) {dtheta = -M_PI/2;}
+
+				speed.V = 0;
+				speed.W = 2*r/l*alpha*dtheta/4;
+
+				// Rotation done
+				if(dtheta*dtheta < M_PI*M_PI/180/180*theta_error*theta_error)
+				{
+					actions.pop_front();
+					busy = false;
+
+					// Relaunch EKF
+					Stop_EKF s;
+					s.stop = false;
+					s.rotation_angle = current_action.parameter1;
+					stop_EKF_pub.publish(s);
+				}
 			}
 		}
 	}
@@ -251,41 +331,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 	if(actions.empty())
 	{
-		// Go back to the base;
 		if(discrete_map.size() > 3)
 		{
-			back = true;
-			std::list<Node> back_map = discrete_map;
-			Action action;
-
-			// Turn to go back
-			action.n = ACTION_ROTATION;
-			action.parameter = back_map.back().rotation;
-			actions.push_back(action);
-
-			action.n = ACTION_FORWARD;
-			action.parameter = back_map.back().x;
-			actions.push_back(action);
-
-			back_map.pop_back();
-
-
-			while(!back_map.empty())
-			{
-				action.n = ACTION_ROTATION;
-				action.parameter = -back_map.back().rotation;
-
-				action.n = ACTION_FORWARD;
-				action.parameter = back_map.back().x;
-				actions.push_back(action);
-
-				back_map.pop_back();
-			}
-
-
-			action.n = ACTION_STOP;
-			actions.push_back(action);
-
+			path_finding();
 			return;
 		}
 
@@ -296,9 +344,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			x_pb = x;
 
 			Action action;
-			action.n = ACTION_BACKWARD; action.parameter = x_backward_dist;
+			action.n = ACTION_BACKWARD; action.parameter1 = x_backward_dist;
 			actions.push_back(action);
-			action.n = ACTION_CHANGE_Y_CMD_TRAJ; action.parameter = 0.04;
+			action.n = ACTION_CHANGE_Y_CMD_TRAJ; action.parameter1 = 0.04;
 			actions.push_back(action);
 
 			return;
@@ -309,9 +357,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			x_pb = x;
 
 			Action action;
-			action.n = ACTION_BACKWARD; action.parameter = x_backward_dist;
+			action.n = ACTION_BACKWARD; action.parameter1 = x_backward_dist;
 			actions.push_back(action);
-			action.n = ACTION_ROTATION; action.parameter = -M_PI;
+			action.n = ACTION_ROTATION; action.parameter1 = -M_PI;
 			actions.push_back(action);
 
 			return;
@@ -323,10 +371,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		{
 			if(cmpt >= obstacle)
 			{
+				cmpt = 0;
+
 				Action action;
 				action.n = ACTION_ROTATION;
-				action.parameter = -M_PI/2;
+				action.parameter1 = -M_PI/2;
 				actions.push_back(action);
+
+				//printf("Front wall\n");
 
 				return;
 			}
@@ -346,10 +398,43 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			Action action;
 			action.n = ACTION_FORWARD;
-			action.parameter = x_catch_wall;
+			action.parameter1 = x_catch_wall;
 			actions.push_back(action);
+
+			//printf("No left wall\n");
 		}
 	}
+}
+
+
+void path_finding()
+{
+	// Go back to the base;
+	back = true;
+	std::list<Node> back_map = discrete_map;
+	back_map.pop_back();
+
+
+	while(!back_map.empty())
+	{
+		goto_node(back_map.back());
+		back_map.pop_back();
+	}
+
+	Action action;
+	action.n = ACTION_STOP;
+	actions.push_back(action);
+}
+
+
+void goto_node(Node node)
+{
+	Action action;
+
+	action.n = ACTION_GOTO;
+	action.parameter1 = node.x;
+	action.parameter2 = node.y;
+	actions.push_back(action);
 }
 
 
@@ -357,23 +442,22 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 {
 	x_true = msg->x;
 	y_true = msg->y;
+	theta_true = msg->theta;
 }
 
 
-void create_node(double rotation)
+void create_node(double x, double y)
 {
 	Node n;
 
 	// Position
 	n.x = x;
-
-	// Rotation
-	n.rotation = rotation;
+	n.y = y;
 
 	discrete_map.push_back(n);
 
 	// Debug
-	printf("New node:  x = %f, rotation = %f\n",x,rotation);
+	printf("New node:  x = %f, y = %f\n",x,y);
 }
 
 

@@ -28,7 +28,8 @@ enum EACTIONS {
 struct Action
 {
 	enum EACTIONS n;
-	double parameter;
+	double parameter1;
+	double parameter2;
 };
 
 
@@ -36,7 +37,6 @@ struct Action
 struct Node
 {
 	double x,y;
-	double rotation;
 };
 
 
@@ -59,8 +59,8 @@ const double y_cmd_traj = 0.20;
 double y_cmd_change = 0.0;
 const double x_backward_dist = 0.05;
 const double x_forward_dist = 0.2;
-const double dist_front_wall = 0.22;
-const double x_catch_wall = 0.15;
+const double dist_front_wall = 0.24;
+const double x_catch_wall = 0.17;
 
 // Temporary variable
 double x;
@@ -68,11 +68,11 @@ double x_pb;
 double theta_cmd;
 
 // Odometry
-double x_true,y_true;
+double x_true,y_true,theta_true;
 
 // Errors
 const double x_error = 0.01;
-const double theta_error = 5;
+const double theta_error = 2;
 
 // Actions sequence
 bool busy = false;
@@ -80,7 +80,7 @@ std::list<Action> actions;
 Action current_action;
 
 // IR sensor mean
-const int obstacle = 5;
+const int obstacle = 3;
 int cmpt;
 
 // IR sensor value
@@ -98,7 +98,11 @@ void receive_sensors(const AnalogC::ConstPtr &msg);
 
 void receive_odometry(const Odometry::ConstPtr &msg);
 
-void create_node(double rotation);
+void create_node(double x, double y);
+
+void path_finding();
+
+void goto_node(Node node);
 
 double angle(double theta);
 
