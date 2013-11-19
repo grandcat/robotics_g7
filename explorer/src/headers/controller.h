@@ -43,10 +43,12 @@ struct Node
 // ros topics
 ros::Publisher speed_pub;
 ros::Publisher stop_EKF_pub;
+ros::Publisher servo_pub;
 ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 ros::Subscriber odometry_sub;
-ros::Publisher servo_pub;
+ros::Subscriber object_sub;
+
 
 
 // Control filter parameters
@@ -96,6 +98,8 @@ void receive_EKF(const EKF::ConstPtr &msg);
 void receive_sensors(const AnalogC::ConstPtr &msg);
 
 void receive_odometry(const Odometry::ConstPtr &msg);
+
+void receive_object(const Object::ConstPtr &msg);
 
 void create_node(double x, double y);
 

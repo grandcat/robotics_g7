@@ -10,6 +10,7 @@
 #include <differential_drive/AnalogC.h>
 #include <differential_drive/Odometry.h>
 #include "explorer/EKF.h"
+#include "explorer/Object.h"
 #include "explorer/Stop_EKF.h"
 #include "headers/parameters.h"
 #include "headers/controller.h"
@@ -447,6 +448,14 @@ void create_node(double x, double y)
 }
 
 
+void receive_object(const Object::ConstPtr &msg)
+{
+	double x_object = x_true + cos(theta_true);
+	double y_object = y_true + sin(theta_true);
+	printf("x_object = %f, y_object = %f\n",x_object,y_object);
+}
+
+
 /**
  * Angle between ]-pi,pi]
  * @param th
@@ -480,6 +489,7 @@ int main(int argc, char** argv)
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
+	object_sub = nh.subscribe("/motion/Object",1000,receive_object);
 
 	ros::Rate loop_rate(100);
 
