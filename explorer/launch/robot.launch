@@ -1,7 +1,7 @@
 <launch>
 
-  <!-- <include file="$(find openni_launch)/launch/openni.launch">
-  </include> -->
+  <include file="$(find openni_launch)/launch/openni.launch">
+  </include>
 
   <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
   <node pkg="explorer" name="odometry" type="odometry"/>
