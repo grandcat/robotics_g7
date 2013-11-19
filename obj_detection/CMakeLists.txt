@@ -23,6 +23,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(PCL 1.5 REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
+
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -30,4 +33,4 @@ include_directories(${PCL_INCLUDE_DIRS})
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 rosbuild_add_executable(test_depth src/test.cpp)
 rosbuild_add_executable(pcl_processing src/pcl_processing.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+target_link_libraries(pcl_processing ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})

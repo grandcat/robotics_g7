@@ -20,6 +20,7 @@ enum EACTIONS {
 	ACTION_BACKWARD = 1,
 	ACTION_ROTATION,
 	ACTION_CHANGE_Y_CMD_TRAJ,
+	ACTION_STOP,
 };
 
 struct Action
@@ -32,10 +33,12 @@ ros::Publisher speed_pub;
 ros::Publisher stop_EKF_pub;
 ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
+ros::Subscriber object_detection_sub;
+ros::Publisher servo_pub;
 
 
 // Control filter parameters
-const double rho = 9;
+const double rho = 13; // 9
 const double alpha = 10;
 
 // Distances
@@ -63,6 +66,8 @@ Action current_action;
 void receive_EKF(const EKF::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
+
+void receive_object_detection(const Object::ConstPtr &msg);
 
 double angle(double theta);
 

@@ -10,8 +10,10 @@
 #include <differential_drive/AnalogC.h>
 #include "robot/EKF.h"
 #include "robot/Stop_EKF.h"
+#include "robot/Object.h"
 #include "headers/parameters.h"
 #include "headers/wall_followerVW2.h"
+#include <differential_drive/Servomotors.h>
 
 using namespace differential_drive;
 using namespace robot;
@@ -155,6 +157,12 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				s.rotation_angle = 0;
 				stop_EKF_pub.publish(s);
 			}
+
+			// STOP
+			if(current_action.n == ACTION_STOP)
+			{
+
+			}
 		}
 	}
 
@@ -176,9 +184,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s3 = a_short*pow(msg->ch3,b_short); // center
 
 	// Bumpers
-	bool s6 = (msg->ch6 > bumper_threshold); // center
-	bool s7 = (msg->ch7 > bumper_threshold); // right
-	bool s8 = (msg->ch8 > bumper_threshold); // left
+	//bool s6 = (msg->ch6 > bumper_threshold); // center
+	//bool s7 = (msg->ch7 > bumper_threshold); // right
+	//bool s8 = (msg->ch8 > bumper_threshold); // left
+	bool s6 = false;
+	bool s7 = false;
+	bool s8 = false;
 
 	if(actions.empty())
 	{
@@ -223,6 +234,23 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 }
 
 
+void receive_object_detection(const Object::ConstPtr &msg)
+{
+	if(actions.empty())
+	{
+		Action action;
+		action.n = ACTION_STOP;
+		actions.push_back(action);
+
+		Servomotors servo;
+		servo.servoangle[7] = 60;
+		servo_pub.publish(servo);
+
+		printf("Tomato detected !\n");
+	}
+}
+
+
 /**
  * Angle between ]-pi,pi]
  * @param th
@@ -254,6 +282,8 @@ int main(int argc, char** argv)
 	stop_EKF_pub =nh.advertise<Stop_EKF>("/motion/Stop_EKF",100);
 	EKF_sub = nh.subscribe("/motion/EKF",1000,receive_EKF);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
+	object_detection_sub = nh.subscribe("/object_detection",1000,receive_object_detection);
+	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 
 	ros::Rate loop_rate(100);
 

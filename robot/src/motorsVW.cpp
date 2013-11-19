@@ -29,13 +29,13 @@ const int n = 3;
 double T;
 
 
-const double k_V = 1;
-const double kI_V = 30;
-const double kD_V = 0.0005;
+const double k_V = 1; // 1
+const double kI_V = 30; // 30
+const double kD_V = 0.0005; // 0.0005
 
-const double k_W = 5;
-const double kI_W = 50;
-const double kD_W = 0.0005;
+const double k_W = 5; // 5
+const double kI_W = 50; // 50
+const double kD_W = 0.0005; // 0.0005
 
 
 const double int_max = 130;

@@ -14,6 +14,7 @@
 #include <ros/ros.h>
 #include <string.h>
 #include <sstream>
+#include <algorithm>    // std::min
 
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -59,7 +60,7 @@ void computeDepthLine(cv::Mat &img_depth, int height) {
 		sumDepth += depthPos;
 		if (depthPos != 0)
 			++count;
-		ROS_INFO("Pos %i --> Val: %i (c: %i)", curPos, depthPos, count);
+		//ROS_INFO("Pos %i --> Val: %i (c: %i)", curPos, depthPos, count);
 	}
 	// Create line with relative deviation
 	if (count == 0)
@@ -71,13 +72,13 @@ void computeDepthLine(cv::Mat &img_depth, int height) {
 		int relVal = averageDepthAtPos(img_depth, height, curPos) - avgDepth + img_depth.rows / 2;
 		cv::circle(img, cv::Point(curPos, relVal), 1, cv::Scalar(0, 255, 0), 2, 8, 0);
 	}
-
+	
 	cv::imshow("Depth line", img);
 }
 
 void drawDepthLine() {
 	cv::Mat img = cv::Mat::zeros(480, 640, CV_8UC3);
-//	cv::line(img, cv::Point(20, 40), cv::Point(80, 20), cv::Scalar(0, 255, 0), 2, 8);
+	//cv::line(img, cv::Point(20, 40), cv::Point(80, 20), cv::Scalar(0, 255, 0), 2, 8);
 
 	cv::imshow("Depth line", img);
 }
@@ -95,10 +96,18 @@ public:
 	IplImage* hsv_image;
 	IplImage* hsv_mask;
 
+	static const int SIZE_OF_IMAGE_ARRAY = 5;
+	cv::Mat im_array[SIZE_OF_IMAGE_ARRAY];	//circular array to store 5 images
+	int array_ptr;			//circular array pointer
+	int nr_of_stored_images; //to check if the image array is "full"
+
 	ImageConverter()
 	: it_(nh_)
 	{
 		ROS_INFO("Starting imageConverter.");
+		array_ptr = 0;
+		nr_of_stored_images = 0;
+
 //		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
 		image_sub_depth_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCb_depth, this);
 		ROS_INFO("Subscribed to depth image.");
@@ -108,6 +117,62 @@ public:
 	{
 //		cvReleaseImage(&img);
 //		cvReleaseImage(&img_depth);
+	}
+
+	cv::Mat remove_noise(const cv::Mat& src, int iter = 0, int kernel_size = 9)
+	{
+		//only start to remove the noise if we have enough previous images saved
+		if (nr_of_stored_images < SIZE_OF_IMAGE_ARRAY)
+		{
+			im_array[array_ptr] = src;
+			array_ptr++;
+			nr_of_stored_images++;
+			if (array_ptr > SIZE_OF_IMAGE_ARRAY-1)
+				array_ptr = 0;
+			//std::cout<<"ptr: "<<array_ptr<<"stored_images: "<<nr_of_stored_images<<std::endl;
+			return src; //simply return the current image and don't remove the noise
+		}
+
+		//we have enough images stored to remove the background noise by comparing previous images background
+		cv::Mat noise_free_im = src.clone();
+		for (int im_i = 0; im_i < SIZE_OF_IMAGE_ARRAY; im_i++ )
+		{
+			for (int i = 0; i< src.rows; i++)
+			{
+				for (int j=0; j < src.cols; j++)
+				{
+					/*
+					std::cout<<"min( "<<noise_free_im.at<float>(i,j)<<", "<<im_array[im_i].at<float>(i,j)<<"): ";
+					if ( isnan(noise_free_im.at<float>(i,j)) || isnan(im_array[im_i].at<float>(i,j)) )
+						std::cout<< 0.0/0.0 <<std::endl;
+					else
+						std::cout<< min( noise_free_im.at<float>(i,j), im_array[im_i].at<float>(i,j)  ) <<std::endl;
+					*/
+					if ( isnan(noise_free_im.at<float>(i,j)) || isnan(im_array[im_i].at<float>(i,j)) )
+						noise_free_im.at<float>(i,j) = 0;
+					else
+						noise_free_im.at<float>(i,j) = min( noise_free_im.at<float>(i,j), im_array[im_i].at<float>(i,j)  );
+				}
+			}
+		}
+
+		//save current image for future noise elimination
+		im_array[array_ptr] = src;
+		array_ptr++;
+		if (array_ptr > SIZE_OF_IMAGE_ARRAY-1)
+			array_ptr = 0;
+
+		//remove extra noise by using the closing operation ( dilation(erosion(image) )
+		//and then do some extra dilation to increase the size of everything
+		if (iter != 0)
+		{
+			cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernel_size, kernel_size), cv::Point(-1,-1) ); //create the convolution matrix
+			cv::morphologyEx(noise_free_im, noise_free_im, CV_MOP_OPEN, element); //OPEN(src) := dilate( erode(src) )
+			cv::dilate(noise_free_im, noise_free_im, element, cv::Point(-1, -1), iter, 1, 1);
+		}
+
+		return noise_free_im;
+
 	}
 
 	void imageCb_depth(const sensor_msgs::ImageConstPtr& msg)
@@ -123,18 +188,27 @@ public:
 			return;
 		}
 
+
 //		img_depth = new IplImage(cv_ptr->image);
 		// Get closest pixels
 		// DEBUG
-		ROS_INFO("Get depth: %i", cv_ptr->image.depth());
-		int depthPos = averageDepthAtPos(cv_ptr->image, cv_ptr->image.rows / 2, cv_ptr->image.cols / 2);
-		ROS_INFO("Depth in middle: %i", depthPos);
+		//ROS_INFO("Get depth: %i", cv_ptr->image.depth());
+		//int depthPos = averageDepthAtPos(cv_ptr->image, cv_ptr->image.rows / 2, cv_ptr->image.cols / 2);
+		//ROS_INFO("Depth in middle: %i", depthPos);
 //		ROS_INFO("Resolution: %i", img_depth->depth);
-		computeDepthLine(cv_ptr->image, cv_ptr->image.rows - 100);
+
+		cv::Mat noise_free_image = remove_noise(cv_ptr->image);
+		cv::Mat better_noise_free_image = remove_noise(cv_ptr->image,1);
+
+		//computeDepthLine(noise_free_image, cv_ptr->image.rows - 100);
 
 		cv::imshow("depth image", cv_ptr->image);
+		cv::imshow("depth image removed noise", noise_free_image);
+		cv::imshow("depth image removed noise EVEN BETTER?!", better_noise_free_image);
+
 		cvWaitKey(10);
 	}
+
 
 	void imageCb(const sensor_msgs::ImageConstPtr& msg)
 	{

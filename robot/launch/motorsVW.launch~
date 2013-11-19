@@ -1,0 +1,7 @@
+<launch>
+
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
+  <node pkg="robot" name="motorsVW" type="motorsVW"/>
+  <node pkg="robot" name="keyboardVW" type="keyboardVW" output="screen"/>
+
+</launch>
