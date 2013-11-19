@@ -15,9 +15,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 // Point cloud: downsampling & cleaning noise
-//#include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
-//#include <pcl/filters/statistical_outlier_removal.h>
+#include <Eigen/Dense>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
 
@@ -26,7 +25,7 @@
 #include <string.h>
 #include <sstream>
 
-#define VOXEL_LEAF_SIZE 0.005
+#define VOXEL_LEAF_SIZE 0.001
 
 using namespace std;
 
@@ -39,10 +38,6 @@ ros::Publisher pub_pcl_filtered;
  */
 void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
 {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*plc_raw, *pclCloud);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
-
   // Reduce visible points to close view
 //  pcl::PassThrough<pcl::PointXYZ> pass;
 //  pass.setInputCloud(pclCloud);
@@ -50,14 +45,21 @@ void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
 //  pass.setFilterLimits(0.0, 1.0);
 //  pass.filter(*cloud_filtered);
 
-  // Reduce view to the front (Z axes) to 100cm and downsample amount of points
-//  sensor_msgs::PointCloud2 cloudVoxel;
-  pcl::VoxelGrid<pcl::PointXYZ> pclVoxelFilter;
-  pclVoxelFilter.setInputCloud(pclCloud);
+  // Reduce view 100cm to the front (Z axes) and downsample amount of points
+  sensor_msgs::PointCloud2 cloudVoxel;
+  pcl::VoxelGrid<sensor_msgs::PointCloud2> pclVoxelFilter;
+  pclVoxelFilter.setInputCloud(plc_raw);
   pclVoxelFilter.setFilterFieldName("z");
   pclVoxelFilter.setFilterLimits(0.0, 1.0);  //< only take XYZ points maximum 1m away from camera on z axis
   pclVoxelFilter.setLeafSize(VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE);
-//  pclVoxelFilter.filter(*cloud_filtered);
+  pclVoxelFilter.filter(cloudVoxel);
+
+  // Convert to PCL data representation for more advanced treatment of Pointclouds
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pclFiltered(new pcl::PointCloud<pcl::PointXYZ>),
+      pclProcessed(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(cloudVoxel, *pclFiltered);
+
+  ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
 
 //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoiseFree(new pcl::PointCloud<pcl::PointXYZ>);
 //  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
@@ -66,26 +68,31 @@ void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
 //  pclOutlierFilter.setStddevMulThresh(1.0);
 //  pclOutlierFilter.filter(*cloudNoiseFree);
 
-  // Determine plane surfaces (like walls)
-  // TODO: increase performance by Voxel representation with z axes limiation (integrate part above)
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-  pcl::PointIndices::Ptr inlierIndices (new pcl::PointIndices);
+  // Determine plane surfaces (only vertical walls)
+  Eigen::Vector3f axisSidePlanes = Eigen::Vector3f(1.0, 0.0, 0.0);
+
+  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr inlierIndices(new pcl::PointIndices);
   pcl::SACSegmentation<pcl::PointXYZ> pclSegmentation;
-  pclSegmentation.setInputCloud(pclCloud);
-  pclSegmentation.setModelType(pcl::SACMODEL_PLANE);
+  pclSegmentation.setInputCloud(pclFiltered);
+  pclSegmentation.setOptimizeCoefficients(true);
+  pclSegmentation.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
   pclSegmentation.setMethodType(pcl::SAC_RANSAC);
+  pclSegmentation.setAxis(axisSidePlanes);
+  pclSegmentation.setEpsAngle(15.0f * (M_PI/180.0f));
   pclSegmentation.setDistanceThreshold(0.01); //< how close point must be to object to be inlier
   pclSegmentation.setMaxIterations(1000);
-  pclSegmentation.segment (*inlierIndices, *coefficients);
+  pclSegmentation.segment(*inlierIndices, *coefficients);
   // Remove points of possible walls
   pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
-  pclObstacle.setInputCloud(pclCloud);
+  pclObstacle.setInputCloud(pclFiltered);
   pclObstacle.setIndices(inlierIndices);
-  pclObstacle.setNegative(true);    // inverse: remove walls
-  pclObstacle.filter(*cloud_filtered);
+  pclObstacle.setNegative(false);    // inverse: remove walls
+  pclObstacle.filter(*pclProcessed);
 
+  // Generate debugging output for rViz
   sensor_msgs::PointCloud2 output;
-  pcl::toROSMsg(*cloud_filtered, output);
+  pcl::toROSMsg(*pclProcessed, output);
   pub_pcl_filtered.publish(output);
 }
 
