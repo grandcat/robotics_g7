@@ -6,6 +6,7 @@
  */
 
 #include "headers/pcl_processing.hpp"
+#include "headers/pcl_detection.hpp"
 
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
@@ -24,6 +25,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <sstream>
+
+/*
+ *  New overall TODO for recognition (PCL):
+ *  - Create new class of point processing
+ *  - Take several frames (like 3), remove walls, extract all objects using Euclidean approach
+ *  - Remove noise by comparing middle point of objects and search for close objects to these points
+ *  --> if not exist: probably noise
+ *  - Trying matching: http://www.pointclouds.org/documentation/tutorials/template_alignment.php
+ *
+ *  - also cut sample pcd files (remove all background) !
+ */
 
 #define VOXEL_LEAF_SIZE 0.005
 
@@ -69,7 +81,7 @@ void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
 //  pclOutlierFilter.filter(*cloudNoiseFree);
 
   // Determine plane surfaces (only vertical walls)
-  Eigen::Vector3f axisSidePlanes = Eigen::Vector3f(0.0, 0.0, 1.0);
+  Eigen::Vector3f axisBackPlane = Eigen::Vector3f(0.0, 0.0, 1.0);
 
   pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inlierIndices(new pcl::PointIndices);
@@ -78,11 +90,11 @@ void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
   pclSegmentation.setOptimizeCoefficients(true);
   pclSegmentation.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
   pclSegmentation.setMethodType(pcl::SAC_RANSAC);
-  pclSegmentation.setAxis(axisSidePlanes);
+  pclSegmentation.setAxis(axisBackPlane);     // only check for
   pclSegmentation.setEpsAngle(15.0f * (M_PI/180.0f));
-  pclSegmentation.setDistanceThreshold(0.02); //< how close point must be to object to be inlier
+  pclSegmentation.setDistanceThreshold(0.02); // how close point must be to object to be inlier
   pclSegmentation.setMaxIterations(1000);
-  pclSegmentation.segment(*inlierIndices, *coefficients);
+  pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
   // Remove points of possible walls
   pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
   pclObstacle.setInputCloud(pclFiltered);
