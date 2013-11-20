@@ -317,6 +317,21 @@ tests/fast:
 .PHONY : tests/fast
 
 # target to build an object file
+src/pcl_detection.o:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.o
+.PHONY : src/pcl_detection.o
+
+# target to preprocess a source file
+src/pcl_detection.i:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.i
+.PHONY : src/pcl_detection.i
+
+# target to generate assembly for a file
+src/pcl_detection.s:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.s
+.PHONY : src/pcl_detection.s
+
+# target to build an object file
 src/pcl_processing.o:
 	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_processing.o
 .PHONY : src/pcl_processing.o
@@ -371,6 +386,9 @@ help:
 	@echo "... test-results-run"
 	@echo "... test_depth"
 	@echo "... tests"
+	@echo "... src/pcl_detection.o"
+	@echo "... src/pcl_detection.i"
+	@echo "... src/pcl_detection.s"
 	@echo "... src/pcl_processing.o"
 	@echo "... src/pcl_processing.i"
 	@echo "... src/pcl_processing.s"

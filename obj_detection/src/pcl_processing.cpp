@@ -28,7 +28,7 @@
 
 /*
  *  New overall TODO for recognition (PCL):
- *  - Create new class of point processing
+ *  - (done) Create new class of point processing
  *  - Take several frames (like 3), remove walls, extract all objects using Euclidean approach
  *  - Remove noise by comparing middle point of objects and search for close objects to these points
  *  --> if not exist: probably noise
@@ -46,9 +46,9 @@ ros::Publisher pub_pcl_filtered;
 
 /**
  * @brief process_pcl_data
- * @param plc_raw
+ * @param pc_raw
  */
-void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
+void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& pc_raw)
 {
   // Reduce visible points to close view
 //  pcl::PassThrough<pcl::PointXYZ> pass;
@@ -60,7 +60,7 @@ void process_pcl_data(const sensor_msgs::PointCloud2ConstPtr& plc_raw)
   // Reduce view 100cm to the front (Z axes) and downsample amount of points
   sensor_msgs::PointCloud2 cloudVoxel;
   pcl::VoxelGrid<sensor_msgs::PointCloud2> pclVoxelFilter;
-  pclVoxelFilter.setInputCloud(plc_raw);
+  pclVoxelFilter.setInputCloud(pc_raw);
   pclVoxelFilter.setFilterFieldName("z");
   pclVoxelFilter.setFilterLimits(0.0, 1.0);  //< only take XYZ points maximum 1m away from camera on z axis
   pclVoxelFilter.setLeafSize(VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE);
@@ -116,10 +116,13 @@ int main(int argc, char** argv)
 
   ROS_INFO("Starting pcl converter.");
 
-  // Create a ROS subscriber for thle input point cloud
-  sub_pcl_primesense = nh.subscribe("/camera/depth_registered/points", 1, process_pcl_data);
-  pub_pcl_filtered = nh.advertise<sensor_msgs::PointCloud2>("/camera/filtered_points", 1);
-  ROS_INFO("Subscribed to depth pointcloud.");
+  objRecognition::ImageFetchSmooth processPipeline(nh);
+  processPipeline.start();
+
+//  // Create a ROS subscriber for thle input point cloud
+//  sub_pcl_primesense = nh.subscribe("/camera/depth_registered/points", 1, process_pcl_data);
+//  pub_pcl_filtered = nh.advertise<sensor_msgs::PointCloud2>("/camera/filtered_points", 1);
+//  ROS_INFO("Subscribed to depth pointcloud.");
 
   ros::spin();
   return 0;

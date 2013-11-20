@@ -32,5 +32,6 @@ include_directories(${Eigen_INCLUDE_DIRS})
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 rosbuild_add_executable(test_depth src/test.cpp)
-rosbuild_add_executable(pcl_processing src/pcl_processing.cpp)
+
+rosbuild_add_executable(pcl_processing src/pcl_processing.cpp src/pcl_detection.cpp)
 target_link_libraries(pcl_processing ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
