@@ -7,6 +7,7 @@
 
 #include "headers/pcl_processing.hpp"
 #include "headers/pcl_detection.hpp"
+#include "recognition_constants.hpp"
 
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
