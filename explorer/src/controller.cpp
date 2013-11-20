@@ -227,7 +227,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				double x_cmd = current_action.parameter1;
 				double y_cmd = current_action.parameter2;
 
-				dist = x_cmd;
+				dist = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
 				diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
 				if((x_cmd-x_true) < 0)
 				{
@@ -242,24 +242,27 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				}
 				diff_ang = angle(diff_ang);
 
+				//printf("dist = %f\n",dist);
+
 
 				static bool init;
 				if(!init)
 				{
 					init = true;
-					rotation = diff_ang;
+
+					printf("goto node: x = %f, y = %f\n",current_action.parameter1,current_action.parameter2);
 				}
 
 
 				// Rotate first if needed
-				if(fabs(diff_ang) > M_PI/180*10)
+				if(fabs(diff_ang) > M_PI/180*15)
 				{
 					// Rotation saturation
 					if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
 					if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
 
 					speed.V = 0;
-					speed.W = 2*r/l*alpha*diff_ang/4;
+					speed.W = -2*r/l*alpha*diff_ang/4;
 				}
 				else
 				{
@@ -319,7 +322,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 	if(actions.empty())
 	{
-		if(discrete_map.size() > 3)
+		if(discrete_map.size() > 1000)
 		{
 			path_finding();
 			return;

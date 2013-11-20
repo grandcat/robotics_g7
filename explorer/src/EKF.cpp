@@ -163,7 +163,8 @@ void rotate(double rotation_angle)
 	y_true += x*sin(theta_true) + y*cos(theta_true);
 
 	// Update theta_true
-	theta_true += rotation_angle;
+	if(rotation_angle == 0) {theta_true += theta_bar;}
+	else {theta_true += rotation_angle;}
 	theta_true = angle(theta_true);
 
 	// Reset

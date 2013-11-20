@@ -60,7 +60,7 @@ const double x_cmd_traj = 0.2;
 const double y_cmd_traj = 0.20;
 double y_cmd_change = 0.0;
 const double x_backward_dist = 0.05;
-const double x_forward_dist = 0.2;
+const double x_forward_dist = 0.18;
 const double dist_front_wall = 0.24;
 const double x_catch_wall = 0.17;
 
