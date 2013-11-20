@@ -23,6 +23,7 @@ struct ImgHist
 	Mat bHist;
 	Mat gHist;
 	Mat rHist;
+	Mat hsvHist;
 };
 
 struct Features
@@ -82,7 +83,8 @@ void drawHistograms(ImgHist hist)
 	Mat bHist = hist.bHist;
 	Mat gHist = hist.gHist;
 	Mat rHist = hist.rHist;
-	
+	Mat hsvHist = hist.hsvHist;
+
 	int histSize = 256;
   int hist_w = 512; 
   int hist_h = 400;
@@ -101,20 +103,59 @@ void drawHistograms(ImgHist hist)
       line( histImage, Point( bin_w*(i-1), hist_h - cvRound(rHist.at<float>(i-1)) ) ,
                        Point( bin_w*(i), hist_h - cvRound(rHist.at<float>(i)) ),
                        Scalar( 0, 0, 255), 2, 8, 0  );
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(hsvHist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(hsvHist.at<float>(i)) ),
+                       Scalar( 255, 255, 255), 2, 8, 0  );
   }
   namedWindow("Histogram", CV_WINDOW_AUTOSIZE );
   imshow("Histogram", histImage );
 }
 
+/*
+ * Make a HSV color histogram for the image
+ */
+Mat colorDetectionHSV(Mat img)
+{
+	Mat hsvImg;
+	cvtColor( img, hsvImg, CV_BGR2HSV );
+
+	//Split image into planes (HSV)
+	vector<Mat> planes;
+	split( hsvImg, planes );
+
+
+	// Set bins for hue and saturation
+  /*int hBins = 50; 
+  int sBins = 60;
+  int histSize[] = { hBins, sBins };*/
+
+	int histSize = 256;
+
+  // Set hue and saturation ranges
+  float hRanges[] = { 0, 256 };
+  //float sRanges[] = { 0, 180 };
+  //const float* ranges[] = { hRanges, sRanges };
+	const float* histRange = { hRanges };
+  //int channels[] = { 0, 1 };
+
+  //Calculate HSV histogram and normalize
+  Mat hist;
+	calcHist( &planes[0], 1, 0, Mat(), hist, 1, &histSize, &histRange, true, false );
+  normalize( hist, hist, 0, 1, NORM_MINMAX, -1, Mat() );
+
+	hist.at<float>(0) = 0;
+
+  return hist;
+}
 
 /*
- * Make a color histogram for the image
+ * Make a RGB color histogram for the image
  */
-ImgHist colorDetection(Mat matImg)
+ImgHist colorDetectionRGB(Mat img)
 {
 	//Split image into planes (B, G, R)
 	vector<Mat> planes;
-	split( matImg, planes );
+	split( img, planes );
 
 	int histSize = 256;
 
@@ -143,7 +184,8 @@ ImgHist colorDetection(Mat matImg)
   normalize(gHist, gHist, 0, histH, NORM_MINMAX, -1, Mat() );
   normalize(rHist, rHist, 0, histH, NORM_MINMAX, -1, Mat() );
 
-	ImgHist hist = {bHist, gHist, rHist};
+	Mat hsvHist = colorDetectionHSV(img);
+	ImgHist hist = {bHist, gHist, rHist, hsvHist};
 	return hist;
 }
 
@@ -190,11 +232,12 @@ int identifyObject(ImgHist hist, Features feat)
 		double resB = compareHist(hist.bHist, trainImg[i].colorHist.bHist, CV_COMP_CORREL);
 		double resG = compareHist(hist.gHist, trainImg[i].colorHist.gHist, CV_COMP_CORREL);
 		double resR = compareHist(hist.rHist, trainImg[i].colorHist.rHist, CV_COMP_CORREL);
-		std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << std::endl;
-		
+		double resH = compareHist(hist.hsvHist, trainImg[i].colorHist.hsvHist, CV_COMP_CORREL);
+		std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
+
 		// Not a match if negative correlation
-		if(resB > 0 && resG > 0 && resR > 0) {
-			double res = resB*resB + resG*resG + resR*resR;
+		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
+			double res = resB*resB + resG*resG + resR*resR + resH*resH;
 			//std::cout << "Res: " << res << std::endl;
 			if(res > bestRes) {
 				bestRes = res;
@@ -206,7 +249,7 @@ int identifyObject(ImgHist hist, Features feat)
 
 	// Match descriptors
 	int bestDescriptMatch = 0;
-	float matchPercent = 0.4;
+	float matchPercent = 0.3; //0.3 when testing on images
 	for(int i=0; i < trainImg.size(); ++i) {
 		// Use BruteForceMatcher
 		BFMatcher matcher(cv::NORM_L1, true);
@@ -220,11 +263,15 @@ int identifyObject(ImgHist hist, Features feat)
 		if(res > matchPercent) {
 			matchPercent = res;
 			bestDescriptMatch = trainImg[i].obj;
+
+			if(bestDescriptMatch == bestColorMatch) {
+				std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
 			}
+		}
 	}
 	std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
 
-	if(bestDescriptMatch == bestColorMatch) {
+	/*if(bestDescriptMatch == bestColorMatch && bestDescriptMatch != 0) {
 		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
 	} else if(bestDescriptMatch != bestColorMatch && bestColorMatch != 0) {
 		std::cout << "Best match: " << objects[bestColorMatch-1] << std::endl;
@@ -232,7 +279,7 @@ int identifyObject(ImgHist hist, Features feat)
 		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
 	} else {
 		std::cout << "No match" << std::endl;
-	}
+	}*/
 	
 	return 0;
 }
@@ -273,7 +320,7 @@ void train()
   	std::istringstream(ss.str()) >> n;
 		dummy.obj = n;
 	
-		dummy.colorHist = colorDetection(img);
+		dummy.colorHist = colorDetectionRGB(img);
 		dummy.feat = featureDetector(img);
 		trainImg.push_back(dummy);
 	}
@@ -298,8 +345,8 @@ public:
     : it_(nh_)
   {
 
-	image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
-
+		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
+		//image_sub_depth_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCb, this);
     cv::namedWindow(WINDOW);
   }
 
@@ -330,29 +377,27 @@ public:
 
 		//Mat src(img); 
 
-		// Detect objects through feature detection
-		int featSize = featureDetector(src).keypoints.size();
-
 		// Mask background
 		Mat bgMask = subtractBackground(src);
 		Mat maskedImg;
 		src.copyTo(maskedImg, bgMask);
 
-		//std::cout << "Nr keypoints: " << featSize << std::endl;
-		//if(featSize > 10) {
-			//std::cout << "OBJECT!" << std::endl;
+		// Detect objects through feature detection
+		int featSize = featureDetector(maskedImg).keypoints.size();
 
+		std::cout << "Nr keypoints: " << featSize << std::endl;
+		if(featSize > 10) {
 			// Color detection
-			ImgHist hist = colorDetection(maskedImg);
+			ImgHist hist = colorDetectionRGB(maskedImg);
 
 			//Feature detection
-			//Features feat = featureDetector(maskedImg);
+			Features feat = featureDetector(maskedImg);
 
 			// Identify object
-			/*int obj = identifyObject(hist, feat);
+			int obj = identifyObject(hist, feat);
 
-			image_pub_.publish(obj);*/
-		//}
+			//image_pub_.publish(obj);
+		}
 
     cv::imshow(WINDOW, cv_ptr->image);
     cv::waitKey(3);
@@ -379,8 +424,8 @@ int main(int argc, char** argv)
 		src.copyTo(maskedImg, bgMask);
 		src = maskedImg;
 
-		ImgHist hist = colorDetection(src);
-		//drawHistograms(hist);
+		ImgHist hist = colorDetectionRGB(src);
+		drawHistograms(hist);
 		Features feat = featureDetector(src);
 		showKeypoints(src, feat);
 		int obj = identifyObject(hist, feat);
