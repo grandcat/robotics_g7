@@ -36,6 +36,7 @@ class ImageConverter
 		vector_lines_pub_ = nh_.advertise<camera::Lines2D>("/camera/2Dlines", 1);
 		vector_lines_sub_ = nh_.subscribe("/camera/2Dlines", 1, &ImageConverter::wall_checker, this);
 		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::HoughLinesDetector, this);
+		//image_sub_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::HoughLinesDetector, this);
 		//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
 
 		//image_sub_ = it_.subscribe("/camera/depth/image", 1, &ImageConverter::imageCb, this);

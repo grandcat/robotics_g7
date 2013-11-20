@@ -51,16 +51,29 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	double s2 = a_short*pow(msg->ch2,b_short); // right
 
 	static double s0,x_s0,y_s0;
-	if((s1 < 0.2) & !wall)
+	if((s1 < 0.2) & !wall & (s1 < s2))
 	{
 		init();
 		x_s0 = x_s1;
 		y_s0 = y_s1;
+		right_sensor = false;
+		wall = true;
+	}
+	if((s2 < 0.2) & !wall & (s2 < s1))
+	{
+		init();
+		x_s0 = x_s2;
+		y_s0 = y_s2;
+		right_sensor = true;
 		wall = true;
 	}
 
 	// Sensor measurement
-	if(wall)
+	if(wall & right_sensor)
+	{
+		s0 = -s2;
+	}
+	if(wall & !right_sensor)
 	{
 		s0 = s1;
 	}
@@ -120,6 +133,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	ekf.y = y;
 	ekf.theta = theta;
 	ekf.y_wall = y_wall;
+	ekf.right_sensor = right_sensor;
 	ekf.wall = wall;
 	EKF_pub.publish(ekf);
 

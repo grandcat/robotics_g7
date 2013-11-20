@@ -316,6 +316,34 @@ tests/fast:
 	$(MAKE) -f CMakeFiles/tests.dir/build.make CMakeFiles/tests.dir/build
 .PHONY : tests/fast
 
+#=============================================================================
+# Target rules for targets named tools_pcl_objects_cutter
+
+# Build rule for target.
+tools_pcl_objects_cutter: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 tools_pcl_objects_cutter
+.PHONY : tools_pcl_objects_cutter
+
+# fast build rule for target.
+tools_pcl_objects_cutter/fast:
+	$(MAKE) -f CMakeFiles/tools_pcl_objects_cutter.dir/build.make CMakeFiles/tools_pcl_objects_cutter.dir/build
+.PHONY : tools_pcl_objects_cutter/fast
+
+# target to build an object file
+src/pcl_detection.o:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.o
+.PHONY : src/pcl_detection.o
+
+# target to preprocess a source file
+src/pcl_detection.i:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.i
+.PHONY : src/pcl_detection.i
+
+# target to generate assembly for a file
+src/pcl_detection.s:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.s
+.PHONY : src/pcl_detection.s
+
 # target to build an object file
 src/pcl_processing.o:
 	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_processing.o
@@ -346,6 +374,21 @@ src/test.s:
 	$(MAKE) -f CMakeFiles/test_depth.dir/build.make CMakeFiles/test_depth.dir/src/test.s
 .PHONY : src/test.s
 
+# target to build an object file
+src/tools_pcl_object_cutter.o:
+	$(MAKE) -f CMakeFiles/tools_pcl_objects_cutter.dir/build.make CMakeFiles/tools_pcl_objects_cutter.dir/src/tools_pcl_object_cutter.o
+.PHONY : src/tools_pcl_object_cutter.o
+
+# target to preprocess a source file
+src/tools_pcl_object_cutter.i:
+	$(MAKE) -f CMakeFiles/tools_pcl_objects_cutter.dir/build.make CMakeFiles/tools_pcl_objects_cutter.dir/src/tools_pcl_object_cutter.i
+.PHONY : src/tools_pcl_object_cutter.i
+
+# target to generate assembly for a file
+src/tools_pcl_object_cutter.s:
+	$(MAKE) -f CMakeFiles/tools_pcl_objects_cutter.dir/build.make CMakeFiles/tools_pcl_objects_cutter.dir/src/tools_pcl_object_cutter.s
+.PHONY : src/tools_pcl_object_cutter.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -371,12 +414,19 @@ help:
 	@echo "... test-results-run"
 	@echo "... test_depth"
 	@echo "... tests"
+	@echo "... tools_pcl_objects_cutter"
+	@echo "... src/pcl_detection.o"
+	@echo "... src/pcl_detection.i"
+	@echo "... src/pcl_detection.s"
 	@echo "... src/pcl_processing.o"
 	@echo "... src/pcl_processing.i"
 	@echo "... src/pcl_processing.s"
 	@echo "... src/test.o"
 	@echo "... src/test.i"
 	@echo "... src/test.s"
+	@echo "... src/tools_pcl_object_cutter.o"
+	@echo "... src/tools_pcl_object_cutter.i"
+	@echo "... src/tools_pcl_object_cutter.s"
 .PHONY : help
 
 

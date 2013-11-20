@@ -13,14 +13,72 @@
 #include "headers/odometry.h"
 #include "headers/parameters.h"
 
-using namespace differential_drive;
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
+using namespace differential_drive;
+using namespace cv;
+
+
+void create_node(double x, double y)
+{
+	static int index;
+	index++;
+
+	Node n;
+	n.x = x;
+	n.y = y;
+
+	discrete_map.push_back(n);
+
+	// Marker
+	uint32_t shape = visualization_msgs::Marker::CUBE;
+	visualization_msgs::Marker marker;
+	marker.header.frame_id = "/my_frame";
+	marker.header.stamp = ros::Time::now();
+	marker.ns = "basic_shapes";
+	marker.id = index;
+	marker.type = shape;
+	marker.action = visualization_msgs::Marker::ADD;
+
+	marker.pose.position.x = x;
+	marker.pose.position.y = y;
+	marker.pose.position.z = 0;
+
+	marker.scale.x = 0.1;
+	marker.scale.y = 0.1;
+	marker.scale.z = 0.05;
+
+	marker.color.r = 1.0f;
+	marker.color.g = 0.0f;
+	marker.color.b = 0.0f;
+	marker.color.a = 1.0;
+
+	marker.lifetime = ros::Duration();
+	marker_pub.publish(marker);
+}
 
 void receive_odometry(const Odometry::ConstPtr &msg)
 {
 	x = msg->x;
 	y = msg->y;
 	theta = msg->theta;
+
+
+	// Node
+	static double nx,ny;
+	double dist = sqrt((x-nx)*(x-nx)+(y-ny)*(y-ny));
+	if(dist > 0.1)
+	{
+		create_node(x,y);
+
+		nx = x;
+		ny = y;
+	}
+
 
 	// Robot marker
 	uint32_t shape = visualization_msgs::Marker::ARROW;
@@ -99,6 +157,110 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	}
 
 	map_pub.publish(map);
+
+	Hough(map);
+}
+
+
+void Hough(nav_msgs::OccupancyGrid map)
+{
+	// Map to Image
+	Mat mat = Mat::zeros(height,width,CV_8UC1);
+
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			if(map.data[i*map.info.width+j] == 100)
+			{
+				mat.at<uchar>(height-i-1,j) = 255;
+			}
+		}
+	}
+
+
+	Mat mat2 = Mat::zeros(height,width,CV_8UC1);
+
+	vector<Vec2f> lines;
+	HoughLines(mat, lines, 1, 90*CV_PI/180, 10, 0, 0 );
+
+	for( size_t i = 0; i < lines.size(); i++ )
+	{
+		float rho = lines[i][0], theta = lines[i][1];
+		Point pt1, pt2;
+		double a = cos(theta), b = sin(theta);
+		double x0 = a*rho, y0 = b*rho;
+		pt1.x = cvRound(x0 + 500*(-b));
+		pt1.y = cvRound(y0 + 500*(a));
+		pt2.x = cvRound(x0 - 500*(-b));
+		pt2.y = cvRound(y0 - 500*(a));
+		line( mat2, pt1, pt2, Scalar(255), 1);
+	}
+
+
+	GaussianBlur( mat, mat, Size(3,3), 0, 0 );
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			if(mat.at<uchar>(i,j) == 0)
+			{
+				mat2.at<uchar>(i,j) = 0;
+			}
+		}
+	}
+
+
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			if(map.data[i*map.info.width+j] == 0)
+			{
+				mat2.at<uchar>(height-i-1,j) = 100;
+			}
+		}
+	}
+
+
+	int sz = 5;
+	for(int i = 0; i < height-sz; i++)
+	{
+		for(int j = 0; j < width-sz; j++)
+		{
+			if(mat2.at<uchar>(height-i-1,j) == 100 &
+					mat2.at<uchar>(height-i-sz-1,j) == 100 &
+					mat2.at<uchar>(height-i-1,j+sz) == 100 &
+					mat2.at<uchar>(height-i-sz-1,j+sz) == 100)
+			{
+				bool flag = false;
+				for(int n = 0; n < sz; n++)
+				{
+					for(int m = 0; m < sz; m++)
+					{
+						if(mat2.at<uchar>(height-i-n-1,j+m) == 255)
+						{
+							flag = true;
+						}
+					}
+				}
+				if(!flag)
+					for(int n = 0; n < sz; n++)
+					{
+						for(int m = 0; m < sz; m++)
+						{
+							mat2.at<uchar>(height-i-n-1,j+m) = 100;
+						}
+					}
+			}
+		}
+	}
+
+
+	namedWindow("Map", CV_WINDOW_NORMAL);
+	imshow("Map", mat2);
+
+	cvWaitKey(1);
 }
 
 
@@ -112,6 +274,7 @@ int main(int argc, char** argv)
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 	map_pub = nh.advertise<nav_msgs::OccupancyGrid>("/map",1);
 
+	create_node(x,y);
 
 	// Map init
 	map.header.frame_id = "/my_frame";

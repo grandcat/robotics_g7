@@ -49,8 +49,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	{
 		double x_cmd = x + x_cmd_traj;
 		double y_cmd;
-		if(!msg->wall) {y_cmd = y;}
+		if(msg->right_sensor) {y_cmd = y_wall + y_cmd_traj - y_cmd_change;}
 		else {y_cmd = y_wall - y_cmd_traj + y_cmd_change;}
+		if(!msg->wall) {y_cmd = y;}
 
 		dist = x_cmd_traj;
 		diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
@@ -58,8 +59,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 		speed.V = rho*dist*r;
 		speed.W = -2*r/l*alpha*diff_ang;
-
-		//printf("Wall following\n");
 	}
 
 
@@ -99,16 +98,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				{
 					create_node(x_true,y_true);
 
-					if(s1 > 0.2)
-					{
-						x_pb = x;
-
-						Action action;
-						action.n = ACTION_FORWARD;
-						action.parameter1 = x_forward_dist;
-						actions.push_back(action);
-					}
-
 					actions.pop_front();
 					busy = false;
 
@@ -118,99 +107,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					s.rotation_angle = current_action.parameter1;
 					stop_EKF_pub.publish(s);
 				}
-
-				// Re-init y_cmd_change
-				y_cmd_change = 0;
-
-				//printf("Rotation\n");
-			}
-
-
-			// Go backward
-			if(current_action.n == ACTION_BACKWARD)
-			{
-				double x_cmd = x - x_cmd_traj;
-				double y_cmd = y;
-
-				dist = x_pb-x-x_backward_dist;
-				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
-				diff_ang = angle(diff_ang);
-
-				speed.V = 5*rho*dist*r;
-				speed.W = -2*r/l*alpha*diff_ang;
-
-				// Done
-				if(dist*dist < x_error*x_error)
-				{
-					actions.pop_front();
-					busy = false;
-
-					// Relaunch EKF
-					Stop_EKF s;
-					s.stop = false;
-					s.rotation_angle = 0;
-					stop_EKF_pub.publish(s);
-				}
-
-				//printf("Backward %f\n",dist);
-			}
-
-
-			// Go forward
-			if(current_action.n == ACTION_FORWARD)
-			{
-				double x_cmd = x + x_cmd_traj;
-				double y_cmd = y;
-
-				dist = x_pb-x+current_action.parameter1;
-				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
-				diff_ang = angle(diff_ang);
-
-				// Saturation
-				if(dist > x_cmd_traj)
-				{
-					dist = x_cmd_traj;
-				}
-
-				speed.V = rho*dist*r;
-				speed.W = -2*r/l*alpha*diff_ang;
-
-				// Done
-				if(dist*dist < x_error*x_error)
-				{
-					if(s1 > 0.2)
-					{
-						Action action;
-						action.n = ACTION_ROTATION;
-						action.parameter1 = M_PI/2;
-						actions.push_back(action);
-					}
-
-					actions.pop_front();
-					busy = false;
-
-					// Relaunch EKF
-					Stop_EKF s;
-					s.stop = false;
-					s.rotation_angle = 0;
-					stop_EKF_pub.publish(s);
-				}
-			}
-
-
-			// Change y_cmd_traj
-			if(current_action.n == ACTION_CHANGE_Y_CMD_TRAJ)
-			{
-				y_cmd_change = current_action.parameter1;
-
-				actions.pop_front();
-				busy = false;
-
-				// Relaunch EKF
-				Stop_EKF s;
-				s.stop = false;
-				s.rotation_angle = 0;
-				stop_EKF_pub.publish(s);
 			}
 
 
@@ -242,17 +138,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				}
 				diff_ang = angle(diff_ang);
 
-				//printf("dist = %f\n",dist);
-
-
-				static bool init;
-				if(!init)
-				{
-					init = true;
-
-					printf("goto node: x = %f, y = %f\n",current_action.parameter1,current_action.parameter2);
-				}
-
 
 				// Rotate first if needed
 				if(fabs(diff_ang) > M_PI/180*15)
@@ -272,7 +157,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 						dist = x_cmd_traj;
 					}
 
-
 					speed.V = rho*dist*r;
 					speed.W = -2*r/l*alpha*diff_ang;
 
@@ -287,8 +171,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 						s.stop = false;
 						s.rotation_angle = 0;
 						stop_EKF_pub.publish(s);
-
-						init = false;
 					}
 				}
 			}
@@ -322,13 +204,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 	if(actions.empty())
 	{
-		if(discrete_map.size() > 1000)
-		{
-			path_finding();
-			return;
-		}
-
-
 		// Hurt a wall
 		if(s7 | s8)
 		{
@@ -379,20 +254,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		else
 		{
 			cmpt = 0;
-		}
-
-
-		// No left wall
-		if(s1 > 0.2)
-		{
-			x_pb = x;
-
-			Action action;
-			action.n = ACTION_FORWARD;
-			action.parameter1 = x_catch_wall;
-			actions.push_back(action);
-
-			//printf("No left wall\n");
 		}
 	}
 }
@@ -493,6 +354,8 @@ int main(int argc, char** argv)
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
 	object_sub = nh.subscribe("/motion/Object",1000,receive_object);
+
+	create_node(0,0);
 
 	ros::Rate loop_rate(100);
 
