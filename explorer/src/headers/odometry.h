@@ -34,10 +34,22 @@ const double position_y = -4;
 const double height = 200;
 const double width = 200;
 
+// Map points
+struct Node
+{
+	double x,y;
+};
+
+std::list<Node> discrete_map;
+
 
 void receive_odometry(const Odometry::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
+
+void Hough(nav_msgs::OccupancyGrid map);
+
+void create_node(double x, double y);
 
 
 #endif /* ODOMETRY_H_ */
