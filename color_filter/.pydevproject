@@ -5,16 +5,23 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.6</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
-<path>/opt/ros/fuerte/stacks/bullet/src</path>
-<path>/opt/ros/fuerte/stacks/bullet/lib</path>
 <path>/opt/ros/fuerte/stacks/geometry/tf/src</path>
 <path>/opt/ros/fuerte/stacks/geometry/tf/lib</path>
+<path>/opt/ros/fuerte/stacks/image_common/image_transport/src</path>
+<path>/opt/ros/fuerte/stacks/image_common/image_transport/lib</path>
 <path>/opt/ros/fuerte/stacks/geometry/angles/lib</path>
-<path>/home/robo/DD2425_2013/differential_drive/src</path>
+<path>/opt/ros/fuerte/stacks/vision_opencv/cv_bridge/src</path>
+<path>/opt/ros/fuerte/stacks/vision_opencv/cv_bridge/lib</path>
+<path>/opt/ros/fuerte/stacks/bullet/src</path>
+<path>/opt/ros/fuerte/stacks/bullet/lib</path>
+<path>/opt/ros/fuerte/stacks/pluginlib/src</path>
+<path>/opt/ros/fuerte/stacks/pluginlib/lib</path>
 <path>/home/robo/DD2425_2013/robotics_g7/robot/src</path>
+<path>/home/robo/DD2425_2013/differential_drive/src</path>
+<path>/home/robo/DD2425_2013/robotics_g7/color_filter/src</path>
 <path>/opt/ros/fuerte/share/ros/core/mk</path>
 <path>/opt/ros/fuerte/lib/python2.7/dist-packages</path>
-<path>/home/robo/DD2425_2013/robotics_g7/robot</path>
+<path>/home/robo/DD2425_2013/robotics_g7/color_filter</path>
 <path>/usr/lib/python2.7</path>
 <path>/usr/lib/python2.7/plat-linux2</path>
 <path>/usr/lib/python2.7/lib-tk</path>
