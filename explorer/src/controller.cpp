@@ -555,20 +555,7 @@ bool visited_area()
 
 void path_finding()
 {
-	// Go back to the base;
-	std::list<Node> back_map = discrete_map;
-	back_map.pop_back();
 
-
-	while(!back_map.empty())
-	{
-		goto_node(back_map.back());
-		back_map.pop_back();
-	}
-
-	Action action;
-	action.n = ACTION_STOP;
-	actions.push_back(action);
 }
 
 
@@ -616,6 +603,34 @@ void create_interesting_node(int i,int j)
 
 	// Debug
 	printf("New interesting node:  x = %f, y = %f\n",node.x,node.y);
+}
+
+
+Node find_closest_node(std::list<Node> list)
+{
+	Node node;
+	node.x = 0;
+	node.y = 0;
+
+	double dist = INFINITY;
+
+	if(!list.empty())
+	{
+		for(int i = 0; i < list.size(); i++)
+		{
+			Node n = list.back();
+			list.pop_back();
+			double d = sqrt((n.x-x_true)*(n.x-x_true)+(n.y-y_true)*(n.y-y_true));
+			if(d < dist)
+			{
+				node.x = n.x;
+				node.y = n.y;
+				dist = d;
+			}
+		}
+	}
+
+	return node;
 }
 
 

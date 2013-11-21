@@ -28,6 +28,7 @@ enum EACTIONS {
 	ACTION_ROTATION,
 	ACTION_STOP,
 	ACTION_GOTO,
+	ACTION_GOTO_EKF_WALL,
 };
 
 struct Action
@@ -135,6 +136,8 @@ void create_node(double x, double y);
 void create_interesting_node(int i,int j);
 
 void interesting_node();
+
+Node find_closest_node(std::list<Node> list);
 
 void path_finding(Node node);
 
