@@ -16,7 +16,14 @@
 #include "headers/controller.h"
 #include <differential_drive/Servomotors.h>
 
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 using namespace differential_drive;
+using namespace cv;
 using namespace explorer;
 
 
@@ -42,6 +49,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	y = msg->y;
 	theta = msg->theta;
 	y_wall = msg->y_wall;
+
+
+	// Visited area check
 
 
 	// Wall follower
@@ -194,6 +204,10 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s2 = a_short*pow(msg->ch2,b_short); // right
 	double s3 = a_short*pow(msg->ch3,b_short); // center
 
+
+	update_map(s1,s2);
+
+
 	// Bumpers
 	//bool s6 = (msg->ch6 > bumper_threshold); // center
 	//bool s7 = (msg->ch7 > bumper_threshold); // right
@@ -204,34 +218,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 	if(actions.empty())
 	{
-		// Hurt a wall
-		if(s7 | s8)
-		{
-			x_pb = x;
-
-			Action action;
-			action.n = ACTION_BACKWARD; action.parameter1 = x_backward_dist;
-			actions.push_back(action);
-			action.n = ACTION_CHANGE_Y_CMD_TRAJ; action.parameter1 = 0.04;
-			actions.push_back(action);
-
-			return;
-		}
-
-		if(s6)
-		{
-			x_pb = x;
-
-			Action action;
-			action.n = ACTION_BACKWARD; action.parameter1 = x_backward_dist;
-			actions.push_back(action);
-			action.n = ACTION_ROTATION; action.parameter1 = -M_PI;
-			actions.push_back(action);
-
-			return;
-		}
-
-
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
 		{
@@ -256,6 +242,314 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			cmpt = 0;
 		}
 	}
+}
+
+
+void update_map(double s1, double s2)
+{
+	// Sensors - Wall
+	if(s1 < 0.3)
+	{
+		int wx = ((x_true+x_s1*cos(theta_true)-y_s1*sin(theta_true)-s1*sin(theta_true))-origin_x)/resolution;
+		int wy = ((y_true+x_s1*sin(theta_true)+y_s1*cos(theta_true)+s1*cos(theta_true))-origin_y)/resolution;
+		if((wy*width+wx >= 0) | (wy*width+wx < width*height))
+		{
+			robot_map.at<uchar>(width-wy-1,wx) = 255;
+		}
+	}
+
+	if(s2 < 0.3)
+	{
+		int wx = ((x_true+x_s2*cos(theta_true)-y_s2*sin(theta_true)+s2*sin(theta_true))-origin_x)/resolution;
+		int wy = ((y_true+x_s2*sin(theta_true)+y_s2*cos(theta_true)-s2*cos(theta_true))-origin_y)/resolution;
+		if((wy*width+wx >= 0) | (wy*width+wx < width*height))
+		{
+			robot_map.at<uchar>(width-wy-1,wx) = 255;
+		}
+	}
+
+
+	// Robot
+	int rx = (x_true-origin_x)/resolution;
+	int ry = (y_true-origin_y)/resolution;
+	for(int i = -2; i <= 2; i++)
+	{
+		for(int j = -2; j <= 2; j++)
+		{
+			if(((ry+j)*width+(rx+i) >= 0) | ((ry+j)*width+(rx+i) < width*height))
+			{
+				robot_map.at<uchar>(width-(ry+j)-1,rx+i) = 100;
+			}
+		}
+	}
+
+
+	map = Mat::zeros(height,width,CV_8UC1);
+
+
+	// Wall processing
+	Hough();
+
+
+	// Robot path processing
+	merge_areas();
+	interesting_nodes();
+
+
+	proc_map = map.clone();
+
+
+	// Check visited area
+	visited_flag = visited_area();
+	//if(visited_flag) {printf("Already visited!\n");}
+	if(visited_flag & actions.empty())
+	{
+		Action action;
+		action.n = ACTION_STOP;
+		actions.push_back(action);
+	}
+
+
+	namedWindow("Map",CV_WINDOW_NORMAL);
+	imshow("Map",proc_map);
+
+	cvWaitKey(1);
+}
+
+
+void Hough()
+{
+	Mat wall_map = Mat::zeros(height,width,CV_8UC1);
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			if(robot_map.at<uchar>(i,j) == 255)
+			{
+				wall_map.at<uchar>(i,j) = 255;
+			}
+		}
+	}
+
+
+	vector<Vec2f> lines;
+	HoughLines(wall_map, lines, 1, 90*CV_PI/180, 10, 0, 0 );
+
+	for( size_t i = 0; i < lines.size(); i++ )
+	{
+		float rho = lines[i][0], theta = lines[i][1];
+		Point pt1, pt2;
+		double a = cos(theta), b = sin(theta);
+		double x0 = a*rho, y0 = b*rho;
+		pt1.x = cvRound(x0 + 500*(-b));
+		pt1.y = cvRound(y0 + 500*(a));
+		pt2.x = cvRound(x0 - 500*(-b));
+		pt2.y = cvRound(y0 - 500*(a));
+		line(map, pt1, pt2, Scalar(255), 1);
+	}
+
+	Mat temp_map = wall_map.clone();
+	GaussianBlur(temp_map,temp_map, Size(3,3), 0, 0 );
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			if(temp_map.at<uchar>(i,j) == 0)
+			{
+				map.at<uchar>(i,j) = 0;
+			}
+		}
+	}
+}
+
+
+void merge_areas()
+{
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			if(robot_map.at<uchar>(i,j) == 100)
+			{
+				map.at<uchar>(i,j) = 100;
+			}
+		}
+	}
+
+
+	int sz = 5;
+	for(int i = 0; i < height-sz; i++)
+	{
+		for(int j = 0; j < width-sz; j++)
+		{
+			if(map.at<uchar>(height-i-1,j) == 100 &
+					map.at<uchar>(height-i-sz-1,j) == 100 &
+					map.at<uchar>(height-i-1,j+sz) == 100 &
+					map.at<uchar>(height-i-sz-1,j+sz) == 100)
+			{
+				bool flag = false;
+				for(int n = 0; n < sz; n++)
+				{
+					for(int m = 0; m < sz; m++)
+					{
+						if(map.at<uchar>(height-i-n-1,j+m) == 255)
+						{
+							flag = true;
+						}
+					}
+				}
+				if(!flag)
+				{
+					for(int n = 0; n < sz; n++)
+					{
+						for(int m = 0; m < sz; m++)
+						{
+							map.at<uchar>(height-i-n-1,j+m) = 100;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+void interesting_nodes()
+{
+	toDiscover.clear();
+
+
+	// Check left
+	for(int i = 0; i < height-sz2; i++)
+	{
+		for(int j = 0; j < width-sz1; j++)
+		{
+			bool flag = false;
+			for(int n = 0; n < sz2; n++)
+			{
+				for(int m = 0; m < sz1-1; m++)
+				{
+					if(map.at<uchar>(height-i-n-1,j+m) != 0)
+					{
+						flag = true;
+					}
+				}
+				if(map.at<uchar>(height-i-n-1,j+sz1) != 100)
+				{
+					flag = true;
+				}
+			}
+			if(!flag)
+			{
+				map.at<uchar>(height-i-1-1,j+sz1-2) = 200;
+				create_interesting_node(i,j);
+			}
+		}
+	}
+
+
+	// Check right
+	for(int i = 0; i < height-sz2; i++)
+	{
+		for(int j = 0; j < width-sz1; j++)
+		{
+			bool flag = false;
+			for(int n = 0; n < sz2; n++)
+			{
+				for(int m = 1; m < sz1; m++)
+				{
+					if(map.at<uchar>(height-i-n-1,j+m) != 0)
+					{
+						flag = true;
+					}
+				}
+				if(map.at<uchar>(height-i-n-1,j) != 100)
+				{
+					flag = true;
+				}
+			}
+			if(!flag)
+			{
+				map.at<uchar>(height-i-1-1,j+2) = 200;
+				create_interesting_node(i,j);
+			}
+		}
+	}
+
+
+	// Check bottom
+	for(int i = 0; i < height-sz2; i++)
+	{
+		for(int j = 0; j < width-sz1; j++)
+		{
+			bool flag = false;
+			for(int n = 0; n < sz2; n++)
+			{
+				for(int m = 1; m < sz1; m++)
+				{
+					if(map.at<uchar>(j+m,height-i-n-1) != 0)
+					{
+						flag = true;
+					}
+				}
+				if(map.at<uchar>(j,height-i-n-1) != 100)
+				{
+					flag = true;
+				}
+			}
+			if(!flag)
+			{
+				map.at<uchar>(j+2,height-i-1-1) = 200;
+				create_interesting_node(i,j);
+			}
+		}
+	}
+
+
+	// Check top
+	for(int i = 0; i < height-sz2; i++)
+	{
+		for(int j = 0; j < width-sz1; j++)
+		{
+			bool flag = false;
+			for(int n = 0; n < sz2; n++)
+			{
+				for(int m = 0; m < sz1-1; m++)
+				{
+					if(map.at<uchar>(j+m,height-i-n-1) != 0)
+					{
+						flag = true;
+					}
+				}
+				if(map.at<uchar>(j+sz1,height-i-n-1) != 100)
+				{
+					flag = true;
+				}
+			}
+			if(!flag)
+			{
+				map.at<uchar>(j+sz1-2,height-i-1-1) = 200;
+				create_interesting_node(i,j);
+			}
+		}
+	}
+}
+
+
+bool visited_area()
+{
+	int rx = (x_true-origin_x+0.2*cos(theta_true))/resolution;
+	int ry = (y_true-origin_y+0.2*sin(theta_true))/resolution;
+
+	if((ry*width+rx >= 0) | (ry*width+rx < width*height))
+	{
+		if(proc_map.at<uchar>(width-ry-1,rx) == 100)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -312,6 +606,19 @@ void create_node(double x, double y)
 }
 
 
+void create_interesting_node(int i,int j)
+{
+	Node node;
+
+	node.x = (j+sz1-2)*resolution+origin_x;
+	node.y = (i+1)*resolution+origin_y;
+	toDiscover.push_back(node);
+
+	// Debug
+	printf("New interesting node:  x = %f, y = %f\n",node.x,node.y);
+}
+
+
 void receive_object(const Object::ConstPtr &msg)
 {
 	double x_object = x_true + cos(theta_true);
@@ -355,7 +662,13 @@ int main(int argc, char** argv)
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
 	object_sub = nh.subscribe("/motion/Object",1000,receive_object);
 
+
+	proc_map = Mat::zeros(height,width,CV_8UC1);
+	robot_map = Mat::zeros(height,width,CV_8UC1);
+
+
 	create_node(0,0);
+
 
 	ros::Rate loop_rate(100);
 

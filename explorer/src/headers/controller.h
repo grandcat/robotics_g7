@@ -12,15 +12,20 @@
 #include <differential_drive/Encoders.h>
 #include "explorer/EKF.h"
 
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 using namespace differential_drive;
+using namespace cv;
 using namespace explorer;
 
 // Actions
 enum EACTIONS {
 	ACTION_BACKWARD = 1,
-	ACTION_FORWARD,
 	ACTION_ROTATION,
-	ACTION_CHANGE_Y_CMD_TRAJ,
 	ACTION_STOP,
 	ACTION_GOTO,
 };
@@ -74,7 +79,7 @@ double rotation;
 double x_true,y_true,theta_true;
 
 // Errors
-const double x_error = 0.01;
+const double x_error = 0.02; //0.01
 const double theta_error = 2;
 
 // Actions sequence
@@ -91,8 +96,22 @@ double s1,s2;
 
 // Map
 std::list<Node> discrete_map;
+std::list<Node> toDiscover;
+
+Mat proc_map, robot_map, map;
+const int origin_x = -4;
+const int origin_y = -4;
+const int height = 200;
+const int width = 200;
+const double resolution = 0.04;
+
+const int sz1 = 5;
+const int sz2 = 3;
+
+bool visited_flag = false;
 
 
+// Receive functions
 void receive_EKF(const EKF::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
@@ -101,12 +120,30 @@ void receive_odometry(const Odometry::ConstPtr &msg);
 
 void receive_object(const Object::ConstPtr &msg);
 
+
+// Map explorer
+void update_map(double s1, double s2);
+
+void Hough();
+
+void merge_areas();
+
+void interesting_nodes();
+
 void create_node(double x, double y);
 
-void path_finding();
+void create_interesting_node(int i,int j);
+
+void interesting_node();
+
+void path_finding(Node node);
+
+bool visited_area();
 
 void goto_node(Node node);
 
+
+// Angle between ]-pi,pi]
 double angle(double theta);
 
 
