@@ -1,10 +1,3 @@
-/*
- * pcl_processing.cpp
- *
- *  Created on: Nov 11, 2013
- *      Author: robo
- */
-
 #include <ros/ros.h>
 #include <boost/filesystem.hpp>
 #include <pcl_ros/point_cloud.h>
@@ -13,11 +6,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
-//#include <pcl/visualization/cloud_viewer.h>
-
+// PCL algorithms
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/statistical_outlier_removal.h>
-#include <pcl/filters/extract_indices.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -55,7 +46,7 @@ void extractCloudOfPCD(const std::string pSrcPath)
   pclPass.setFilterFieldName("x");
   pclPass.setFilterLimits(-0.5, 0.18);
   pclPass.filter(*pcRaw);
-
+  // Remove statisitical outliers
   pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> pclOutlierFilter;
   pclOutlierFilter.setInputCloud(pcRaw);
   pclOutlierFilter.setMeanK(50);
@@ -65,7 +56,6 @@ void extractCloudOfPCD(const std::string pSrcPath)
   // Save processed cloud
   ROS_INFO("PCD cut write to '%s'.", (dstDir + pSrcPath).c_str());
   pcl::io::savePCDFile(dstDir + pSrcPath, *pcRaw, true);
-
 }
 
 
@@ -76,28 +66,28 @@ int main(int argc, char** argv)
   ROS_INFO("Starting pcl object cutter.");
 
   if (argc == 1)
-  {
-    ROS_ERROR("Please provide directory / directories for reading .pcl files!");
-    return -1;
-  }
-
-   // For every directory given as param: create subdirectory with processed pointclouds
-  for (int dirID = 1; dirID < argc; ++dirID)
-  {
-    char path[64];
-    for (int i = 0; i <= maxPcdID; ++i)
     {
-      sprintf(path, "%s%s", dstDir.c_str(), argv[dirID]);
-      // Create directory if not exists
-      boost::filesystem::path dir(path);
-      if (boost::filesystem::create_directories(path))
-        ROS_INFO("Created path: %s", path);
-
-      // Start processing
-      sprintf(path, "%s/%i.pcd", argv[dirID], i);
-      extractCloudOfPCD(path);
+      ROS_ERROR("Please provide directory / directories for reading .pcl files!");
+      return -1;
     }
-  }
+
+  // For every directory given as param: create subdirectory with processed pointclouds
+  for (int dirID = 1; dirID < argc; ++dirID)
+    {
+      char path[64];
+      for (int i = 0; i <= maxPcdID; ++i)
+        {
+          sprintf(path, "%s%s", dstDir.c_str(), argv[dirID]);
+          // Create directory if not exists
+          boost::filesystem::path dir(path);
+          if (boost::filesystem::create_directories(path))
+            ROS_INFO("Created path: %s", path);
+
+          // Start processing
+          sprintf(path, "%s/%i.pcd", argv[dirID], i);
+          extractCloudOfPCD(path);
+        }
+    }
 
 
 //  ros::spin();
