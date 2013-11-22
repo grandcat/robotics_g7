@@ -101,7 +101,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				if(dtheta < -M_PI/2) {dtheta = -M_PI/2;}
 
 				speed.V = 0;
-				speed.W = 2*r/l*alpha*dtheta/4;
+				speed.W = 2*r/l*alpha*dtheta/4*2;
 
 				// Rotation done
 				if(dtheta*dtheta < M_PI*M_PI/180/180*theta_error*theta_error)
@@ -313,7 +313,7 @@ void update_map(double s1, double s2)
 	namedWindow("Map",CV_WINDOW_NORMAL);
 	imshow("Map",proc_map);
 
-	cvWaitKey(1);
+	cvWaitKey(10);
 }
 
 

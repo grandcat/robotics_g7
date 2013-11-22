@@ -59,7 +59,7 @@ ros::Subscriber object_sub;
 
 // Control filter parameters
 const double rho = 13; // 9
-const double alpha = 10;
+const double alpha = 5; // 10
 
 // Distances
 const double x_cmd_traj = 0.2;
