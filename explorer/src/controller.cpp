@@ -602,7 +602,7 @@ void create_interesting_node(int i,int j)
 	toDiscover.push_back(node);
 
 	// Debug
-	printf("New interesting node:  x = %f, y = %f\n",node.x,node.y);
+	//printf("New interesting node:  x = %f, y = %f\n",node.x,node.y);
 }
 
 
