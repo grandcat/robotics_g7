@@ -77,10 +77,13 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			current_action = actions.front();
 			busy = true;
 
-			// Stop EKF
-			Stop_EKF s;
-			s.stop = true;
-			stop_EKF_pub.publish(s);
+			if(current_action.n != ACTION_GOTO_FORWARD)
+			{
+				// Stop EKF
+				Stop_EKF s;
+				s.stop = true;
+				stop_EKF_pub.publish(s);
+			}
 		}
 
 
@@ -281,12 +284,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				{
 					actions.pop_front();
 					busy = false;
-
-					// Relaunch EKF
-					Stop_EKF s;
-					s.stop = false;
-					s.rotation_angle = 0;
-					stop_EKF_pub.publish(s);
 				}
 			}
 		}
@@ -823,7 +820,7 @@ void path_finding(Node n)
 		action.n = ACTION_STOP;
 		actions.push_back(action);
 	}
-	*/
+	 */
 }
 
 
