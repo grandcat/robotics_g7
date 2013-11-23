@@ -80,7 +80,7 @@ const double x_catch_wall = 0.17;
 double x;
 double x_pb;
 double theta_cmd;
-double rotation;
+double x_collision;
 
 // Odometry
 double x_true,y_true,theta_true;

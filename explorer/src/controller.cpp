@@ -86,6 +86,34 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 		else
 		{
+			// Go backward
+			if(current_action.n == ACTION_BACKWARD)
+			{
+				double x_cmd = x - x_cmd_traj;
+				double y_cmd = y;
+
+				dist = x_collision-x-x_backward_dist;
+				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
+				diff_ang = angle(diff_ang);
+
+				speed.V = 5*rho*dist*r;
+				speed.W = -2*r/l*alpha*diff_ang;
+
+				// Done
+				if(dist*dist < x_error*x_error)
+				{
+					actions.pop_front();
+					busy = false;
+
+					// Relaunch EKF
+					Stop_EKF s;
+					s.stop = false;
+					s.rotation_angle = 0;
+					stop_EKF_pub.publish(s);
+				}
+			}
+
+
 			// Rotation
 			if(current_action.n == ACTION_ROTATION)
 			{
@@ -285,12 +313,10 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 
 	// Bumpers
-	//bool s6 = (msg->ch6 > bumper_threshold); // center
-	//bool s7 = (msg->ch7 > bumper_threshold); // right
-	//bool s8 = (msg->ch8 > bumper_threshold); // left
-	bool s6 = false;
-	bool s7 = false;
-	bool s8 = false;
+	bool s6 = (msg->ch6 > bumper_threshold); // right
+	bool s7 = (msg->ch7 > bumper_threshold); // center
+	bool s8 = (msg->ch8 > bumper_threshold); // left
+
 
 	if(actions.empty())
 	{
@@ -317,6 +343,58 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		else
 		{
 			cmpt = 0;
+		}
+
+
+		// Bumpers
+		if(s6)
+		{
+			Action action;
+			x_collision = x;
+
+			action.n = ACTION_BACKWARD;
+			action.parameter1 = x_backward_dist;
+			actions.push_back(action);
+
+			action.n = ACTION_GOTO;
+			action.parameter1 = x_true + 0.05*cos(theta_true) + 0.02*sin(theta_true);
+			action.parameter2 = y_true + 0.05*sin(theta_true) - 0.02*cos(theta_true);
+			actions.push_back(action);
+
+			return;
+		}
+
+		if(s8)
+		{
+			Action action;
+			x_collision = x;
+
+			action.n = ACTION_BACKWARD;
+			action.parameter1 = x_backward_dist;
+			actions.push_back(action);
+
+			action.n = ACTION_GOTO;
+			action.parameter1 = x_true + 0.05*cos(theta_true) - 0.02*sin(theta_true);
+			action.parameter2 = y_true + 0.05*sin(theta_true) + 0.02*cos(theta_true);
+			actions.push_back(action);
+
+			return;
+		}
+
+		if(s7)
+		{
+			Action action;
+
+			action.n = ACTION_BACKWARD;
+			action.parameter1 = x_backward_dist;
+			actions.push_back(action);
+
+			action.n = ACTION_ROTATION;
+			if(s1 < s2){action.parameter1 = -M_PI/2;}
+			else {action.parameter1 = M_PI/2;}
+			actions.push_back(action);
+
+			return;
 		}
 	}
 }
@@ -640,43 +718,43 @@ void path_finding(Node n)
 	// Try 2 ways
 
 	// Up Down
-	bool flag = false;
-	for(int i = 0; i < abs(p.i-p_true.i); i++)
+	bool flag1 = false;
+	for(int i = 1; i < abs(p.i-p_true.i); i++)
 	{
 		if(p.i <= p_true.i)
 		{
 			if(map.at<uchar>(p.i+i,p.j) != 100)
 			{
-				flag = true;
+				flag1 = true;
 			}
 		}
 		else
 		{
 			if(map.at<uchar>(p.i-i,p.j) != 100)
 			{
-				flag = true;
+				flag1 = true;
 			}
 		}
 
 	}
-	for(int j = 0; j < abs(p.j-p_true.j); j++)
+	for(int j = 1; j < abs(p.j-p_true.j); j++)
 	{
 		if(p.j <= p_true.j)
 		{
 			if(map.at<uchar>(p_true.i,p.j+j) != 100)
 			{
-				flag = true;
+				flag1 = true;
 			}
 		}
 		else
 		{
 			if(map.at<uchar>(p_true.i,p.j-j) != 100)
 			{
-				flag = true;
+				flag1 = true;
 			}
 		}
 	}
-	if(!flag)
+	if(!flag1)
 	{
 		Node interm;
 		interm.x = n.x;
@@ -689,43 +767,43 @@ void path_finding(Node n)
 
 
 	// Left Right
-	flag = false;
-	for(int i = 0; i < abs(p.i-p_true.i); i++)
+	bool flag2 = false;
+	for(int i = 1; i < abs(p.i-p_true.i); i++)
 	{
 		if(p.i <= p_true.i)
 		{
 			if(map.at<uchar>(p.i+i,p_true.j) != 100)
 			{
-				flag = true;
+				flag2 = true;
 			}
 		}
 		else
 		{
 			if(map.at<uchar>(p.i-i,p_true.j) != 100)
 			{
-				flag = true;
+				flag2 = true;
 			}
 		}
 
 	}
-	for(int j = 0; j < abs(p.j-p_true.j); j++)
+	for(int j = 1; j < abs(p.j-p_true.j); j++)
 	{
 		if(p.j <= p_true.j)
 		{
 			if(map.at<uchar>(p.i,p.j+j) != 100)
 			{
-				flag = true;
+				flag2 = true;
 			}
 		}
 		else
 		{
 			if(map.at<uchar>(p.i,p.j-j) != 100)
 			{
-				flag = true;
+				flag2 = true;
 			}
 		}
 	}
-	if(!flag)
+	if(!flag2)
 	{
 		Node interm;
 		interm.x = x_true;
@@ -735,6 +813,17 @@ void path_finding(Node n)
 
 		goto_node(n);
 	}
+
+
+	/*
+	// No path
+	if(flag1 & flag2)
+	{
+		Action action;
+		action.n = ACTION_STOP;
+		actions.push_back(action);
+	}
+	*/
 }
 
 
