@@ -28,7 +28,8 @@ enum EACTIONS {
 	ACTION_ROTATION,
 	ACTION_STOP,
 	ACTION_GOTO,
-	ACTION_GOTO_EKF_WALL,
+	ACTION_GOTO_FORWARD,
+	ACTION_GOTO_ROTATION,
 };
 
 struct Action
@@ -43,6 +44,11 @@ struct Action
 struct Node
 {
 	double x,y;
+};
+
+struct Pixel
+{
+	int i,j;
 };
 
 
@@ -80,8 +86,9 @@ double rotation;
 double x_true,y_true,theta_true;
 
 // Errors
-const double x_error = 0.02; //0.01
+const double x_error = 0.01;
 const double theta_error = 2;
+const double dist_error = 0.03;
 
 // Actions sequence
 bool busy = false;
@@ -142,6 +149,8 @@ Node find_closest_node(std::list<Node> list);
 void path_finding(Node node);
 
 bool visited_area();
+
+Pixel nodeToPixel(Node node);
 
 void goto_node(Node node);
 

@@ -51,9 +51,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	y_wall = msg->y_wall;
 
 
-	// Visited area check
-
-
 	// Wall follower
 	if(actions.empty())
 	{
@@ -157,7 +154,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
 
 					speed.V = 0;
-					speed.W = -2*r/l*alpha*diff_ang/4;
+					speed.W = -2*r/l*alpha*diff_ang/4*2;
 				}
 				else
 				{
@@ -184,9 +181,88 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					}
 				}
 			}
+
+
+			// Rotate without correction
+			if(current_action.n == ACTION_GOTO_ROTATION)
+			{
+				double x_cmd = current_action.parameter1;
+				double y_cmd = current_action.parameter2;
+
+				diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
+				if((x_cmd-x_true) < 0)
+				{
+					if((y_cmd-y_true) > 0)
+					{
+						diff_ang += M_PI;
+					}
+					else
+					{
+						diff_ang -= M_PI;
+					}
+				}
+				diff_ang = angle(diff_ang);
+
+
+				// Rotation saturation
+				if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
+				if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
+
+				speed.V = 0;
+				speed.W = -2*r/l*alpha*diff_ang/4*2;
+
+
+				// Done
+				if(fabs(diff_ang) > M_PI/180*theta_error)
+				{
+					actions.pop_front();
+					busy = false;
+
+					// Relaunch EKF
+					Stop_EKF s;
+					s.stop = false;
+					s.rotation_angle = 0;
+					stop_EKF_pub.publish(s);
+				}
+			}
+
+
+			// Forward with correction
+			if(current_action.n == ACTION_GOTO_FORWARD)
+			{
+				double x_cmd = current_action.parameter1;
+				double y_cmd = current_action.parameter2;
+
+				dist = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
+
+
+				// Saturations
+				if(dist > x_cmd_traj)
+				{
+					dist = x_cmd_traj;
+				}
+				if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
+				if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
+
+
+				speed.V = rho*dist*r;
+				speed.W = -2*r/l*alpha*diff_ang;
+
+
+				if(dist < dist_error)
+				{
+					actions.pop_front();
+					busy = false;
+
+					// Relaunch EKF
+					Stop_EKF s;
+					s.stop = false;
+					s.rotation_angle = 0;
+					stop_EKF_pub.publish(s);
+				}
+			}
 		}
 	}
-
 
 	speed_pub.publish(speed);
 }
@@ -227,7 +303,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 				Action action;
 				action.n = ACTION_ROTATION;
-				action.parameter1 = -M_PI/2;
+				if(s1 < s2){action.parameter1 = -M_PI/2;}
+				else {action.parameter1 = M_PI/2;}
 				actions.push_back(action);
 
 				//printf("Front wall\n");
@@ -301,12 +378,9 @@ void update_map(double s1, double s2)
 
 	// Check visited area
 	visited_flag = visited_area();
-	//if(visited_flag) {printf("Already visited!\n");}
 	if(visited_flag & actions.empty())
 	{
-		Action action;
-		action.n = ACTION_STOP;
-		actions.push_back(action);
+		path_finding(find_closest_node(toDiscover));
 	}
 
 
@@ -378,14 +452,14 @@ void merge_areas()
 
 
 	int sz = 5;
-	for(int i = 0; i < height-sz; i++)
+	for(int i = 0; i < (height-sz); i++)
 	{
-		for(int j = 0; j < width-sz; j++)
+		for(int j = 0; j < (width-sz); j++)
 		{
-			if(map.at<uchar>(height-i-1,j) == 100 &
-					map.at<uchar>(height-i-sz-1,j) == 100 &
-					map.at<uchar>(height-i-1,j+sz) == 100 &
-					map.at<uchar>(height-i-sz-1,j+sz) == 100)
+			if((map.at<uchar>(height-i-1,j) == 100) &
+					(map.at<uchar>(height-i-sz-1,j) == 100) &
+					(map.at<uchar>(height-i-1,j+sz) == 100) &
+					(map.at<uchar>(height-i-sz-1,j+sz) == 100))
 			{
 				bool flag = false;
 				for(int n = 0; n < sz; n++)
@@ -441,7 +515,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(height-i-1-1,j+sz1-2) = 200;
+				map.at<uchar>(height-i-1-1,j+sz1-1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -470,7 +544,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(height-i-1-1,j+2) = 200;
+				map.at<uchar>(height-i-1-1,j+1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -499,7 +573,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+2,height-i-1-1) = 200;
+				map.at<uchar>(j+1,height-i-1-1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -528,7 +602,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+sz1-2,height-i-1-1) = 200;
+				map.at<uchar>(j+sz1-1,height-i-1-1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -553,9 +627,127 @@ bool visited_area()
 }
 
 
-void path_finding()
+void path_finding(Node n)
 {
+	Node n_true;
+	n_true.x = x_true;
+	n_true.y = y_true;
 
+	Pixel p_true = nodeToPixel(n_true);
+	Pixel p = nodeToPixel(n);
+
+
+	// Try 2 ways
+
+	// Up Down
+	bool flag = false;
+	for(int i = 0; i < abs(p.i-p_true.i); i++)
+	{
+		if(p.i <= p_true.i)
+		{
+			if(map.at<uchar>(p.i+i,p.j) != 100)
+			{
+				flag = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p.i-i,p.j) != 100)
+			{
+				flag = true;
+			}
+		}
+
+	}
+	for(int j = 0; j < abs(p.j-p_true.j); j++)
+	{
+		if(p.j <= p_true.j)
+		{
+			if(map.at<uchar>(p_true.i,p.j+j) != 100)
+			{
+				flag = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p_true.i,p.j-j) != 100)
+			{
+				flag = true;
+			}
+		}
+	}
+	if(!flag)
+	{
+		Node interm;
+		interm.x = n.x;
+		interm.y = y_true;
+
+		goto_node(interm);
+
+		goto_node(n);
+	}
+
+
+	// Left Right
+	flag = false;
+	for(int i = 0; i < abs(p.i-p_true.i); i++)
+	{
+		if(p.i <= p_true.i)
+		{
+			if(map.at<uchar>(p.i+i,p_true.j) != 100)
+			{
+				flag = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p.i-i,p_true.j) != 100)
+			{
+				flag = true;
+			}
+		}
+
+	}
+	for(int j = 0; j < abs(p.j-p_true.j); j++)
+	{
+		if(p.j <= p_true.j)
+		{
+			if(map.at<uchar>(p.i,p.j+j) != 100)
+			{
+				flag = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p.i,p.j-j) != 100)
+			{
+				flag = true;
+			}
+		}
+	}
+	if(!flag)
+	{
+		Node interm;
+		interm.x = x_true;
+		interm.y = n.y;
+
+		goto_node(interm);
+
+		goto_node(n);
+	}
+}
+
+
+Pixel nodeToPixel(Node node)
+{
+	int px = (node.x-origin_x+0.2*cos(theta_true))/resolution;
+	int py = (node.y-origin_y+0.2*sin(theta_true))/resolution;
+
+	Pixel pixel;
+	pixel.i = width-py-1;
+	pixel.j = px;
+
+	return pixel;
 }
 
 
@@ -563,7 +755,12 @@ void goto_node(Node node)
 {
 	Action action;
 
-	action.n = ACTION_GOTO;
+	action.n = ACTION_GOTO_ROTATION;
+	action.parameter1 = node.x;
+	action.parameter2 = node.y;
+	actions.push_back(action);
+
+	action.n = ACTION_GOTO_FORWARD;
 	action.parameter1 = node.x;
 	action.parameter2 = node.y;
 	actions.push_back(action);
