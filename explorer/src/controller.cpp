@@ -314,6 +314,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	bool s7 = (msg->ch7 > bumper_threshold); // center
 	bool s8 = (msg->ch8 > bumper_threshold); // left
 
+	s6 = s7 = s8 = false;
+
 
 	if(actions.empty())
 	{
@@ -874,6 +876,8 @@ void goto_node(Node node)
 	action.parameter1 = node.x;
 	action.parameter2 = node.y;
 	actions.push_back(action);
+
+	printf("Goto node: x = %f, y = %f",node.x,node.y);
 }
 
 
