@@ -824,6 +824,13 @@ void path_finding(Node n)
 }
 
 
+std::list<Action> path(Node n1, Node n2)
+{
+	std::list<Action> list;
+	return list;
+}
+
+
 Pixel nodeToPixel(Node node)
 {
 	int px = (node.x-origin_x+0.2*cos(theta_true))/resolution;
@@ -841,9 +848,26 @@ void goto_node(Node node)
 {
 	Action action;
 
-	action.n = ACTION_GOTO_ROTATION;
-	action.parameter1 = node.x;
-	action.parameter2 = node.y;
+	double x_cmd = node.x;
+	double y_cmd = node.y;
+
+	double diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
+	if((x_cmd-x_true) < 0)
+	{
+		if((y_cmd-y_true) > 0)
+		{
+			diff_ang += M_PI;
+		}
+		else
+		{
+			diff_ang -= M_PI;
+		}
+	}
+	diff_ang = angle(diff_ang);
+	diff_ang = diff_ang - nPi2(diff_ang)*(M_PI/2);
+
+	action.n = ACTION_ROTATION;
+	action.parameter1 = diff_ang;
 	actions.push_back(action);
 
 	action.n = ACTION_GOTO_FORWARD;
@@ -945,6 +969,33 @@ double angle(double theta)
 	}
 
 	return theta;
+}
+
+
+int nPi2(double theta)
+{
+	int res = 0;
+	double th = theta;
+
+	if(theta > 0)
+	{
+		while(th > 0)
+		{
+			th = th - M_PI/4;
+			res++;
+		}
+	}
+
+	if(theta < 0)
+	{
+		while(th < 0)
+		{
+			th = th + M_PI/4;
+			res--;
+		}
+	}
+
+	return res/2;
 }
 
 

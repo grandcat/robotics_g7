@@ -158,5 +158,7 @@ void goto_node(Node node);
 // Angle between ]-pi,pi]
 double angle(double theta);
 
+int nPi2(double theta);
+
 
 #endif /* CONTROLLER_H_ */
