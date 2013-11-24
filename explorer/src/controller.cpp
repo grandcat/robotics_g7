@@ -235,6 +235,16 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				diff_ang = angle(diff_ang);
 
 
+				// Init
+				static double rotation;
+				static bool flag;
+				if(!flag)
+				{
+					 rotation = nPi2(diff_ang)*(M_PI/2);
+					 flag = true;
+				}
+
+
 				// Rotation saturation
 				if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
 				if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
@@ -252,8 +262,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					// Relaunch EKF
 					Stop_EKF s;
 					s.stop = false;
-					s.rotation_angle = 0;
+					s.rotation_angle = rotation;
 					stop_EKF_pub.publish(s);
+
+					flag = false;
 				}
 			}
 
@@ -749,6 +761,8 @@ void path_finding(Node n)
 		goto_node(interm);
 
 		goto_node(n);
+
+		return;
 	}
 
 
@@ -798,6 +812,8 @@ void path_finding(Node n)
 		goto_node(interm);
 
 		goto_node(n);
+
+		return;
 	}
 
 
@@ -835,30 +851,11 @@ Pixel nodeToPixel(Node node)
 
 void goto_node(Node node)
 {
-	printf("Position: x = %f, y = %f\n",x_true,y_true);
-
 	Action action;
 
-	double x_cmd = node.x;
-	double y_cmd = node.y;
-
-	double diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
-	if((x_cmd-x_true) < 0)
-	{
-		if((y_cmd-y_true) > 0)
-		{
-			diff_ang += M_PI;
-		}
-		else
-		{
-			diff_ang -= M_PI;
-		}
-	}
-	diff_ang = angle(diff_ang);
-	diff_ang = nPi2(diff_ang)*(M_PI/2);
-
-	action.n = ACTION_ROTATION;
-	action.parameter1 = diff_ang;
+	action.n = ACTION_GOTO_ROTATION;
+	action.parameter1 = node.x;
+	action.parameter2 = node.y;
 	actions.push_back(action);
 
 	action.n = ACTION_GOTO_FORWARD;
