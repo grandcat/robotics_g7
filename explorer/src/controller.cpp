@@ -401,28 +401,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 void update_map(double s1, double s2)
 {
-	// Sensors - Wall
-	if(s1 < 0.3)
-	{
-		int wx = ((x_true+x_s1*cos(theta_true)-y_s1*sin(theta_true)-s1*sin(theta_true))-origin_x)/resolution;
-		int wy = ((y_true+x_s1*sin(theta_true)+y_s1*cos(theta_true)+s1*cos(theta_true))-origin_y)/resolution;
-		if((wy*width+wx >= 0) | (wy*width+wx < width*height))
-		{
-			robot_map.at<uchar>(width-wy-1,wx) = 255;
-		}
-	}
-
-	if(s2 < 0.3)
-	{
-		int wx = ((x_true+x_s2*cos(theta_true)-y_s2*sin(theta_true)+s2*sin(theta_true))-origin_x)/resolution;
-		int wy = ((y_true+x_s2*sin(theta_true)+y_s2*cos(theta_true)-s2*cos(theta_true))-origin_y)/resolution;
-		if((wy*width+wx >= 0) | (wy*width+wx < width*height))
-		{
-			robot_map.at<uchar>(width-wy-1,wx) = 255;
-		}
-	}
-
-
 	// Robot
 	int rx = (x_true-origin_x)/resolution;
 	int ry = (y_true-origin_y)/resolution;
@@ -437,6 +415,27 @@ void update_map(double s1, double s2)
 		}
 	}
 
+	// Sensors - Wall
+	if(s1 < 0.3)
+	{
+		int wx = ((x_true+x_s1*cos(theta_true)-y_s1*sin(theta_true)-s1*sin(theta_true))-origin_x)/resolution;
+		int wy = ((y_true+x_s1*sin(theta_true)+y_s1*cos(theta_true)+s1*cos(theta_true))-origin_y)/resolution;
+		if((wy*width+wx >= 0) | (wy*width+wx < width*height))
+		{
+			wall_map.at<uchar>(width-wy-1,wx) = 255;
+		}
+	}
+
+	if(s2 < 0.3)
+	{
+		int wx = ((x_true+x_s2*cos(theta_true)-y_s2*sin(theta_true)+s2*sin(theta_true))-origin_x)/resolution;
+		int wy = ((y_true+x_s2*sin(theta_true)+y_s2*cos(theta_true)-s2*cos(theta_true))-origin_y)/resolution;
+		if((wy*width+wx >= 0) | (wy*width+wx < width*height))
+		{
+			wall_map.at<uchar>(width-wy-1,wx) = 255;
+		}
+	}
+
 
 	map = Mat::zeros(height,width,CV_8UC1);
 
@@ -447,6 +446,9 @@ void update_map(double s1, double s2)
 
 	// Robot path processing
 	merge_areas();
+
+
+	// Explore
 	interesting_nodes();
 
 
@@ -457,7 +459,8 @@ void update_map(double s1, double s2)
 	visited_flag = visited_area();
 	if(visited_flag & actions.empty())
 	{
-		path_finding(find_node(toDiscover));
+		printf("Already visited !\n");
+		path_finding(find_closest_node(toDiscover));
 	}
 
 
@@ -470,19 +473,6 @@ void update_map(double s1, double s2)
 
 void Hough()
 {
-	Mat wall_map = Mat::zeros(height,width,CV_8UC1);
-	for(int i = 0; i < height; i++)
-	{
-		for(int j = 0; j < width; j++)
-		{
-			if(robot_map.at<uchar>(i,j) == 255)
-			{
-				wall_map.at<uchar>(i,j) = 255;
-			}
-		}
-	}
-
-
 	vector<Vec2f> lines;
 	HoughLines(wall_map, lines, 1, 90*CV_PI/180, 10, 0, 0 );
 
@@ -520,7 +510,7 @@ void merge_areas()
 	{
 		for(int j = 0; j < width; j++)
 		{
-			if(robot_map.at<uchar>(i,j) == 100)
+			if((robot_map.at<uchar>(i,j) == 100) & (map.at<uchar>(i,j) == 0))
 			{
 				map.at<uchar>(i,j) = 100;
 			}
@@ -533,17 +523,17 @@ void merge_areas()
 	{
 		for(int j = 0; j < (width-sz); j++)
 		{
-			if((map.at<uchar>(height-i-1,j) == 100) &
-					(map.at<uchar>(height-i-sz-1,j) == 100) &
-					(map.at<uchar>(height-i-1,j+sz) == 100) &
-					(map.at<uchar>(height-i-sz-1,j+sz) == 100))
+			if((map.at<uchar>(i,j) == 100) &
+					(map.at<uchar>(i+sz-1,j) == 100) &
+					(map.at<uchar>(i,j+sz-1) == 100) &
+					(map.at<uchar>(i+sz-1,j+sz-1) == 100))
 			{
 				bool flag = false;
 				for(int n = 0; n < sz; n++)
 				{
 					for(int m = 0; m < sz; m++)
 					{
-						if(map.at<uchar>(height-i-n-1,j+m) == 255)
+						if(map.at<uchar>(i+n,j+m) == 255)
 						{
 							flag = true;
 						}
@@ -555,7 +545,7 @@ void merge_areas()
 					{
 						for(int m = 0; m < sz; m++)
 						{
-							map.at<uchar>(height-i-n-1,j+m) = 100;
+							map.at<uchar>(i+n,j+m) = 100;
 						}
 					}
 				}
@@ -580,20 +570,20 @@ void interesting_nodes()
 			{
 				for(int m = 0; m < sz1-1; m++)
 				{
-					if(map.at<uchar>(height-i-n-1,j+m) != 0)
+					if(map.at<uchar>(i+n,j+m) != 0)
 					{
 						flag = true;
 					}
 				}
-				if(map.at<uchar>(height-i-n-1,j+sz1) != 100)
+				if(map.at<uchar>(i+n,j+sz1-1) != 100)
 				{
 					flag = true;
 				}
 			}
 			if(!flag)
 			{
-				map.at<uchar>(height-i-2-1,j+sz1-1) = 200;
-				create_interesting_node(i,j);
+				map.at<uchar>(i+2,j+sz1-2) = 200;
+				create_interesting_node(i+2,j+sz1-2);
 			}
 		}
 	}
@@ -609,20 +599,20 @@ void interesting_nodes()
 			{
 				for(int m = 1; m < sz1; m++)
 				{
-					if(map.at<uchar>(height-i-n-1,j+m) != 0)
+					if(map.at<uchar>(i+n,j+m) != 0)
 					{
 						flag = true;
 					}
 				}
-				if(map.at<uchar>(height-i-n-1,j) != 100)
+				if(map.at<uchar>(i+n,j) != 100)
 				{
 					flag = true;
 				}
 			}
 			if(!flag)
 			{
-				map.at<uchar>(height-i-2-1,j+1) = 200;
-				create_interesting_node(i,j);
+				map.at<uchar>(i+2,j+1) = 200;
+				create_interesting_node(i+2,j+1);
 			}
 		}
 	}
@@ -638,20 +628,20 @@ void interesting_nodes()
 			{
 				for(int m = 1; m < sz1; m++)
 				{
-					if(map.at<uchar>(j+m,height-i-n-1) != 0)
+					if(map.at<uchar>(j+m,i+n) != 0)
 					{
 						flag = true;
 					}
 				}
-				if(map.at<uchar>(j,height-i-n-1) != 100)
+				if(map.at<uchar>(j,i+n) != 100)
 				{
 					flag = true;
 				}
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+1,height-i-2-1) = 200;
-				create_interesting_node(i,j);
+				map.at<uchar>(j+1,i+2) = 200;
+				create_interesting_node(j+1,i+2);
 			}
 		}
 	}
@@ -667,20 +657,20 @@ void interesting_nodes()
 			{
 				for(int m = 0; m < sz1-1; m++)
 				{
-					if(map.at<uchar>(j+m,height-i-n-1) != 0)
+					if(map.at<uchar>(j+m,i+n) != 0)
 					{
 						flag = true;
 					}
 				}
-				if(map.at<uchar>(j+sz1,height-i-n-1) != 100)
+				if(map.at<uchar>(j+sz1-1,i+n) != 100)
 				{
 					flag = true;
 				}
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+sz1-1,height-i-2-1) = 200;
-				create_interesting_node(i,j);
+				map.at<uchar>(j+sz1-2,i+2) = 200;
+				create_interesting_node(j+sz1-2,i+2);
 			}
 		}
 	}
@@ -692,12 +682,9 @@ bool visited_area()
 	int rx = (x_true-origin_x+0.2*cos(theta_true))/resolution;
 	int ry = (y_true-origin_y+0.2*sin(theta_true))/resolution;
 
-	if((ry*width+rx >= 0) | (ry*width+rx < width*height))
+	if(proc_map.at<uchar>(height-ry-1,rx) == 100)
 	{
-		if(proc_map.at<uchar>(width-ry-1,rx) == 100)
-		{
-			return true;
-		}
+		return true;
 	}
 
 	return false;
@@ -827,19 +814,19 @@ void path_finding(Node n)
 
 
 std::list<Action> path(Node n1, Node n2)
-{
+		{
 	std::list<Action> list;
 	return list;
-}
+		}
 
 
 Pixel nodeToPixel(Node node)
 {
-	int px = (node.x-origin_x+0.2*cos(theta_true))/resolution;
-	int py = (node.y-origin_y+0.2*sin(theta_true))/resolution;
+	int px = (node.x-origin_x)/resolution;
+	int py = (node.y-origin_y)/resolution;
 
 	Pixel pixel;
-	pixel.i = width-py-1;
+	pixel.i = height-py-1;
 	pixel.j = px;
 
 	return pixel;
@@ -910,22 +897,25 @@ void create_interesting_node(int i,int j)
 {
 	Node node;
 
-	node.x = (j+sz1-2)*resolution+origin_x;
-	node.y = (i+1)*resolution+origin_y;
+	node.x = j*resolution+origin_x;
+	node.y = (height-i-1)*resolution+origin_y;
 	toDiscover.push_back(node);
+
+	//Pixel pixel = nodeToPixel(node);
+	//printf("pi = %d, pj = %d, i = %d, j = %d\n",pixel.i,pixel.j,i,j);
 
 	// Debug
 	//printf("New interesting node:  x = %f, y = %f\n",node.x,node.y);
 }
 
 
-Node find_node(std::list<Node> list)
+Node find_closest_node(std::list<Node> list)
 {
 	Node node;
 	node.x = 0;
 	node.y = 0;
 
-	double dist = 0;
+	double dist = INFINITY;
 
 	if(!list.empty())
 	{
@@ -934,7 +924,7 @@ Node find_node(std::list<Node> list)
 			Node n = list.back();
 			list.pop_back();
 			double d = sqrt((n.x-x_true)*(n.x-x_true)+(n.y-y_true)*(n.y-y_true));
-			if(d >= dist)
+			if(d < dist)
 			{
 				node.x = n.x;
 				node.y = n.y;
@@ -943,7 +933,7 @@ Node find_node(std::list<Node> list)
 		}
 	}
 
-	printf("Node found: x = %f, y = %f\n",node.x,node.y);
+	//printf("Node found: x = %f, y = %f\n",node.x,node.y);
 
 	return node;
 }
@@ -1022,6 +1012,7 @@ int main(int argc, char** argv)
 
 	proc_map = Mat::zeros(height,width,CV_8UC1);
 	robot_map = Mat::zeros(height,width,CV_8UC1);
+	wall_map = Mat::zeros(height,width,CV_8UC1);
 
 
 	create_node(0,0);

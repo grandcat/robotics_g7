@@ -106,7 +106,7 @@ double s1,s2;
 std::list<Node> discrete_map;
 std::list<Node> toDiscover;
 
-Mat proc_map, robot_map, map;
+Mat proc_map, robot_map, wall_map, map;
 const int origin_x = -4;
 const int origin_y = -4;
 const int height = 200;
@@ -144,7 +144,7 @@ void create_interesting_node(int i,int j);
 
 void interesting_node();
 
-Node find_node(std::list<Node> list);
+Node find_closest_node(std::list<Node> list);
 
 void path_finding(Node node);
 
