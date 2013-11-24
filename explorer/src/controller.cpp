@@ -457,7 +457,7 @@ void update_map(double s1, double s2)
 	visited_flag = visited_area();
 	if(visited_flag & actions.empty())
 	{
-		path_finding(find_closest_node(toDiscover));
+		path_finding(find_node(toDiscover));
 	}
 
 
@@ -592,7 +592,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(height-i-1-1,j+sz1-1) = 200;
+				map.at<uchar>(height-i-2-1,j+sz1-1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -621,7 +621,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(height-i-1-1,j+1) = 200;
+				map.at<uchar>(height-i-2-1,j+1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -650,7 +650,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+1,height-i-1-1) = 200;
+				map.at<uchar>(j+1,height-i-2-1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -679,7 +679,7 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+sz1-1,height-i-1-1) = 200;
+				map.at<uchar>(j+sz1-1,height-i-2-1) = 200;
 				create_interesting_node(i,j);
 			}
 		}
@@ -848,6 +848,8 @@ Pixel nodeToPixel(Node node)
 
 void goto_node(Node node)
 {
+	printf("Position: x = %f, y = %f\n",x_true,y_true);
+
 	Action action;
 
 	double x_cmd = node.x;
@@ -866,7 +868,7 @@ void goto_node(Node node)
 		}
 	}
 	diff_ang = angle(diff_ang);
-	diff_ang = diff_ang - nPi2(diff_ang)*(M_PI/2);
+	diff_ang = nPi2(diff_ang)*(M_PI/2);
 
 	action.n = ACTION_ROTATION;
 	action.parameter1 = diff_ang;
@@ -877,7 +879,7 @@ void goto_node(Node node)
 	action.parameter2 = node.y;
 	actions.push_back(action);
 
-	printf("Goto node: x = %f, y = %f",node.x,node.y);
+	printf("Goto node: x = %f, y = %f\n",node.x,node.y);
 }
 
 
@@ -917,13 +919,13 @@ void create_interesting_node(int i,int j)
 }
 
 
-Node find_closest_node(std::list<Node> list)
+Node find_node(std::list<Node> list)
 {
 	Node node;
 	node.x = 0;
 	node.y = 0;
 
-	double dist = INFINITY;
+	double dist = 0;
 
 	if(!list.empty())
 	{
@@ -932,7 +934,7 @@ Node find_closest_node(std::list<Node> list)
 			Node n = list.back();
 			list.pop_back();
 			double d = sqrt((n.x-x_true)*(n.x-x_true)+(n.y-y_true)*(n.y-y_true));
-			if(d < dist)
+			if(d >= dist)
 			{
 				node.x = n.x;
 				node.y = n.y;
@@ -940,6 +942,8 @@ Node find_closest_node(std::list<Node> list)
 			}
 		}
 	}
+
+	printf("Node found: x = %f, y = %f\n",node.x,node.y);
 
 	return node;
 }

@@ -114,7 +114,7 @@ const int width = 200;
 const double resolution = 0.04;
 
 const int sz1 = 5;
-const int sz2 = 3;
+const int sz2 = 5;
 
 bool visited_flag = false;
 
@@ -144,7 +144,7 @@ void create_interesting_node(int i,int j);
 
 void interesting_node();
 
-Node find_closest_node(std::list<Node> list);
+Node find_node(std::list<Node> list);
 
 void path_finding(Node node);
 
