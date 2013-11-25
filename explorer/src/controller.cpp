@@ -471,7 +471,7 @@ void update_map(double s1, double s2)
 	visited_flag = visited_area();
 	if(visited_flag & actions.empty())
 	{
-		printf("Already visited !\n");
+		//printf("Already visited !\n");
 		path_finding(find_closest_node(toDiscover));
 	}
 
