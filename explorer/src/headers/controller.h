@@ -44,6 +44,7 @@ struct Action
 struct Node
 {
 	double x,y;
+	std::list<Node> connectedTo;
 };
 
 struct Pixel
@@ -150,7 +151,11 @@ void path_finding(Node node);
 
 bool visited_area();
 
+void update_nodes_list(Node node);
+
 Pixel nodeToPixel(Node node);
+
+Node pixelToNode(Pixel pixel);
 
 void goto_node(Node node);
 

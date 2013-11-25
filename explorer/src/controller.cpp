@@ -849,6 +849,21 @@ Pixel nodeToPixel(Node node)
 }
 
 
+Node pixelToNode(Pixel pixel)
+{
+	Node node;
+	node.x = pixel.j*resolution+origin_x;
+	node.y = (height-pixel.i-1)*resolution+origin_y;
+	return node;
+}
+
+
+void update_nodes_list(Node node)
+{
+
+}
+
+
 void goto_node(Node node)
 {
 	Action action;
