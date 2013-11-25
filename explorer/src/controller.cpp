@@ -472,7 +472,8 @@ void update_map(double s1, double s2)
 	if(visited_flag & actions.empty())
 	{
 		//printf("Already visited !\n");
-		path_finding(find_closest_node(toDiscover));
+		std::list<Node> list = std::list<Node>(toDiscover);
+		path_finding(find_closest_node(list));
 	}
 
 
@@ -831,8 +832,22 @@ void path_finding(Node n)
 
 std::list<Action> path(Node n1, Node n2)
 {
-	std::list<Action> list;
-	return list;
+	std::list<Action> path;
+	std::list<Node> list = std::list<Node>(discrete_map);
+
+	if(!list.empty())
+	{
+		for(int i = 0; i < list.size(); i++)
+		{
+			Node n = list.back();
+			list.pop_back();
+
+
+
+		}
+	}
+
+	return path;
 }
 
 
@@ -860,7 +875,7 @@ Node pixelToNode(Pixel pixel)
 
 void update_nodes_list(Node node)
 {
-	std::list<Node> list = discrete_map;
+	std::list<Node> list = std::list<Node>(discrete_map);
 	if(!list.empty())
 	{
 		for(int i = 0; i < list.size(); i++)
@@ -1068,7 +1083,14 @@ void receive_object(const Object::ConstPtr &msg)
 {
 	double x_object = x_true + cos(theta_true);
 	double y_object = y_true + sin(theta_true);
+
+	Node node;
+	node.x = x_object;
+	node.y = y_object;
+	Pixel pixel = nodeToPixel(node);
+
 	printf("x_object = %f, y_object = %f\n",x_object,y_object);
+	printf("i = %d, j = %d\n",pixel.i,pixel.j);
 }
 
 
