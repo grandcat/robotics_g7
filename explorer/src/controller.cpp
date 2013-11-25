@@ -240,8 +240,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				static bool flag;
 				if(!flag)
 				{
-					 rotation = nPi2(diff_ang)*(M_PI/2);
-					 flag = true;
+					rotation = nPi2(diff_ang)*(M_PI/2);
+					flag = true;
 				}
 
 
@@ -830,10 +830,10 @@ void path_finding(Node n)
 
 
 std::list<Action> path(Node n1, Node n2)
-		{
+{
 	std::list<Action> list;
 	return list;
-		}
+}
 
 
 Pixel nodeToPixel(Node node)
@@ -860,7 +860,116 @@ Node pixelToNode(Pixel pixel)
 
 void update_nodes_list(Node node)
 {
+	std::list<Node> list = discrete_map;
+	if(!list.empty())
+	{
+		for(int i = 0; i < list.size(); i++)
+		{
+			Node n = list.back();
+			list.pop_back();
+			if(isPath(n,node))
+			{
+				n.connectedTo.push_back(node);
+			}
+		}
+	}
+}
 
+
+bool isPath(Node n1, Node n2)
+{
+	Pixel p1 = nodeToPixel(n1);
+	Pixel p2 = nodeToPixel(n2);
+
+
+	// Try 2 ways
+
+	// Up Down
+	bool flag1 = false;
+	for(int i = 1; i < abs(p1.i-p2.i); i++)
+	{
+		if(p1.i <= p2.i)
+		{
+			if(map.at<uchar>(p1.i+i,p1.j) != 100)
+			{
+				flag1 = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p1.i-i,p1.j) != 100)
+			{
+				flag1 = true;
+			}
+		}
+
+	}
+	for(int j = 1; j < abs(p1.j-p2.j); j++)
+	{
+		if(p1.j <= p2.j)
+		{
+			if(map.at<uchar>(p2.i,p1.j+j) != 100)
+			{
+				flag1 = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p2.i,p1.j-j) != 100)
+			{
+				flag1 = true;
+			}
+		}
+	}
+	if(!flag1)
+	{
+		return true;
+	}
+
+
+	// Left Right
+	bool flag2 = false;
+	for(int i = 1; i < abs(p1.i-p2.i); i++)
+	{
+		if(p1.i <= p2.i)
+		{
+			if(map.at<uchar>(p1.i+i,p2.j) != 100)
+			{
+				flag2 = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p1.i-i,p2.j) != 100)
+			{
+				flag2 = true;
+			}
+		}
+
+	}
+	for(int j = 1; j < abs(p1.j-p2.j); j++)
+	{
+		if(p1.j <= p2.j)
+		{
+			if(map.at<uchar>(p1.i,p1.j+j) != 100)
+			{
+				flag2 = true;
+			}
+		}
+		else
+		{
+			if(map.at<uchar>(p1.i,p1.j-j) != 100)
+			{
+				flag2 = true;
+			}
+		}
+	}
+	if(!flag2)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -898,6 +1007,9 @@ void create_node(double x, double y)
 	n.x = x;
 	n.y = y;
 
+	// Update nodes list
+	update_nodes_list(n);
+
 	discrete_map.push_back(n);
 
 	// Debug
@@ -911,6 +1023,7 @@ void create_interesting_node(int i,int j)
 
 	node.x = j*resolution+origin_x;
 	node.y = (height-i-1)*resolution+origin_y;
+
 	toDiscover.push_back(node);
 
 	//Pixel pixel = nodeToPixel(node);

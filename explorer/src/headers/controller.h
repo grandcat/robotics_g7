@@ -153,6 +153,8 @@ bool visited_area();
 
 void update_nodes_list(Node node);
 
+bool isPath(Node n1, Node n2);
+
 Pixel nodeToPixel(Node node);
 
 Node pixelToNode(Pixel pixel);
