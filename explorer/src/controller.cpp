@@ -472,8 +472,7 @@ void update_map(double s1, double s2)
 	if(visited_flag & actions.empty())
 	{
 		//printf("Already visited !\n");
-		std::list<Node> list = std::list<Node>(toDiscover);
-		path_finding(find_closest_node(list));
+		path_finding(find_closest_node(toDiscover));
 	}
 
 
@@ -833,19 +832,28 @@ void path_finding(Node n)
 std::list<Action> path(Node n1, Node n2)
 {
 	std::list<Action> path;
-	std::list<Node> list = std::list<Node>(discrete_map);
+	std::vector<Node> begin,end;
 
-	if(!list.empty())
+
+	for(int i = 0; i < discrete_map.size(); i++)
 	{
-		for(int i = 0; i < list.size(); i++)
+		Node n = discrete_map.at(i);
+
+		if(isPath(n1,n))
 		{
-			Node n = list.back();
-			list.pop_back();
+			begin.push_back(n);
+		}
 
-
-
+		if(isPath(n2,n))
+		{
+			end.push_back(n);
 		}
 	}
+
+
+	// DFS
+
+
 
 	return path;
 }
@@ -875,17 +883,12 @@ Node pixelToNode(Pixel pixel)
 
 void update_nodes_list(Node node)
 {
-	std::list<Node> list = std::list<Node>(discrete_map);
-	if(!list.empty())
+	for(int i = 0; i < discrete_map.size(); i++)
 	{
-		for(int i = 0; i < list.size(); i++)
+		Node n = discrete_map.at(i);
+		if(isPath(n,node))
 		{
-			Node n = list.back();
-			list.pop_back();
-			if(isPath(n,node))
-			{
-				n.connectedTo.push_back(node);
-			}
+			n.connectedTo.push_back(node);
 		}
 	}
 }
@@ -1049,7 +1052,7 @@ void create_interesting_node(int i,int j)
 }
 
 
-Node find_closest_node(std::list<Node> list)
+Node find_closest_node(std::vector<Node> vector)
 {
 	Node node;
 	node.x = 0;
@@ -1057,19 +1060,15 @@ Node find_closest_node(std::list<Node> list)
 
 	double dist = INFINITY;
 
-	if(!list.empty())
+	for(int i = 0; i < vector.size(); i++)
 	{
-		for(int i = 0; i < list.size(); i++)
+		Node n = vector.at(i);
+		double d = sqrt((n.x-x_true)*(n.x-x_true)+(n.y-y_true)*(n.y-y_true));
+		if(d < dist)
 		{
-			Node n = list.back();
-			list.pop_back();
-			double d = sqrt((n.x-x_true)*(n.x-x_true)+(n.y-y_true)*(n.y-y_true));
-			if(d < dist)
-			{
-				node.x = n.x;
-				node.y = n.y;
-				dist = d;
-			}
+			node.x = n.x;
+			node.y = n.y;
+			dist = d;
 		}
 	}
 

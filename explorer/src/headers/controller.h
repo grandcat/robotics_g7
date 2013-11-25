@@ -44,7 +44,7 @@ struct Action
 struct Node
 {
 	double x,y;
-	std::list<Node> connectedTo;
+	std::vector<Node> connectedTo;
 };
 
 struct Pixel
@@ -104,8 +104,8 @@ int cmpt;
 double s1,s2;
 
 // Map
-std::list<Node> discrete_map;
-std::list<Node> toDiscover;
+std::vector<Node> discrete_map;
+std::vector<Node> toDiscover;
 
 Mat proc_map, robot_map, wall_map, map;
 const int origin_x = -4;
@@ -118,6 +118,9 @@ const int sz1 = 5;
 const int sz2 = 5;
 
 bool visited_flag = false;
+
+// Path finding
+const int max_depth = 10;
 
 
 // Receive functions
@@ -145,7 +148,7 @@ void create_interesting_node(int i,int j);
 
 void interesting_node();
 
-Node find_closest_node(std::list<Node> list);
+Node find_closest_node(std::vector<Node> vector);
 
 void path_finding(Node node);
 
