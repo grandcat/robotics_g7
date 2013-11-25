@@ -19,7 +19,6 @@ namespace enc = sensor_msgs::image_encodings;
 
 static const char WINDOW[] = "Image window";
 
-
 //initial min and max HSV filter values.
 //these will be changed using trackbars
 int CHANGE = 10;
@@ -38,18 +37,20 @@ class ImageConverter
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber image_sub_;
 	ros::Subscriber keyboard_sub;
+	image_transport::Publisher msg_pub_;
 
 	public:
 	ImageConverter(): it_(nh_)
 	{
 		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::color_filter, this);
 		keyboard_sub = nh_.subscribe("/keyboard/input", 1, &ImageConverter::ChangeThreshold, this);
-		cv::namedWindow(WINDOW);
+		msg_pub_ = it_.advertise("/color_filter/filtered_image", 1);
+		//cv::namedWindow(WINDOW);
 	}
 
 	~ImageConverter()
 	{
-		cv::destroyWindow(WINDOW);
+		//cv::destroyWindow(WINDOW);
 	}
 
 	void ChangeThreshold(const std_msgs::String::ConstPtr& msg)
@@ -162,16 +163,18 @@ class ImageConverter
 		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
 		cv::erode(filter_image, filter_image, cv::Mat());
 		cv::dilate(filter_image, filter_image, element);
-		cv::imshow("Original", src_image);
+		//cv::imshow("Original", src_image);
 		//cv::imshow("HSV", hsv_image);
 		//cv::imshow("Background", threshold_image);
 		//cv::imshow("THRESHOLD", threshold_image);
-		cv::imshow("Result", filter_image);
+
+		//Publish filtered image
+		filter_image.copyTo(cv_ptr->image);
+    msg_pub_.publish(cv_ptr->toImageMsg());
+
+		//cv::imshow("Result", filter_image);
 		cv::waitKey(3);
 	}
-
-
-
 
 };
 

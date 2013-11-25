@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include "std_msgs/String.h"
 
 using namespace cv;
 namespace enc = sensor_msgs::image_encodings;
@@ -42,7 +43,7 @@ struct IdImg
 static const std::string objects[] = {"pepper", "lemon", "pear", "carrot", "giraff", "tiger", "hippo"};
 
 vector<IdImg> trainImg;
-
+int keypThreshold = 25;
 
 /*
  * Subtract background based on RGB color
@@ -172,7 +173,7 @@ ImgHist colorDetectionRGB(Mat img)
 	calcHist(&planes[1], 1, 0, Mat(), gHist, 1, &histSize, &histRange, uniform, accumulate);
 	calcHist(&planes[2], 1, 0, Mat(), rHist, 1, &histSize, &histRange, uniform, accumulate);
 
-	for(int i=0; i<10; ++i) {
+	for(int i=0; i<5; ++i) {
 		bHist.at<float>(i) = 0;
 		gHist.at<float>(i) = 0;
 		rHist.at<float>(i) = 0;
@@ -228,22 +229,33 @@ int identifyObject(ImgHist hist, Features feat)
 	// Match color histogram
 	int bestColorMatch = 0;
 	double bestRes = 0;
+	double bestResH = 0;
 	for(int i=0; i < trainImg.size(); ++i) {
 		double resB = compareHist(hist.bHist, trainImg[i].colorHist.bHist, CV_COMP_CORREL);
 		double resG = compareHist(hist.gHist, trainImg[i].colorHist.gHist, CV_COMP_CORREL);
 		double resR = compareHist(hist.rHist, trainImg[i].colorHist.rHist, CV_COMP_CORREL);
 		double resH = compareHist(hist.hsvHist, trainImg[i].colorHist.hsvHist, CV_COMP_CORREL);
-		std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
+		//std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
 
 		// Not a match if negative correlation
 		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
 			double res = resB*resB + resG*resG + resR*resR + resH*resH;
-			//std::cout << "Res: " << res << std::endl;
 			if(res > bestRes) {
 				bestRes = res;
+				bestResH = resH;
 				bestColorMatch = trainImg[i].obj;
+				std::cout << "RGB match: " << objects[bestColorMatch-1] << std::endl;
+				std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
 			}
 		}
+
+		 /*if(resH > 0 && resH > bestResH) {
+				bestResH = resH;
+				bestColorMatch = trainImg[i].obj;
+				std::cout << "Hue match: " << objects[bestColorMatch-1] << std::endl;
+				std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
+		 }*/
+
 	}
 	std::cout << "Best match color: " << bestColorMatch << std::endl;
 
@@ -258,15 +270,16 @@ int identifyObject(ImgHist hist, Features feat)
 
 		// Check percent of keypoints that match
 		float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
-		std::cout << "Percent match for " << trainImg[i].obj << ": " << res << std::endl;
+		//std::cout << "Percent match for " << trainImg[i].obj << ": " << res << std::endl;
 
 		if(res > matchPercent) {
 			matchPercent = res;
 			bestDescriptMatch = trainImg[i].obj;
+			std::cout << "Descriptor match: " << objects[bestDescriptMatch-1] << std::endl;
 
-			if(bestDescriptMatch == bestColorMatch) {
+			/*if(bestDescriptMatch == bestColorMatch) {
 				std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
-			}
+			}*/
 		}
 	}
 	std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
@@ -333,7 +346,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
-	image_transport::Subscriber image_sub_depth_;
+	image_transport::Subscriber filter_sub_;
 
 public:
   IplImage* img;
@@ -345,14 +358,20 @@ public:
     : it_(nh_)
   {
 
-		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
-		//image_sub_depth_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCb, this);
+		//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
+		filter_sub_ = it_.subscribe("/color_filter/filtered_image", 1, &ImageConverter::imageCb, this);
+
     cv::namedWindow(WINDOW);
   }
 
   ~ImageConverter()
   {
     cv::destroyWindow(WINDOW);
+  }
+
+  void test(const sensor_msgs::Image& msg)
+  {
+  	std::cout << "test" << std::endl;
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -371,27 +390,29 @@ public:
     //cv_ptr has image now, identify object
 		img = new IplImage(cv_ptr->image);
 
-		Rect crop((img->width)/4, (img->height)/2, (img->width)/2, (img->height)*1/2);
+		Rect crop((img->width)/5, (img->height)/4, (img->width)*3/5, (img->height)*3/4);
 		Mat src;
 		Mat(img, crop).copyTo(src);
 
 		//Mat src(img); 
 
 		// Mask background
-		Mat bgMask = subtractBackground(src);
+		/*Mat bgMask = subtractBackground(src);
 		Mat maskedImg;
-		src.copyTo(maskedImg, bgMask);
+		src.copyTo(maskedImg, bgMask);*/
 
 		// Detect objects through feature detection
-		int featSize = featureDetector(maskedImg).keypoints.size();
+		int featSize = featureDetector(src).keypoints.size();
 
-		std::cout << "Nr keypoints: " << featSize << std::endl;
-		if(featSize > 10) {
+		//std::cout << "Nr keypoints: " << featSize << std::endl;
+		if(featSize > keypThreshold) {
 			// Color detection
-			ImgHist hist = colorDetectionRGB(maskedImg);
+			ImgHist hist = colorDetectionRGB(src);
+			drawHistograms(hist);
 
 			//Feature detection
-			Features feat = featureDetector(maskedImg);
+			Features feat = featureDetector(src);
+			showKeypoints(src, feat);
 
 			// Identify object
 			int obj = identifyObject(hist, feat);
@@ -399,7 +420,7 @@ public:
 			//image_pub_.publish(obj);
 		}
 
-    cv::imshow(WINDOW, cv_ptr->image);
+    cv::imshow(WINDOW, src);
     cv::waitKey(3);
   }
 };
@@ -418,11 +439,10 @@ int main(int argc, char** argv)
 	// Testing on image
 	if(argc > 1) {
 		Mat src = imread( argv[1] );
-
-		Mat bgMask = subtractBackground(src);
+		/*Mat bgMask = subtractBackground(src);
 		Mat maskedImg;
 		src.copyTo(maskedImg, bgMask);
-		src = maskedImg;
+		src = maskedImg;*/
 
 		ImgHist hist = colorDetectionRGB(src);
 		drawHistograms(hist);
