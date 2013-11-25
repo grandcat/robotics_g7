@@ -1,80 +1,92 @@
-#include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include "color_filter.h"
 
-#include <opencv2/core/core.hpp>
-
-#include <string.h>
-#include "std_msgs/String.h"
-#include <sstream>      //std::stringstream
-#include <stdio.h>      //getchar()
-#include <termios.h>    //termios, TCSANOW, ECHO, ICANON
-#include <unistd.h>     //STDIN_FILENO
-
-namespace enc = sensor_msgs::image_encodings;
-
-
-static const char WINDOW[] = "Image window";
-
-
-//initial min and max HSV filter values.
-//these will be changed using trackbars
-int CHANGE = 10;
-int MAX = 256;
-int H_MIN = 0;
-int H_MAX = MAX;
-int S_MIN = 0;
-int S_MAX = 106;
-int V_MIN = 0;
-int V_MAX = MAX;
-
-
-class ImageConverter
+class Color_Filter
 {
 	ros::NodeHandle nh_;
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber image_sub_;
 	ros::Subscriber keyboard_sub;
+	ros::Publisher obj_pub_;
+
 
 	public:
-	ImageConverter(): it_(nh_)
+	Color_Filter(): it_(nh_)
 	{
-		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::color_filter, this);
-		keyboard_sub = nh_.subscribe("/keyboard/input", 1, &ImageConverter::ChangeThreshold, this);
-		cv::namedWindow(WINDOW);
+		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
+		keyboard_sub = nh_.subscribe("/keyboard/input", 1, &Color_Filter::ChangeThreshold, this);
+		obj_pub_ = nh_.advertise<color_filter::Objects>("/recognition/detect", 1);
 	}
 
-	~ImageConverter()
+	~Color_Filter()
 	{
-		cv::destroyWindow(WINDOW);
+		cv::destroyAllWindows();
 	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ChangeThreshold(const std_msgs::String::ConstPtr& msg)
 	{
-		//std::cout<<msg->data.c_str()<<std::endl;
+		if ( tolower(msg->data.c_str()[1]) == 'z' )
+		{
+			if (image_sub_ == 0) //not subscribing
+			{
+				image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
+				puts("RESUMED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
+			}
+			else //don't subscribe to the camera and just be idle
+			{
+				image_sub_.shutdown();
+				puts("STOPPED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
+			}
+			return;
+		}
+
+
+		puts("---------------------");
+		if (msg->data.c_str()[0] == '1')
+		{
+			puts("Wall filter parameters");
+			mode = WALLS;
+			H_MIN = wall_H_MIN;
+			H_MAX = wall_H_MAX;
+			S_MIN = wall_S_MIN;
+			S_MAX = wall_S_MAX;
+			V_MIN = wall_V_MIN;
+			V_MAX = wall_V_MAX;
+		}
+		else if (msg->data.c_str()[0] == '2')
+		{
+			puts("Floor filter parameters");
+			mode = FLOOR;
+			H_MIN = floor_H_MIN;
+			H_MAX = floor_H_MAX;
+			S_MIN = floor_S_MIN;
+			S_MAX = floor_S_MAX;
+			V_MIN = floor_V_MIN;
+			V_MAX = floor_V_MAX;
+		}
+
+
 		//Hue-part
-		if (strcmp(msg->data.c_str(),"a")==0 || strcmp(msg->data.c_str(),"A")==0)
+		if ( tolower(msg->data.c_str()[1]) == 'a')
 		{
 			H_MIN -= CHANGE;
 			if (H_MIN < 0)
 				H_MIN = 0;
 		}
-		else if (strcmp(msg->data.c_str(),"q")==0 || strcmp(msg->data.c_str(),"Q")==0)
+		else if ( tolower(msg->data.c_str()[1]) == 'q')
 		{
 			H_MIN += CHANGE;
 			if (H_MIN > H_MAX)
 				H_MIN = H_MAX;
 		}
-		else if (strcmp(msg->data.c_str(),"s")==0 || strcmp(msg->data.c_str(),"S")==0)
+		else if (tolower(msg->data.c_str()[1]) == 's')
 		{
 			H_MAX -= CHANGE;
 			if (H_MAX < H_MIN)
 				H_MAX = H_MIN;
 		}
-		else if (strcmp(msg->data.c_str(),"w")==0 || strcmp(msg->data.c_str(),"W")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'w')
 		{
 			H_MAX += CHANGE;
 			if (H_MAX > MAX)
@@ -82,25 +94,25 @@ class ImageConverter
 		}
 
 		//Saturate-part
-		else if (strcmp(msg->data.c_str(),"d")==0 || strcmp(msg->data.c_str(),"D")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'd')
 		{
 			S_MIN -= CHANGE;
 			if (S_MIN < 0)
 				S_MIN = 0;
 		}
-		else if (strcmp(msg->data.c_str(),"e")==0 || strcmp(msg->data.c_str(),"E")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'e')
 		{
 			S_MIN += CHANGE;
 			if (S_MIN > S_MAX)
 				S_MIN = S_MAX;
 		}
-		else if (strcmp(msg->data.c_str(),"f")==0 || strcmp(msg->data.c_str(),"F")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'f')
 		{
 			S_MAX -= CHANGE;
 			if (S_MAX < S_MIN)
 				S_MAX = S_MIN;
 		}
-		else if (strcmp(msg->data.c_str(),"r")==0 || strcmp(msg->data.c_str(),"R")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'r')
 		{
 			S_MAX += CHANGE;
 			if (S_MAX > MAX)
@@ -108,78 +120,284 @@ class ImageConverter
 		}
 
 		//Value-part
-		else if (strcmp(msg->data.c_str(),"g")==0 || strcmp(msg->data.c_str(),"G")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'g')
 		{
 			V_MIN -= CHANGE;
 			if (V_MIN < 0)
 				V_MIN = 0;
 		}
-		else if (strcmp(msg->data.c_str(),"t")==0 || strcmp(msg->data.c_str(),"T")==0)
+		else if (tolower(msg->data.c_str()[1]) == 't')
 		{
 			V_MIN += CHANGE;
 			if (V_MIN > V_MAX)
 				V_MIN = V_MAX;
 		}
-		else if (strcmp(msg->data.c_str(),"h")==0 || strcmp(msg->data.c_str(),"H")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'h')
 		{
 			V_MAX -= CHANGE;
 			if (V_MAX < V_MIN)
 				V_MAX = V_MIN;
 		}
-		else if (strcmp(msg->data.c_str(),"y")==0 || strcmp(msg->data.c_str(),"Y")==0)
+		else if (tolower(msg->data.c_str()[1]) == 'y')
 		{
 			V_MAX += CHANGE;
 			if (V_MAX > MAX)
 				V_MAX = MAX;
 		}
+
+		//update
+		switch(mode)
+		{
+			case WALLS:
+			{
+				wall_H_MIN = H_MIN;
+				wall_H_MAX = H_MAX;
+				wall_S_MIN = S_MIN;
+				wall_S_MAX = S_MAX;
+				wall_V_MIN = V_MIN;
+				wall_V_MAX = V_MAX;
+				break;
+			}
+			case FLOOR:
+			{
+				floor_H_MIN = H_MIN;
+				floor_H_MAX = H_MAX;
+				floor_S_MIN = S_MIN;
+				floor_S_MAX = S_MAX;
+				floor_V_MIN = V_MIN;
+				floor_V_MAX = V_MAX;
+				break;
+			}
+
+		}
+
 		std::cout<<"H_MIN: "<< H_MIN<<" H_MAX: "<<H_MAX<< " S_MIN: "<<S_MIN<<" S_MAX: "<<S_MAX<<" V_MIN: "<<V_MIN<<" V_MAX: "<<V_MAX<<std::endl;
 	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void color_filter(const sensor_msgs::ImageConstPtr& msg)
 	{
 		cv_bridge::CvImagePtr cv_ptr;
 		try
 		{
-			cv_ptr = cv_bridge::toCvCopy(msg, enc::BGR8);
+			cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
 		}
 		catch (cv_bridge::Exception& e)
 		{
 			ROS_ERROR("cv_bridge exception: %s", e.what());
 			return;
 		}
-		cv::Mat src_image, hsv_image,threshold_image_background, threshold_image;
+
+		cv::Mat src_image, hsv_image, im_walls, im_floor, remove_walls, remove_floor, remove_background,filter_image;
 		src_image = cv_ptr->image; //get the source image from the pointer
+
+		//remove top part of image (set to black)
+		int y_remove = 100;
+		for(int i=0; i<y_remove; i++)
+		   for(int j=0; j<src_image.cols; j++)
+		   {
+			   src_image.at<cv::Vec3b>(i,j)[0] = 0;
+			   src_image.at<cv::Vec3b>(i,j)[1] = 0;
+			   src_image.at<cv::Vec3b>(i,j)[2] = 0;
+		   }
+
+
 		cv::cvtColor(src_image, hsv_image,CV_BGR2HSV);
-		cv::inRange(hsv_image,cv::Scalar(H_MIN,S_MIN,V_MIN),cv::Scalar(H_MAX,S_MAX,V_MAX),threshold_image_background);
-		bitwise_not(threshold_image_background, threshold_image); //invert the pixels so that the background is removed
+		cv::inRange(hsv_image,cv::Scalar(wall_H_MIN,wall_S_MIN,wall_V_MIN),cv::Scalar(wall_H_MAX,wall_S_MAX,wall_V_MAX),im_walls);
+		cv::inRange(hsv_image,cv::Scalar(floor_H_MIN,floor_S_MIN,floor_V_MIN),cv::Scalar(floor_H_MAX,floor_S_MAX,floor_V_MAX),im_floor);
+		bitwise_not(im_walls, remove_walls); //invert the pixels so that the walls are removed
+		bitwise_not(im_floor, remove_floor); //invert the pixels so that the floor is removed
+		bitwise_and(remove_walls, remove_floor, remove_background); //Grayscale image with the background removed
+		cvtColor(remove_background, remove_background, CV_GRAY2BGR); //change image to a BGR image
+		bitwise_and(src_image, remove_background, filter_image); //Remove the background
 
-
-		cv::Mat filter_image;
-		cvtColor(threshold_image, threshold_image, CV_GRAY2BGR); //change the threshold image to a BGR image
-		bitwise_and(src_image, threshold_image, filter_image); //Remove the background
-
-		//Does some erosion and dilation to remove some of the pixels (add more if you want to)
+		//Does some erosion and dilation to remove some of the pixels
 		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
 		cv::erode(filter_image, filter_image, cv::Mat());
 		cv::dilate(filter_image, filter_image, element);
-		cv::imshow("Original", src_image);
-		//cv::imshow("HSV", hsv_image);
-		//cv::imshow("Background", threshold_image);
-		//cv::imshow("THRESHOLD", threshold_image);
-		cv::imshow("Result", filter_image);
-		cv::waitKey(3);
+
+
+
+//CONTOURS DETECTION!
+///*
+		//http://docs.opencv.org/doc/tutorials/imgproc/shapedescriptors/bounding_rects_circles/bounding_rects_circles.html
+		std::vector<std::vector<cv::Point> > contours;
+		std::vector<cv::Vec4i> hierarchy;
+
+		/// Detect edges using Threshold
+		cv::Mat filter_image_bin;
+		threshold( filter_image, filter_image_bin, 0, 255, 0 ); //0 == THRESH_BINARY
+		cvtColor(filter_image_bin, filter_image_bin, CV_RGB2GRAY); //one channel
+
+		/// Find contours
+		findContours( filter_image_bin, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+
+		std::vector< std::vector<cv::Point> > contours_poly;
+		std::vector<cv::Point> cur_contours_poly;
+		contours_poly.reserve(contours.size()); //reserve space
+		for(unsigned int i = 0; i < contours.size(); i++ )
+		{
+			approxPolyDP( cv::Mat(contours[i]), cur_contours_poly, 3, true );
+			double area = contourArea(cur_contours_poly);
+			//std::cout<<"Area of contour nr "<<i<<": "<<area<<std::endl;
+			if (area >= minArea && area<= maxArea) //save the closed approximated contour if it's area is "lagom"
+			{
+				//std::cout<<"\nContour is lagom! nr "<<i<<": "<<area<<std::endl;
+				contours_poly.push_back(cur_contours_poly);
+			}
+		}
+
+		//Create ros-message
+		color_filter::Objects obj_msg;
+		obj_msg.ROI.reserve( contours_poly.size() );
+
+		/// Approximate contours to polygons + get bounding rectangles
+		std::vector<cv::Rect> boundRect( contours_poly.size() );
+		std::vector<cv::Point2f>center( contours_poly.size() );
+		for(unsigned int i = 0; i < contours_poly.size(); i++ )
+		{
+			boundRect[i] = boundingRect( cv::Mat(contours_poly[i]) );
+			color_filter::Rect2D_ rect2D_msg;
+			rect2D_msg.x = boundRect[i].x;
+			rect2D_msg.y = boundRect[i].y;
+			rect2D_msg.height = boundRect[i].height;
+			rect2D_msg.width = boundRect[i].width;
+			obj_msg.ROI.push_back(rect2D_msg);
+
+			//std::cout<<"x: "<<boundRect[i].x<<std::endl;
+			//std::cout<<"y: "<<boundRect[i].y<<std::endl;
+			//std::cout<<"height: "<<boundRect[i].height<<std::endl;
+			//std::cout<<"width: "<<boundRect[i].width<<std::endl;
+		}
+
+		obj_pub_.publish(obj_msg);
+
+		if (FLAG_SHOW_IMAGE)
+		{
+			cv::imshow("Original", src_image);
+
+			/// Draw polygonal contour + bonding rectangles
+			cv::Mat drawing = cv::Mat::zeros( filter_image_bin.size(), CV_8UC3 );
+			for(unsigned int i = 0; i< contours_poly.size(); i++ )
+			{
+				cv::Scalar color = cv::Scalar( 0, 0, 255 );
+				drawContours( drawing, contours_poly, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+				rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
+			}
+			imshow( "Found objects", drawing );
+			cv::waitKey(3);
+		}
+
+		if (FLAG_CHANGE_THRESHOLD)
+		{
+			cv::imshow("Original", src_image);
+			cv::imshow("HSV", hsv_image);
+			cv::imshow("Only the walls", im_walls);
+			cv::imshow("Only the floor", im_floor);
+			cv::imshow("Result", filter_image);
+			cv::waitKey(3);
+		}
+//*/
+
+
+//BLOB DETECTION!
+/*
+
+		//http://stackoverflow.com/questions/8076889/tutorial-on-opencv-simpleblobdetector
+		// set up the parameters (check the defaults in opencv's code in blobdetector.cpp)
+		cv::SimpleBlobDetector::Params params;
+		params.minDistBetweenBlobs = 20.0f;
+		params.filterByInertia = false;
+		params.filterByConvexity = false;
+		params.filterByCircularity = false;
+		params.filterByColor = false;
+		params.filterByArea = true;
+		params.minArea = 100.0f;
+		params.maxArea = 1000000.0f;
+
+		// ... any other params you don't want default value
+
+
+		// set up and create the detector using the parameters
+		cv::Ptr<cv::FeatureDetector> blob_detector = new cv::SimpleBlobDetector(params);
+		blob_detector->create("SimpleBlob");
+
+		// detect!
+
+
+		cv::erode(remove_background, remove_background, cv::Mat());
+		cv::dilate(filter_image, filter_image, element);
+		//cv::imshow("remove_background", remove_background);
+
+
+		cv::Mat imageROI;
+		int y_remove = 100;
+		imageROI= remove_background(cv::Rect(0,y_remove,remove_background.cols,remove_background.rows - y_remove));
+		std::vector<cv::KeyPoint> keypoints;
+		blob_detector->detect(imageROI, keypoints);
+
+
+		// extract the x y coordinates of the keypoints:
+		if (keypoints.size()>0)
+			std::cout<<"\nFound "<<keypoints.size()<<" keypoints"<<std::endl;
+		for (int i=0; i<keypoints.size(); i++){
+			keypoints[i].pt.y += y_remove;
+		    float X=keypoints[i].pt.x;
+		    float Y=keypoints[i].pt.y;
+		    std::cout<<"X: "<<X<<std::endl;
+		    std::cout<<"Y: "<<Y<<std::endl<<std::endl;
+		}l
+
+		cv::Mat found_objects;
+		drawKeypoints(remove_background, keypoints,found_objects, cv::Scalar(0,0,255));
+		cv::imshow("found_objects", found_objects);
+*/
 	}
-
-
-
 
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void on_trackbar( int, void* ) //for later use
+{
+	/*
+ alpha = (double) alpha_slider/alpha_slider_max ;
+ beta = ( 1.0 - alpha );
+
+ addWeighted( src1, alpha, src2, beta, 0.0, dst);
+
+ imshow( "Linear Blend", dst );
+ */
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "image_converter");
-	ImageConverter ic;
+	ros::init(argc, argv, "color_filter");
+	if (argc != 1)
+	{
+		if (atoi(argv[1]) == 1)
+		{
+			FLAG_SHOW_IMAGE = true;
+		}
+		else if (atoi(argv[1]) >= 2)
+		{
+			//FLAG_SHOW_IMAGE = true;
+			FLAG_CHANGE_THRESHOLD = true;
+		}
+	}
+
+	//cv::namedWindow("Linear Blend", 1);
+	//cv::createTrackbar( " Threshold:", "Linear Blend", &floor_S_MAX, 255, on_trackbar);
+	/// Show some stuff
+	//on_trackbar( floor_S_MAX, 0 );
+
+
+	Color_Filter cf;
+	puts("Color filter is up and running!");
+	puts("Message is being sent to /recognition/detect");
 	ros::spin();
 
 	return 0;
