@@ -254,7 +254,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 				// Done
-				if(fabs(diff_ang) > M_PI/180*theta_error)
+				if(fabs(diff_ang) < M_PI/180*theta_error)
 				{
 					actions.pop_front();
 					busy = false;

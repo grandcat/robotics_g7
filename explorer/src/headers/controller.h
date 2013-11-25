@@ -89,7 +89,7 @@ double x_true,y_true,theta_true;
 // Errors
 const double x_error = 0.01;
 const double theta_error = 2;
-const double dist_error = 0.03;
+const double dist_error = 0.02;
 
 // Actions sequence
 bool busy = false;
