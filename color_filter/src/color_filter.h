@@ -17,6 +17,7 @@
 #include <opencv2/features2d/features2d.hpp> //SimpleBlobDetector (is out-commented for the moment)
 #include <opencv2/core/core.hpp>
 #include <string.h>
+#include <opencv2/objdetect/objdetect.hpp> //groupRectangles
 
 //for the keyboard input (will remove later and only use the Trackbar)
 #include "std_msgs/String.h"
