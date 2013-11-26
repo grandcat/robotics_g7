@@ -7,13 +7,14 @@ class Color_Filter
 	image_transport::Subscriber image_sub_;
 	ros::Subscriber keyboard_sub;
 	ros::Publisher obj_pub_;
-
+	image_transport::Publisher img_pub_;
 
 	public:
 	Color_Filter(): it_(nh_)
 	{
 		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
 		keyboard_sub = nh_.subscribe("/keyboard/input", 1, &Color_Filter::ChangeThreshold, this);
+		img_pub_ = it_.advertise("/color_filter/filtered_image", 1);
 		obj_pub_ = nh_.advertise<color_filter::Objects>("/recognition/detect", 1);
 	}
 
@@ -322,6 +323,11 @@ class Color_Filter
 		}
 		obj_pub_.publish(obj_msg);
 
+
+		//Publish filtered image
+		cv_bridge::CvImagePtr img_ptr = cv_ptr;
+		filter_image.copyTo(img_ptr->image);
+  	img_pub_.publish(img_ptr->toImageMsg());
 
 		if (FLAG_SHOW_IMAGE)
 		{
