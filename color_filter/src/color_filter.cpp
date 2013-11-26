@@ -248,30 +248,80 @@ class Color_Filter
 			}
 		}
 
+		/// Approximate contours to polygons + get bounding rectangles
+		cv::Rect rect;
+		std::vector<cv::Rect> boundRect;
+		boundRect.reserve( contours_poly.size() );
+		for(unsigned int i = 0; i < contours_poly.size(); i++ )
+		{
+			rect = boundingRect( cv::Mat(contours_poly[i]) );
+			double ratio = (double)std::max(rect.height,rect.width)  / (double)std::min(rect.height,rect.width);
+			//std::cout<<ratio<<std::endl;
+			if (ratio > 4.3) //if it's a too narrow rectangle, ignore it
+			{
+				continue;
+			}
+			boundRect.push_back(rect);
+
+		}
+
+		//could not get the damned openCV-merging-rectangles-function to work properly.
+		//Had to create my own way of merging intersecting rectangles!
+		bool MERGE_DONE = false;
+		int i = 0;
+		while(!MERGE_DONE && boundRect.size()>1)
+		{
+			bool have_merged = false;
+			for (unsigned int j = i+1; j<boundRect.size(); j++)
+			{
+				cv::Rect rect_a = boundRect[i];
+
+				cv::Rect rect_b = boundRect[j];
+				cv::Rect intersect = rect_a & rect_b;
+				if (intersect.height != 0 && intersect.width != 0) //rectangles intersect!
+				{
+					int x = std::min(rect_a.x , rect_b.x);
+					int y = std::min(rect_a.y , rect_b.y);
+					int width = std::max(rect_a.br().x , rect_b.br().x) - x;
+					int height = std::max(rect_a.br().y , rect_b.br().y) - y;
+					cv::Rect merged_rect(x,y,width, height);
+
+					boundRect[i] = merged_rect; //write over the old rectangle with the bigger one
+					boundRect.erase(boundRect.begin() + j); //delete the rectangle that is already merged
+
+					have_merged = true;
+					break;
+				}
+			}
+
+			//if we have merged two rectangles, start all over again in case there exist
+			//rectangles that will intersect with the new bigger added rectangle.
+			if (have_merged)
+			{
+				i = 0;
+				continue;
+			}
+			i++;
+			if (i == boundRect.size()) MERGE_DONE = true;
+		}
+
+
+
 		//Create ros-message
 		color_filter::Objects obj_msg;
 		obj_msg.ROI.reserve( contours_poly.size() );
-
-		/// Approximate contours to polygons + get bounding rectangles
-		std::vector<cv::Rect> boundRect( contours_poly.size() );
-		std::vector<cv::Point2f>center( contours_poly.size() );
-		for(unsigned int i = 0; i < contours_poly.size(); i++ )
+		for (unsigned int i=0; i < boundRect.size(); i++)
 		{
-			boundRect[i] = boundingRect( cv::Mat(contours_poly[i]) );
+			cv::Rect rect = boundRect[i];
 			color_filter::Rect2D_ rect2D_msg;
-			rect2D_msg.x = boundRect[i].x;
-			rect2D_msg.y = boundRect[i].y;
-			rect2D_msg.height = boundRect[i].height;
-			rect2D_msg.width = boundRect[i].width;
+			rect2D_msg.x = rect.x;
+			rect2D_msg.y = rect.y;
+			rect2D_msg.height = rect.height;
+			rect2D_msg.width = rect.width;
 			obj_msg.ROI.push_back(rect2D_msg);
-
-			//std::cout<<"x: "<<boundRect[i].x<<std::endl;
-			//std::cout<<"y: "<<boundRect[i].y<<std::endl;
-			//std::cout<<"height: "<<boundRect[i].height<<std::endl;
-			//std::cout<<"width: "<<boundRect[i].width<<std::endl;
 		}
-
 		obj_pub_.publish(obj_msg);
+
 
 		if (FLAG_SHOW_IMAGE)
 		{
@@ -279,10 +329,15 @@ class Color_Filter
 
 			/// Draw polygonal contour + bonding rectangles
 			cv::Mat drawing = cv::Mat::zeros( filter_image_bin.size(), CV_8UC3 );
+
 			for(unsigned int i = 0; i< contours_poly.size(); i++ )
 			{
 				cv::Scalar color = cv::Scalar( 0, 0, 255 );
 				drawContours( drawing, contours_poly, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+			}
+			for(unsigned int i = 0; i< boundRect.size(); i++ )
+			{
+				cv::Scalar color = cv::Scalar( 0, 0, 255 );
 				rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
 			}
 			imshow( "Found objects", drawing );
@@ -388,11 +443,29 @@ int main(int argc, char** argv)
 			FLAG_CHANGE_THRESHOLD = true;
 		}
 	}
+	/*
+	cv::Mat drawing = cv::Mat::zeros( 400,400, CV_8UC3 );
+	cv::Scalar color = cv::Scalar( 0, 0, 255 );
+	cv::Point p1_tl,p1_br,p2_tl,p2_br;
 
+	p1_tl.x = 10;
+	p1_tl.y = 10;
+	p1_br.x = 200;
+	p1_br.y = 200;
+	p2_tl.x = 50;
+	p2_tl.y = 50;
+	p2_br.x = 250;
+	p2_br.y = 250;
+
+	rectangle( drawing, p1_tl, p1_br, color, 2, 8, 0 );
+	rectangle( drawing, p2_tl, p2_br, color, 2, 8, 0 );
+	cv::imshow("test",drawing);
+	*/
 	//cv::namedWindow("Linear Blend", 1);
 	//cv::createTrackbar( " Threshold:", "Linear Blend", &floor_S_MAX, 255, on_trackbar);
 	/// Show some stuff
 	//on_trackbar( floor_S_MAX, 0 );
+
 
 
 	Color_Filter cf;
