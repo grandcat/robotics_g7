@@ -283,11 +283,20 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				double x_cmd = current_action.parameter1;
 				double y_cmd = current_action.parameter2;
 
-				dist = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
+				// Init
+				static double distance;
+				static bool flag;
+				if(!flag)
+				{
+					distance = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
+					flag = true;
+				}
+
 
 				diff_ang = -theta;
 				diff_ang = angle(diff_ang);
 
+				dist = distance-x;
 
 				// Saturations
 				if(dist > x_cmd_traj)
@@ -299,7 +308,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
 
 
-				speed.V = rho*dist*r/2;
+				speed.V = rho*dist*r;
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
