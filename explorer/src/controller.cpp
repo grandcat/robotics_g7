@@ -890,39 +890,19 @@ void path_finding(Node n)
 }
 
 
-std::list<Action> path(Node n1, Node n2)
+typedef boost::unordered_map<Node,int> Hash;
+int hash_value(Node const &n) {
+    boost::hash<int> hasher;
+    return hasher(n.x) + hasher(n.y);
+}
+
+std::vector<Node> path(Node n1, Node n2)
 {
-	std::list<Action> path;
-	std::vector<Node> begin,end;
-
-	boost::unordered_map<Node,double> u_map;
-
-
-	for(int i = 0; i < discrete_map.size(); i++)
-	{
-		Node n = discrete_map.at(i);
-
-		if(isPath(n1,n))
-		{
-			begin.push_back(n);
-			//u_map.insert(std::pair<Node,double>(n,0));
-		}
-
-		if(isPath(n2,n))
-		{
-			end.push_back(n);
-		}
-	}
+	std::vector<Node> path;
+	Hash hash;
 
 
 	// BFS
-	int i = 0;
-	//while(i < u_map.end())
-	{
-
-	}
-
-	//u_map.count();
 
 
 
@@ -949,19 +929,6 @@ Node pixelToNode(Pixel pixel)
 	node.x = pixel.j*resolution+origin_x;
 	node.y = (height-pixel.i-1)*resolution+origin_y;
 	return node;
-}
-
-
-void update_nodes_list(Node node)
-{
-	for(int i = 0; i < discrete_map.size(); i++)
-	{
-		Node n = discrete_map.at(i);
-		if(isPath(n,node))
-		{
-			n.connectedTo.push_back(node);
-		}
-	}
 }
 
 
@@ -1095,9 +1062,6 @@ void create_node(double x, double y)
 	// Position
 	n.x = x;
 	n.y = y;
-
-	// Update nodes list
-	update_nodes_list(n);
 
 	discrete_map.push_back(n);
 

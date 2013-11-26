@@ -44,11 +44,10 @@ struct Action
 struct Node
 {
 	double x,y;
-	std::vector<Node> connectedTo;
 
-	bool operator==(const Node& n)
+	bool operator==(const Node& n) const
 	{
-	    return ((x == n.x) & (y == n.y));
+	    return ((n.x == x) & (n.y == y));
 	}
 };
 
@@ -156,8 +155,6 @@ Node find_closest_node(std::vector<Node> vector);
 void path_finding(Node node);
 
 bool visited_area();
-
-void update_nodes_list(Node node);
 
 bool isPath(Node n1, Node n2);
 
