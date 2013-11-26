@@ -97,7 +97,7 @@ std::list<Action> actions;
 Action current_action;
 
 // IR sensor mean
-const int obstacle = 3;
+const int obstacle = 2;
 int cmpt;
 
 // IR sensor value

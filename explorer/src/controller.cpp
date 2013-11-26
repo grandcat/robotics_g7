@@ -220,29 +220,32 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				double x_cmd = current_action.parameter1;
 				double y_cmd = current_action.parameter2;
 
-				diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
-				if((x_cmd-x_true) < 0)
-				{
-					if((y_cmd-y_true) > 0)
-					{
-						diff_ang += M_PI;
-					}
-					else
-					{
-						diff_ang -= M_PI;
-					}
-				}
-				diff_ang = angle(diff_ang);
-
-
 				// Init
 				static double rotation;
 				static bool flag;
 				if(!flag)
 				{
+					diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
+					if((x_cmd-x_true) < 0)
+					{
+						if((y_cmd-y_true) > 0)
+						{
+							diff_ang += M_PI;
+						}
+						else
+						{
+							diff_ang -= M_PI;
+						}
+					}
+					diff_ang = angle(diff_ang);
+
 					rotation = nPi2(diff_ang)*(M_PI/2);
 					flag = true;
 				}
+
+
+				diff_ang = rotation-theta;
+				diff_ang = angle(diff_ang);
 
 
 				// Rotation saturation
@@ -266,6 +269,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					stop_EKF_pub.publish(s);
 
 					flag = false;
+
+					printf("rotation = %f\n",rotation);
 				}
 			}
 
@@ -278,24 +283,41 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 				dist = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
 
+				diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
+				if((x_cmd-x_true) < 0)
+				{
+					if((y_cmd-y_true) > 0)
+					{
+						diff_ang += M_PI;
+					}
+					else
+					{
+						diff_ang -= M_PI;
+					}
+				}
+				diff_ang = angle(diff_ang);
+
 
 				// Saturations
 				if(dist > x_cmd_traj)
 				{
 					dist = x_cmd_traj;
 				}
+
 				if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
 				if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
 
 
-				speed.V = rho*dist*r;
-				speed.W = -2*r/l*alpha*diff_ang;
+				speed.V = rho*dist*r/2;
+				speed.W = -2*r/l*alpha*diff_ang; //*1.5
 
 
 				if(dist < dist_error)
 				{
 					actions.pop_front();
 					busy = false;
+
+					printf("Done !\n");
 				}
 			}
 		}
@@ -486,7 +508,7 @@ void update_map(double s1, double s2)
 void Hough()
 {
 	vector<Vec2f> lines;
-	HoughLines(wall_map, lines, 1, 90*CV_PI/180, 10, 0, 0 );
+	HoughLines(wall_map, lines, 1, 90*CV_PI/180, 7, 0, 0 );
 
 	for( size_t i = 0; i < lines.size(); i++ )
 	{
@@ -1072,7 +1094,8 @@ Node find_closest_node(std::vector<Node> vector)
 		}
 	}
 
-	//printf("Node found: x = %f, y = %f\n",node.x,node.y);
+	printf("Node found: x = %f, y = %f\n",node.x,node.y);
+	printf("Position: x = %f, y = %f\n",x_true,y_true);
 
 	return node;
 }
