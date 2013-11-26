@@ -99,6 +99,7 @@ const double dist_error = 0.02;
 // Actions sequence
 bool busy = false;
 std::list<Action> actions;
+std::list<Action> priority;
 Action current_action;
 
 // IR sensor mean
@@ -115,17 +116,14 @@ std::vector<Node> toDiscover;
 Mat proc_map, robot_map, wall_map, map;
 const int origin_x = -4;
 const int origin_y = -4;
-const int height = 200;
-const int width = 200;
-const double resolution = 0.04;
+const int height = 400;
+const int width = 400;
+const double resolution = 0.02;
 
-const int sz1 = 5;
-const int sz2 = 5;
+const int sz1 = 11;
+const int sz2 = 11;
 
 bool visited_flag = false;
-
-// Path finding
-const int max_depth = 10;
 
 
 // Receive functions
