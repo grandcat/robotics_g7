@@ -44,6 +44,7 @@ struct Action
 struct Node
 {
 	double x,y;
+	std::vector<Node> connectedTo;
 
 	bool operator==(const Node& n) const
 	{
@@ -143,6 +144,8 @@ void Hough();
 void merge_areas();
 
 void interesting_nodes();
+
+void update_nodes_list(Node node);
 
 void create_node(double x, double y);
 

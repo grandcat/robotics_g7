@@ -890,21 +890,48 @@ void path_finding(Node n)
 }
 
 
-typedef boost::unordered_map<Node,int> Hash;
 int hash_value(Node const &n) {
     boost::hash<int> hasher;
     return hasher(n.x) + hasher(n.y);
 }
+typedef std::vector<Node> Path;
+typedef boost::unordered_map<Node,Path> Hash;
 
 std::vector<Node> path(Node n1, Node n2)
 {
-	std::vector<Node> path;
-	Hash hash;
+	Path path;
+	Hash hash,end;
 
+	for(int i = 0; i < discrete_map.size(); i++)
+	{
+		if(isPath(n1,discrete_map.at(i)))
+		{
+			hash[discrete_map.at(i)] = Path();
+		}
+		if(isPath(n2,discrete_map.at(i)))
+		{
+			end[discrete_map.at(i)] = Path();
+		}
+	}
 
 	// BFS
+	Hash::iterator it;
+	for(it = hash.begin(); it != hash.end(); it++)
+	{
+		Node n = it->first;
+		Path p = hash.at(n);
 
+		if(end.count(n) != 0)
+		{
+			path = p;
+			path.push_back(n);
+		}
 
+		for(int i = 0; i < p.size(); i++)
+		{
+			hash[p.at(i)] = Path();
+		}
+	}
 
 	return path;
 }
@@ -1055,6 +1082,19 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 }
 
 
+void update_nodes_list(Node node)
+{
+	for(int i = 0; i < discrete_map.size(); i++)
+	{
+		if(isPath(discrete_map.at(i),node))
+		{
+			node.connectedTo.push_back(discrete_map.at(i));
+			discrete_map.at(i).connectedTo.push_back(node);
+		}
+	}
+}
+
+
 void create_node(double x, double y)
 {
 	Node n;
@@ -1062,6 +1102,9 @@ void create_node(double x, double y)
 	// Position
 	n.x = x;
 	n.y = y;
+
+	// Updates nodes list
+	update_nodes_list(n);
 
 	discrete_map.push_back(n);
 
