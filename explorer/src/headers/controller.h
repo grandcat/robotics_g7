@@ -45,6 +45,11 @@ struct Node
 {
 	double x,y;
 	std::vector<Node> connectedTo;
+
+	bool operator==(const Node& n)
+	{
+	    return ((x == n.x) & (y == n.y));
+	}
 };
 
 struct Pixel

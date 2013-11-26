@@ -22,6 +22,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <boost/unordered_map.hpp>
+
 using namespace differential_drive;
 using namespace cv;
 using namespace explorer;
@@ -178,7 +180,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 				// Rotate first if needed
-				if(fabs(diff_ang) > M_PI/180*15)
+				if(fabs(diff_ang) > M_PI/180*10)
 				{
 					// Rotation saturation
 					if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
@@ -283,18 +285,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 				dist = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
 
-				diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
-				if((x_cmd-x_true) < 0)
-				{
-					if((y_cmd-y_true) > 0)
-					{
-						diff_ang += M_PI;
-					}
-					else
-					{
-						diff_ang -= M_PI;
-					}
-				}
+				diff_ang = -theta;
 				diff_ang = angle(diff_ang);
 
 
@@ -309,7 +300,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 				speed.V = rho*dist*r/2;
-				speed.W = -2*r/l*alpha*diff_ang; //*1.5
+				speed.W = -2*r/l*alpha*diff_ang;
 
 
 				if(dist < dist_error)
@@ -390,8 +381,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			actions.push_back(action);
 
 			action.n = ACTION_GOTO;
-			action.parameter1 = x_true + 0.05*cos(theta_true) + 0.02*sin(theta_true);
-			action.parameter2 = y_true + 0.05*sin(theta_true) - 0.02*cos(theta_true);
+			action.parameter1 = x_true + 0.07*cos(theta_true) + 0.02*sin(theta_true);
+			action.parameter2 = y_true + 0.07*sin(theta_true) - 0.02*cos(theta_true);
 			actions.push_back(action);
 
 			return;
@@ -856,6 +847,8 @@ std::list<Action> path(Node n1, Node n2)
 	std::list<Action> path;
 	std::vector<Node> begin,end;
 
+	boost::unordered_map<Node,double> u_map;
+
 
 	for(int i = 0; i < discrete_map.size(); i++)
 	{
@@ -864,6 +857,7 @@ std::list<Action> path(Node n1, Node n2)
 		if(isPath(n1,n))
 		{
 			begin.push_back(n);
+			//u_map.insert(std::pair<Node,double>(n,0));
 		}
 
 		if(isPath(n2,n))
@@ -873,7 +867,14 @@ std::list<Action> path(Node n1, Node n2)
 	}
 
 
-	// DFS
+	// BFS
+	int i = 0;
+	//while(i < u_map.end())
+	{
+
+	}
+
+	//u_map.count();
 
 
 
