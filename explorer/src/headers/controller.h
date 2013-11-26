@@ -44,7 +44,12 @@ struct Action
 struct Node
 {
 	double x,y;
-	std::list<Node> connectedTo;
+	std::vector<Node> connectedTo;
+
+	bool operator==(const Node& n)
+	{
+	    return ((x == n.x) & (y == n.y));
+	}
 };
 
 struct Pixel
@@ -94,28 +99,29 @@ const double dist_error = 0.02;
 // Actions sequence
 bool busy = false;
 std::list<Action> actions;
+std::list<Action> priority;
 Action current_action;
 
 // IR sensor mean
-const int obstacle = 3;
+const int obstacle = 2;
 int cmpt;
 
 // IR sensor value
 double s1,s2;
 
 // Map
-std::list<Node> discrete_map;
-std::list<Node> toDiscover;
+std::vector<Node> discrete_map;
+std::vector<Node> toDiscover;
 
 Mat proc_map, robot_map, wall_map, map;
 const int origin_x = -4;
 const int origin_y = -4;
-const int height = 200;
-const int width = 200;
-const double resolution = 0.04;
+const int height = 400;
+const int width = 400;
+const double resolution = 0.02;
 
-const int sz1 = 5;
-const int sz2 = 5;
+const int sz1 = 11;
+const int sz2 = 11;
 
 bool visited_flag = false;
 
@@ -145,7 +151,7 @@ void create_interesting_node(int i,int j);
 
 void interesting_node();
 
-Node find_closest_node(std::list<Node> list);
+Node find_closest_node(std::vector<Node> vector);
 
 void path_finding(Node node);
 
