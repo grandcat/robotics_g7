@@ -12,17 +12,24 @@
 #include <differential_drive/Encoders.h>
 #include "explorer/EKF.h"
 
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 using namespace differential_drive;
+using namespace cv;
 using namespace explorer;
 
 // Actions
 enum EACTIONS {
 	ACTION_BACKWARD = 1,
-	ACTION_FORWARD,
 	ACTION_ROTATION,
-	ACTION_CHANGE_Y_CMD_TRAJ,
 	ACTION_STOP,
 	ACTION_GOTO,
+	ACTION_GOTO_FORWARD,
+	ACTION_GOTO_ROTATION,
 };
 
 struct Action
@@ -37,6 +44,17 @@ struct Action
 struct Node
 {
 	double x,y;
+	std::vector<Node> connectedTo; // check every time !
+
+	bool operator==(const Node& n) const
+	{
+	    return ((n.x == x) & (n.y == y));
+	}
+};
+
+struct Pixel
+{
+	int i,j;
 };
 
 
@@ -53,7 +71,7 @@ ros::Subscriber object_sub;
 
 // Control filter parameters
 const double rho = 13; // 9
-const double alpha = 10;
+const double alpha = 5; // 10
 
 // Distances
 const double x_cmd_traj = 0.2;
@@ -68,7 +86,7 @@ const double x_catch_wall = 0.17;
 double x;
 double x_pb;
 double theta_cmd;
-double rotation;
+double x_collision;
 
 // Odometry
 double x_true,y_true,theta_true;
@@ -76,23 +94,39 @@ double x_true,y_true,theta_true;
 // Errors
 const double x_error = 0.01;
 const double theta_error = 2;
+const double dist_error = 0.02;
 
 // Actions sequence
 bool busy = false;
 std::list<Action> actions;
+std::list<Action> priority;
 Action current_action;
 
 // IR sensor mean
-const int obstacle = 3;
+const int obstacle = 2;
 int cmpt;
 
 // IR sensor value
 double s1,s2;
 
 // Map
-std::list<Node> discrete_map;
+std::vector<Node> discrete_map;
+std::vector<Node> toDiscover;
+
+Mat proc_map, robot_map, wall_map, map;
+const int origin_x = -4;
+const int origin_y = -4;
+const int height = 400;
+const int width = 400;
+const double resolution = 0.02;
+
+const int sz1 = 11;
+const int sz2 = 11;
+
+bool visited_flag = false;
 
 
+// Receive functions
 void receive_EKF(const EKF::ConstPtr &msg);
 
 void receive_sensors(const AnalogC::ConstPtr &msg);
@@ -101,13 +135,43 @@ void receive_odometry(const Odometry::ConstPtr &msg);
 
 void receive_object(const Object::ConstPtr &msg);
 
+
+// Map explorer
+void update_map(double s1, double s2);
+
+void Hough();
+
+void merge_areas();
+
+void interesting_nodes();
+
+void update_nodes_list(Node node);
+
 void create_node(double x, double y);
 
-void path_finding();
+void create_interesting_node(int i,int j);
+
+void interesting_node();
+
+Node find_closest_node(std::vector<Node> vector);
+
+void path_finding(Node node);
+
+bool visited_area();
+
+bool isPath(Node n1, Node n2);
+
+Pixel nodeToPixel(Node node);
+
+Node pixelToNode(Pixel pixel);
 
 void goto_node(Node node);
 
+
+// Angle between ]-pi,pi]
 double angle(double theta);
+
+int nPi2(double theta);
 
 
 #endif /* CONTROLLER_H_ */

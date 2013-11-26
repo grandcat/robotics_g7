@@ -245,6 +245,7 @@ void Hough(nav_msgs::OccupancyGrid map)
 					}
 				}
 				if(!flag)
+				{
 					for(int n = 0; n < sz; n++)
 					{
 						for(int m = 0; m < sz; m++)
@@ -252,7 +253,39 @@ void Hough(nav_msgs::OccupancyGrid map)
 							mat2.at<uchar>(height-i-n-1,j+m) = 100;
 						}
 					}
+				}
 			}
+		}
+	}
+
+
+	// Interesting points
+	int sz2 = 7;
+	for(int i = 0; i < height-sz2; i++)
+	{
+		// Check go left
+		for(int j = 0; j < width-sz2; j++)
+		{
+			bool flag1 = false;
+			for(int n = 0; n < sz; n++)
+			{
+				for(int m = 0; m < sz2-1; m++)
+				{
+					if(mat2.at<uchar>(height-i-n-1,j+m) != 0)
+					{
+						flag1 = true;
+					}
+				}
+				if(mat2.at<uchar>(height-i-n-1,j+sz2) != 100)
+				{
+					flag1 = true;
+				}
+			}
+			if(!flag1)
+			{
+				mat2.at<uchar>(height-i-2-1,j+sz2-2) = 200;
+			}
+
 		}
 	}
 

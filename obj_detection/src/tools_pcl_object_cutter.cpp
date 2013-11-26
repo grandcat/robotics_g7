@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         {
           sprintf(path, "%s%s", dstDir.c_str(), argv[dirID]);
           // Create directory if not exists
-          boost::filesystem::path dir(path);
+//          boost::filesystem::path dir(path);
           if (boost::filesystem::create_directories(path))
             ROS_INFO("Created path: %s", path);
 
