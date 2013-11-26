@@ -334,6 +334,8 @@ class ImageConverter
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
 	image_transport::Subscriber filter_sub_;
+	//ros::Subscriber filter_sub_2_;
+
 
 public:
   IplImage* img;
@@ -347,6 +349,7 @@ public:
 
 		//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
 		filter_sub_ = it_.subscribe("/color_filter/filtered_image", 1, &ImageConverter::imageCb, this);
+		//filter_sub_2_ = it_.subscribe(" /recognition/detect", 1, &ImageConverter::imageCb, this);
 
     cv::namedWindow(WINDOW);
   }
@@ -354,11 +357,6 @@ public:
   ~ImageConverter()
   {
     cv::destroyWindow(WINDOW);
-  }
-
-  void test(const sensor_msgs::Image& msg)
-  {
-  	std::cout << "test" << std::endl;
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -383,10 +381,11 @@ public:
 
 		// Detect objects through feature detection
 		int featSize = featureDetector(src).keypoints.size();
-
 		//std::cout << "Nr keypoints: " << featSize << std::endl;
+
 		// Try to recognize object if enough keys are detected
 		if(featSize > keypThreshold) {
+			
 			// Color detection
 			ImgHist hist = colorDetectionRGB(src);
 			//drawHistograms(hist);
@@ -398,6 +397,7 @@ public:
 			// Identify object
 			int obj = identifyObject(hist, feat);
 
+			//Check if already identified object
 			if(obj != 0) {
 				bool addObj = false;
 				int nrIdentified = identified.size();
@@ -406,6 +406,8 @@ public:
 					std::cout << "Identified: " << objects[obj-1] << std::endl;	
 				}
 			}
+
+			//Publish message when object is detectec
 			//image_pub_.publish(obj);
 		}
 
@@ -432,7 +434,6 @@ int main(int argc, char** argv)
 		Mat maskedImg;
 		src.copyTo(maskedImg, bgMask);
 		src = maskedImg;*/
-
 		ImgHist hist = colorDetectionRGB(src);
 		drawHistograms(hist);
 		Features feat = featureDetector(src);
