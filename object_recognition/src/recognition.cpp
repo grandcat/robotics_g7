@@ -43,7 +43,8 @@ struct IdImg
 static const std::string objects[] = {"pepper", "lemon", "pear", "carrot", "giraff", "tiger", "hippo"};
 
 vector<IdImg> trainImg;
-int keypThreshold = 25;
+int keypThreshold = 30;
+vector<int> identified;
 
 /*
  * Subtract background based on RGB color
@@ -222,46 +223,38 @@ Features featureDetector(Mat img)
 
 
 /*
- * Try to identify the object by comparing edge detection to train images
+ * Try to identify the object by comparing color histogram, hue and feature detection to train images
  */
 int identifyObject(ImgHist hist, Features feat)
 {
 	// Match color histogram
 	int bestColorMatch = 0;
-	double bestRes = 0;
-	double bestResH = 0;
+	double bestRes = 0.7;	//0.7
+	//double bestResH = 0.5;
 	for(int i=0; i < trainImg.size(); ++i) {
 		double resB = compareHist(hist.bHist, trainImg[i].colorHist.bHist, CV_COMP_CORREL);
 		double resG = compareHist(hist.gHist, trainImg[i].colorHist.gHist, CV_COMP_CORREL);
 		double resR = compareHist(hist.rHist, trainImg[i].colorHist.rHist, CV_COMP_CORREL);
 		double resH = compareHist(hist.hsvHist, trainImg[i].colorHist.hsvHist, CV_COMP_CORREL);
-		//std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
 
 		// Not a match if negative correlation
 		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
 			double res = resB*resB + resG*resG + resR*resR + resH*resH;
 			if(res > bestRes) {
 				bestRes = res;
-				bestResH = resH;
+				//bestResH = resH;
 				bestColorMatch = trainImg[i].obj;
-				std::cout << "RGB match: " << objects[bestColorMatch-1] << std::endl;
-				std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
+				//std::cout << "RGB match: " << objects[bestColorMatch-1] << " Res: " << bestRes << std::endl;
+				//std::cout << "RGB match: " << objects[bestColorMatch-1] << std::endl;
+				//std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
 			}
 		}
-
-		 /*if(resH > 0 && resH > bestResH) {
-				bestResH = resH;
-				bestColorMatch = trainImg[i].obj;
-				std::cout << "Hue match: " << objects[bestColorMatch-1] << std::endl;
-				std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
-		 }*/
-
 	}
-	std::cout << "Best match color: " << bestColorMatch << std::endl;
+	//std::cout << "Best match color: " << bestColorMatch << std::endl;
 
 	// Match descriptors
 	int bestDescriptMatch = 0;
-	float matchPercent = 0.3; //0.3 when testing on images
+	float matchPercent = 0.5;
 	for(int i=0; i < trainImg.size(); ++i) {
 		// Use BruteForceMatcher
 		BFMatcher matcher(cv::NORM_L1, true);
@@ -270,31 +263,25 @@ int identifyObject(ImgHist hist, Features feat)
 
 		// Check percent of keypoints that match
 		float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
-		//std::cout << "Percent match for " << trainImg[i].obj << ": " << res << std::endl;
-
 		if(res > matchPercent) {
 			matchPercent = res;
 			bestDescriptMatch = trainImg[i].obj;
-			std::cout << "Descriptor match: " << objects[bestDescriptMatch-1] << std::endl;
-
-			/*if(bestDescriptMatch == bestColorMatch) {
-				std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
-			}*/
+			//std::cout << "Descriptor match: " << objects[bestDescriptMatch-1] << " Percent: " << matchPercent << std::endl;
+			if(bestDescriptMatch == bestColorMatch) {
+				//std::cout << "Best desc & color match: " << objects[bestDescriptMatch-1] << std::endl;
+				break;
+			}
 		}
 	}
-	std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
+	//std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
 
-	/*if(bestDescriptMatch == bestColorMatch && bestDescriptMatch != 0) {
-		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
+	if(bestDescriptMatch == bestColorMatch) {
+		return bestColorMatch;
 	} else if(bestDescriptMatch != bestColorMatch && bestColorMatch != 0) {
-		std::cout << "Best match: " << objects[bestColorMatch-1] << std::endl;
-	} else if(bestColorMatch == 0) {
-		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
+		return bestColorMatch;
 	} else {
-		std::cout << "No match" << std::endl;
-	}*/
-	
-	return 0;
+		return bestDescriptMatch;
+	}
 }
 
 
@@ -394,29 +381,31 @@ public:
 		Mat src;
 		Mat(img, crop).copyTo(src);
 
-		//Mat src(img); 
-
-		// Mask background
-		/*Mat bgMask = subtractBackground(src);
-		Mat maskedImg;
-		src.copyTo(maskedImg, bgMask);*/
-
 		// Detect objects through feature detection
 		int featSize = featureDetector(src).keypoints.size();
 
 		//std::cout << "Nr keypoints: " << featSize << std::endl;
+		// Try to recognize object if enough keys are detected
 		if(featSize > keypThreshold) {
 			// Color detection
 			ImgHist hist = colorDetectionRGB(src);
-			drawHistograms(hist);
+			//drawHistograms(hist);
 
 			//Feature detection
 			Features feat = featureDetector(src);
-			showKeypoints(src, feat);
+			//showKeypoints(src, feat);
 
 			// Identify object
 			int obj = identifyObject(hist, feat);
 
+			if(obj != 0) {
+				bool addObj = false;
+				int nrIdentified = identified.size();
+				if(nrIdentified == 0 || (nrIdentified > 0 && identified[nrIdentified-1] != obj)) {
+					identified.push_back(obj);
+					std::cout << "Identified: " << objects[obj-1] << std::endl;	
+				}
+			}
 			//image_pub_.publish(obj);
 		}
 
