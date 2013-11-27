@@ -391,7 +391,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s6 = s7 = s8 = false;
 
 
-	if(priority.empty())
+	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION))
 	{
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
