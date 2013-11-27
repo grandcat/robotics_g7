@@ -16,6 +16,9 @@
 #include "headers/controller.h"
 #include <differential_drive/Servomotors.h>
 
+#include "std_msgs/String.h"
+#include <sstream>
+
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -1245,14 +1248,23 @@ int main(int argc, char** argv)
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
 	object_sub = nh.subscribe("/motion/Object",1000,receive_object);
+	ros::Publisher chatter_pub = nh.advertise<std_msgs::String>("robot/talk", 1000);
 
 
+	// Map init
 	proc_map = Mat::zeros(height,width,CV_8UC1);
 	robot_map = Mat::zeros(height,width,CV_8UC1);
 	wall_map = Mat::zeros(height,width,CV_8UC1);
 
-
 	create_node(0,0);
+
+
+	// Robot_talk
+    std_msgs::String msg;
+    std::stringstream ss;
+    ss << "Go";
+    msg.data = ss.str();
+    chatter_pub.publish(msg);
 
 
 	ros::Rate loop_rate(100);
