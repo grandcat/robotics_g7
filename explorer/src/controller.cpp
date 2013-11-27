@@ -958,7 +958,12 @@ Node pixelToNode(Pixel pixel)
 	return node;
 }
 
-
+/**
+ * @brief isPath  Check whether already explored path exists between Node n1 and n2
+ * @param n1
+ * @param n2
+ * @return
+ */
 bool isPath(Node n1, Node n2)
 {
 	Pixel p1 = nodeToPixel(n1);
