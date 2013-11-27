@@ -11,6 +11,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
 // PCL: normals & feature
@@ -86,6 +87,12 @@ void ImageFetchSmooth::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_
   pcl::fromROSMsg(cloudVoxel, *pclFiltered);
   ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
 
+  // Rotate whole point cloud to correct sensor orientation (pose)
+  Eigen::Quaternionf rotateZ;
+  Eigen::Affine3f baseRotation;
+  baseRotation = Eigen::AngleAxisf(M_PI/6, Eigen::Vector3f::UnitZ());
+  pcl::transformPointCloud(*pclFiltered, *pclFiltered, baseRotation);
+
   // TESTING
   static FeatureCloud objModel;
   compareModelWithScene(objModel);
@@ -146,7 +153,7 @@ void ImageFetchSmooth::compareModelWithScene(FeatureCloud& model)
 
   pcl::PointCloud<pcl::PointXYZ> outputAlignResult;
   sacIA.align(outputAlignResult);
-  float alignScore = sacIA.getFitnessScore(0.001f);
+  float alignScore = sacIA.getFitnessScore(0.0001f);
   Eigen::Matrix4f resTransform = sacIA.getFinalTransformation();
 
   // DEBUG Output

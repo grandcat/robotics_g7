@@ -44,11 +44,11 @@ struct Action
 struct Node
 {
 	double x,y;
-	std::vector<Node> connectedTo;
+	std::vector<Node> connectedTo; // check every time !
 
-	bool operator==(const Node& n)
+	bool operator==(const Node& n) const
 	{
-	    return ((x == n.x) & (y == n.y));
+	    return ((n.x == x) & (n.y == y));
 	}
 };
 
@@ -66,7 +66,6 @@ ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 ros::Subscriber odometry_sub;
 ros::Subscriber object_sub;
-
 
 
 // Control filter parameters
@@ -145,6 +144,8 @@ void merge_areas();
 
 void interesting_nodes();
 
+void update_nodes_list(Node node);
+
 void create_node(double x, double y);
 
 void create_interesting_node(int i,int j);
@@ -156,8 +157,6 @@ Node find_closest_node(std::vector<Node> vector);
 void path_finding(Node node);
 
 bool visited_area();
-
-void update_nodes_list(Node node);
 
 bool isPath(Node n1, Node n2);
 

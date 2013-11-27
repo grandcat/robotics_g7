@@ -10,6 +10,9 @@
 #include <opencv2/nonfree/nonfree.hpp>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include "std_msgs/String.h"
 
 using namespace cv;
 namespace enc = sensor_msgs::image_encodings;
@@ -21,6 +24,7 @@ struct ImgHist
 	Mat bHist;
 	Mat gHist;
 	Mat rHist;
+	Mat hsvHist;
 };
 
 struct Features
@@ -31,7 +35,6 @@ struct Features
 
 struct IdImg 
 {
-	Mat img;
 	int obj;
 	ImgHist colorHist;
 	Features feat;
@@ -39,19 +42,22 @@ struct IdImg
 
 static const std::string objects[] = {"pepper", "lemon", "pear", "carrot", "giraff", "tiger", "hippo"};
 
-const int trainSize = 6;
-IdImg testImg[trainSize];
-
+vector<IdImg> trainImg;
+int keypThreshold = 30;
+vector<int> identified;
 
 /*
  * Subtract background based on RGB color
  */
 Mat subtractBackground(Mat img)
 {
-	//string windowName = "background";
-  //namedWindow(windowName);
+  int rh = 255;
+	int gh = rh;
+  int bh = rh;
 
-  int rh = 255, rl = 70, gh = 255, gl = 70, bh = 255, bl = 70;
+  int rl = 70;
+  int gl = rl;
+  int bl = rl;
 
   // for dilation
   Mat element = getStructuringElement(MORPH_RECT, Size(7, 7));
@@ -64,6 +70,7 @@ Mat subtractBackground(Mat img)
   erode(bgIsolation, bgIsolation, Mat());
   dilate(bgIsolation, bgIsolation, element);
 
+	//namedWindow("background mask");
   //imshow(windowName, bgIsolation);
 
 	return bgIsolation;
@@ -71,13 +78,86 @@ Mat subtractBackground(Mat img)
 
 
 /*
- * Make a color histogram for the image
+ * Draw RGB histogram
  */
-ImgHist colorDetection(Mat matImg)
+void drawHistograms(ImgHist hist)
+{
+	Mat bHist = hist.bHist;
+	Mat gHist = hist.gHist;
+	Mat rHist = hist.rHist;
+	Mat hsvHist = hist.hsvHist;
+
+	int histSize = 256;
+  int hist_w = 512; 
+  int hist_h = 400;
+  int bin_w = cvRound( (double) hist_w/histSize );
+  Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+
+  /// Draw for each channel
+  for( int i = 1; i < histSize; i++ )
+  {
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(bHist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(bHist.at<float>(i)) ),
+                       Scalar( 255, 0, 0), 2, 8, 0  );
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(gHist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(gHist.at<float>(i)) ),
+                       Scalar( 0, 255, 0), 2, 8, 0  );
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(rHist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(rHist.at<float>(i)) ),
+                       Scalar( 0, 0, 255), 2, 8, 0  );
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(hsvHist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(hsvHist.at<float>(i)) ),
+                       Scalar( 255, 255, 255), 2, 8, 0  );
+  }
+  namedWindow("Histogram", CV_WINDOW_AUTOSIZE );
+  imshow("Histogram", histImage );
+}
+
+/*
+ * Make a HSV color histogram for the image
+ */
+Mat colorDetectionHSV(Mat img)
+{
+	Mat hsvImg;
+	cvtColor( img, hsvImg, CV_BGR2HSV );
+
+	//Split image into planes (HSV)
+	vector<Mat> planes;
+	split( hsvImg, planes );
+
+
+	// Set bins for hue and saturation
+  /*int hBins = 50; 
+  int sBins = 60;
+  int histSize[] = { hBins, sBins };*/
+
+	int histSize = 256;
+
+  // Set hue and saturation ranges
+  float hRanges[] = { 0, 256 };
+  //float sRanges[] = { 0, 180 };
+  //const float* ranges[] = { hRanges, sRanges };
+	const float* histRange = { hRanges };
+  //int channels[] = { 0, 1 };
+
+  //Calculate HSV histogram and normalize
+  Mat hist;
+	calcHist( &planes[0], 1, 0, Mat(), hist, 1, &histSize, &histRange, true, false );
+  normalize( hist, hist, 0, 1, NORM_MINMAX, -1, Mat() );
+
+	hist.at<float>(0) = 0;
+
+  return hist;
+}
+
+/*
+ * Make a RGB color histogram for the image
+ */
+ImgHist colorDetectionRGB(Mat img)
 {
 	//Split image into planes (B, G, R)
 	vector<Mat> planes;
-	split( matImg, planes );
+	split( img, planes );
 
 	int histSize = 256;
 
@@ -94,43 +174,35 @@ ImgHist colorDetection(Mat matImg)
 	calcHist(&planes[1], 1, 0, Mat(), gHist, 1, &histSize, &histRange, uniform, accumulate);
 	calcHist(&planes[2], 1, 0, Mat(), rHist, 1, &histSize, &histRange, uniform, accumulate);
 
-	bHist.at<float>(0) = 0;
-	gHist.at<float>(0) = 0;
-	rHist.at<float>(0) = 0;
-
-// Draw the histograms for B, G and R
-  int hist_w = 512; int hist_h = 400;
-  int bin_w = cvRound( (double) hist_w/histSize );
-
-  Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
-
-  /// Normalize the result to [ 0, histImage.rows ]
-  normalize(bHist, bHist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-  normalize(gHist, gHist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-  normalize(rHist, rHist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-
-  /// Draw for each channel
-  for( int i = 1; i < histSize; i++ )
-  {
-      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(bHist.at<float>(i-1)) ) ,
-                       Point( bin_w*(i), hist_h - cvRound(bHist.at<float>(i)) ),
-                       Scalar( 255, 0, 0), 2, 8, 0  );
-      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(gHist.at<float>(i-1)) ) ,
-                       Point( bin_w*(i), hist_h - cvRound(gHist.at<float>(i)) ),
-                       Scalar( 0, 255, 0), 2, 8, 0  );
-      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(rHist.at<float>(i-1)) ) ,
-                       Point( bin_w*(i), hist_h - cvRound(rHist.at<float>(i)) ),
-                       Scalar( 0, 0, 255), 2, 8, 0  );
-  }
-
-  /// Display
-  namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE );
-  imshow("calcHist Demo", histImage );
-
-		ImgHist hist = {bHist, gHist, rHist};
-		return hist;
+	for(int i=0; i<5; ++i) {
+		bHist.at<float>(i) = 0;
+		gHist.at<float>(i) = 0;
+		rHist.at<float>(i) = 0;
 	}
 
+  // Normalize the result
+  int histH = 400;
+  normalize(bHist, bHist, 0, histH, NORM_MINMAX, -1, Mat() );
+  normalize(gHist, gHist, 0, histH, NORM_MINMAX, -1, Mat() );
+  normalize(rHist, rHist, 0, histH, NORM_MINMAX, -1, Mat() );
+
+	Mat hsvHist = colorDetectionHSV(img);
+	ImgHist hist = {bHist, gHist, rHist, hsvHist};
+	return hist;
+}
+
+/*
+ * Show keypoints in image
+ */
+void showKeypoints(Mat img, Features feat) 
+{
+	Mat outputImage;
+  Scalar keypointColor = Scalar(255, 0, 0);
+  drawKeypoints(img, feat.keypoints, outputImage, keypointColor, DrawMatchesFlags::DEFAULT);
+
+  namedWindow("Output");
+  imshow("Output", outputImage);
+}
 
 /*
  * Detect features in image by finding keypoints
@@ -145,71 +217,71 @@ Features featureDetector(Mat img)
   Ptr<DescriptorExtractor> featureExtractor = DescriptorExtractor::create("SURF");
   featureExtractor->compute(img, keypoints, descriptors);
 
-	Mat outputImage;
-  Scalar keypointColor = Scalar(255, 0, 0);
-  drawKeypoints(img, keypoints, outputImage, keypointColor, DrawMatchesFlags::DEFAULT);
-
-  namedWindow("Output");
-  imshow("Output", outputImage);
-
 	Features feat = { keypoints, descriptors };
 	return feat;
 }
 
 
 /*
- * Try to identify the object by comparing edge detection to train images
+ * Try to identify the object by comparing color histogram, hue and feature detection to train images
  */
-void identifyObject(ImgHist hist, Features feat)
+int identifyObject(ImgHist hist, Features feat)
 {
-	// matching color histogram
+	// Match color histogram
 	int bestColorMatch = 0;
-	double bestRes = 0.1;
-	for(int i=0; i < trainSize; ++i) {
-		double resB = compareHist(hist.bHist, testImg[i].colorHist.bHist, CV_COMP_CORREL);
-		double resG = compareHist(hist.gHist, testImg[i].colorHist.gHist, CV_COMP_CORREL);
-		double resR = compareHist(hist.rHist, testImg[i].colorHist.rHist, CV_COMP_CORREL);
+	double bestRes = 0.7;	//0.7
+	//double bestResH = 0.5;
+	for(int i=0; i < trainImg.size(); ++i) {
+		double resB = compareHist(hist.bHist, trainImg[i].colorHist.bHist, CV_COMP_CORREL);
+		double resG = compareHist(hist.gHist, trainImg[i].colorHist.gHist, CV_COMP_CORREL);
+		double resR = compareHist(hist.rHist, trainImg[i].colorHist.rHist, CV_COMP_CORREL);
+		double resH = compareHist(hist.hsvHist, trainImg[i].colorHist.hsvHist, CV_COMP_CORREL);
 
-		double res = resB*resB + resG*resG + resR*resR;
-		std::cout << res << std::endl;
-		if(res > bestRes) {
-			bestRes = res;
-			bestColorMatch = testImg[i].obj;
-			/*std::cout << "Best match color: " << bestColorMatch << std::endl;
-			std::cout << "Histogram compare B,G,R: " << resG << ", " << resB << ", " << resR << std::endl;*/
+		// Not a match if negative correlation
+		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
+			double res = resB*resB + resG*resG + resR*resR + resH*resH;
+			if(res > bestRes) {
+				bestRes = res;
+				//bestResH = resH;
+				bestColorMatch = trainImg[i].obj;
+				//std::cout << "RGB match: " << objects[bestColorMatch-1] << " Res: " << bestRes << std::endl;
+				//std::cout << "RGB match: " << objects[bestColorMatch-1] << std::endl;
+				//std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
+			}
 		}
 	}
-	/*if(bestColorMatch == 0) {
-		std::cout << "No color match" << std::endl;
-	} else {
-			std::cout << "Best match color: " << bestColorMatch << std::endl;
-			//std::cout << "Histogram compare B,G,R: " << rMatch << ", " << bMatch << ", " << rMatch << std::endl;
-	}*/
+	//std::cout << "Best match color: " << bestColorMatch << std::endl;
 
-	// matching descriptors
+	// Match descriptors
 	int bestDescriptMatch = 0;
-	int matchKeypoints = 0;
-	for(int i=0; i < trainSize; ++i) {
-		BFMatcher matcher(cv::NORM_L2, true);
+	float matchPercent = 0.5;
+	for(int i=0; i < trainImg.size(); ++i) {
+		// Use BruteForceMatcher
+		BFMatcher matcher(cv::NORM_L1, true);
 		vector<cv::DMatch> matches;
-		matcher.match(feat.descriptors, testImg[i].feat.descriptors, matches);
+		matcher.match(feat.descriptors, trainImg[i].feat.descriptors, matches);
 
-		if(matches.size() > matchKeypoints) {
-			matchKeypoints = matches.size();
-			bestDescriptMatch = testImg[i].obj;
-			std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
-			std::cout << "Nr matches: " << matches.size() << std::endl;
+		// Check percent of keypoints that match
+		float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
+		if(res > matchPercent) {
+			matchPercent = res;
+			bestDescriptMatch = trainImg[i].obj;
+			//std::cout << "Descriptor match: " << objects[bestDescriptMatch-1] << " Percent: " << matchPercent << std::endl;
+			if(bestDescriptMatch == bestColorMatch) {
+				//std::cout << "Best desc & color match: " << objects[bestDescriptMatch-1] << std::endl;
+				break;
+			}
 		}
 	}
+	//std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
 
 	if(bestDescriptMatch == bestColorMatch) {
-		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
-	} else if(bestDescriptMatch != bestColorMatch && bestDescriptMatch != 0) {
-		std::cout << "Best match: " << objects[bestDescriptMatch-1] << std::endl;
-	} else if(bestDescriptMatch == 0) {
-		std::cout << "No match" << std::endl;
+		return bestColorMatch;
+	} else if(bestDescriptMatch != bestColorMatch && bestColorMatch != 0) {
+		return bestColorMatch;
+	} else {
+		return bestDescriptMatch;
 	}
-	
 }
 
 
@@ -218,19 +290,39 @@ void identifyObject(ImgHist hist, Features feat)
  */
 void train()
 {
-	ImgHist dummyHist;
-	Features edgeDummy;
+	// Get all trainimages
+	vector<std::string> files;
+  class dirent *ent;
+  std::string dirName = "src/trainimages";
+  DIR *dir = opendir(dirName.c_str());
+  while ((ent = readdir(dir)) != NULL) {
+    const std::string fileName = ent->d_name;
 
-	testImg[0] = { imread("src/trainimages/1_1.jpg"), 1, dummyHist, edgeDummy };
-	testImg[1] = { imread("src/trainimages/1_2.jpg"), 1, dummyHist, edgeDummy };
-	testImg[2] = { imread("src/trainimages/2_1.jpg"), 2, dummyHist, edgeDummy };
-	testImg[3] = { imread("src/trainimages/3_1.jpg"), 3, dummyHist, edgeDummy };
-	testImg[4] = { imread("src/trainimages/3_2.jpg"), 3, dummyHist, edgeDummy };
-	testImg[5] = { imread("src/trainimages/3_3.jpg"), 3, dummyHist, edgeDummy };
+    // get only image files (.jpg)
+  	std::size_t isImg = fileName.find(".jpg");
+    if (isImg != std::string::npos) {
+      files.push_back(fileName);
+  	}
+  }
+  closedir(dir);
 
-	for(int i=0; i < trainSize; ++i) {
-		testImg[i].colorHist = colorDetection(testImg[i].img);
-		testImg[i].feat = featureDetector(testImg[i].img);
+  // Calculate color histogram and feature detection on train images
+	for(int i=0; i < files.size(); ++i) {
+    const std::string fullFileName = dirName + "/" + files[i];
+		Mat img = imread(fullFileName);
+
+		IdImg dummy;
+		
+		// Get object id from file name
+		std::stringstream ss;
+  	ss << files[i][0] << files[i][1];
+  	int n;
+  	std::istringstream(ss.str()) >> n;
+		dummy.obj = n;
+	
+		dummy.colorHist = colorDetectionRGB(img);
+		dummy.feat = featureDetector(img);
+		trainImg.push_back(dummy);
 	}
 }
 
@@ -240,8 +332,10 @@ class ImageConverter
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
-  //image_transport::Publisher image_pub_;
-	image_transport::Subscriber image_sub_depth_;
+  image_transport::Publisher image_pub_;
+	image_transport::Subscriber filter_sub_;
+	//ros::Subscriber filter_sub_2_;
+
 
 public:
   IplImage* img;
@@ -253,8 +347,9 @@ public:
     : it_(nh_)
   {
 
-	image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
-	//image_sub_depth_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCb_depth, this);
+		//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
+		filter_sub_ = it_.subscribe("/color_filter/filtered_image", 1, &ImageConverter::imageCb, this);
+		//filter_sub_2_ = it_.subscribe(" /recognition/detect", 1, &ImageConverter::imageCb, this);
 
     cv::namedWindow(WINDOW);
   }
@@ -280,37 +375,44 @@ public:
     //cv_ptr has image now, identify object
 		img = new IplImage(cv_ptr->image);
 
-		Rect crop((img->width)/4, (img->height)/2, (img->width)/2, (img->height)*1/2);
+		Rect crop((img->width)/5, (img->height)/4, (img->width)*3/5, (img->height)*3/4);
 		Mat src;
 		Mat(img, crop).copyTo(src);
 
-		//Mat src(img); 
-
 		// Detect objects through feature detection
 		int featSize = featureDetector(src).keypoints.size();
-
-		Mat bgMask = subtractBackground(src);
-		Mat maskedImg;
-		src.copyTo(maskedImg, bgMask);
-
 		//std::cout << "Nr keypoints: " << featSize << std::endl;
-		if(featSize > 10) {
-			std::cout << "OBJECT!" << std::endl;
 
+		// Try to recognize object if enough keys are detected
+		if(featSize > keypThreshold) {
+			
 			// Color detection
-			ImgHist hist = colorDetection(maskedImg);
+			ImgHist hist = colorDetectionRGB(src);
+			//drawHistograms(hist);
 
 			//Feature detection
-			Features feat = featureDetector(maskedImg);
+			Features feat = featureDetector(src);
+			//showKeypoints(src, feat);
 
 			// Identify object
-			identifyObject(hist, feat);
+			int obj = identifyObject(hist, feat);
+
+			//Check if already identified object
+			if(obj != 0) {
+				bool addObj = false;
+				int nrIdentified = identified.size();
+				if(nrIdentified == 0 || (nrIdentified > 0 && identified[nrIdentified-1] != obj)) {
+					identified.push_back(obj);
+					std::cout << "Identified: " << objects[obj-1] << std::endl;	
+				}
+			}
+
+			//Publish message when object is detectec
+			//image_pub_.publish(obj);
 		}
 
-    cv::imshow(WINDOW, cv_ptr->image);
+    cv::imshow(WINDOW, src);
     cv::waitKey(3);
-
-    //image_pub_.publish(cv_ptr->toImageMsg());
   }
 };
 
@@ -320,13 +422,29 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "object_recognition");
 	ros::NodeHandle n;
 
-	initModule_nonfree();
+	initModule_nonfree();	// For using SURF
 
 	// Train on test images
 	train();
 
-  ImageConverter ic;
-  ros::spin();
+	// Testing on image
+	if(argc > 1) {
+		Mat src = imread( argv[1] );
+		/*Mat bgMask = subtractBackground(src);
+		Mat maskedImg;
+		src.copyTo(maskedImg, bgMask);
+		src = maskedImg;*/
+		ImgHist hist = colorDetectionRGB(src);
+		drawHistograms(hist);
+		Features feat = featureDetector(src);
+		showKeypoints(src, feat);
+		int obj = identifyObject(hist, feat);
+		waitKey(0);
+	} else {
+	  ImageConverter ic;
+	  ros::spin();
+	}
+
   return 0;
 }
 
