@@ -23,7 +23,6 @@
 #include <opencv2/highgui/highgui.hpp>
 */
 #include "wall_detection.h"
-#include <cvblob.h>
 #include <typeinfo>
 
 class Wall_Detection;
@@ -216,7 +215,7 @@ public:
 		//std::cout<<"max_depth: "<<max_depth_<<" min_depth: "<<min_depth_<<std::endl;
 
 		//get the blobs
-		IplImage *labelImg=cvCreateImage(cvGetSize(binary_im), IPL_DEPTH_LABEL, 1);
+		//IplImage *labelImg=cvCreateImage(cvGetSize(binary_im), IPL_DEPTH_LABEL, 1);
 
 		/*cvb::CvBlobs blobs;
 		unsigned int result=cvLabel(binary_im, labelImg, blobs);

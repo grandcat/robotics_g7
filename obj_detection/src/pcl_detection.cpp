@@ -88,10 +88,13 @@ void ImageFetchSmooth::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_
   ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
 
   // Rotate whole point cloud to correct sensor orientation (pose)
-  Eigen::Quaternionf rotateZ;
-  Eigen::Affine3f baseRotation;
-  baseRotation = Eigen::AngleAxisf(M_PI/6, Eigen::Vector3f::UnitZ());
-  pcl::transformPointCloud(*pclFiltered, *pclFiltered, baseRotation);
+//  Eigen::Affine3f baseRotation;
+//  baseRotation = Eigen::AngleAxisf(-12.0 / 180.0 * M_PI, Eigen::Vector3f::UnitX());
+//  pcl::transformPointCloud(*pclFiltered, *pclFiltered, baseRotation);
+//  // TEST
+//  sensor_msgs::PointCloud2 output;
+//  pcl::toROSMsg(*pclFiltered, output);
+//  pub_pcl_filtered.publish(output);
 
   // TESTING
   static FeatureCloud objModel;

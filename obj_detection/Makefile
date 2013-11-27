@@ -174,6 +174,19 @@ pcl_processing/fast:
 .PHONY : pcl_processing/fast
 
 #=============================================================================
+# Target rules for targets named recognition_master
+
+# Build rule for target.
+recognition_master: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 recognition_master
+.PHONY : recognition_master
+
+# fast build rule for target.
+recognition_master/fast:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/build
+.PHONY : recognition_master/fast
+
+#=============================================================================
 # Target rules for targets named rosbuild_precompile
 
 # Build rule for target.
@@ -360,6 +373,21 @@ src/pcl_processing.s:
 .PHONY : src/pcl_processing.s
 
 # target to build an object file
+src/recognition_master.o:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/recognition_master.o
+.PHONY : src/recognition_master.o
+
+# target to preprocess a source file
+src/recognition_master.i:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/recognition_master.i
+.PHONY : src/recognition_master.i
+
+# target to generate assembly for a file
+src/recognition_master.s:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/recognition_master.s
+.PHONY : src/recognition_master.s
+
+# target to build an object file
 src/test.o:
 	$(MAKE) -f CMakeFiles/test_depth.dir/build.make CMakeFiles/test_depth.dir/src/test.o
 .PHONY : src/test.o
@@ -403,6 +431,7 @@ help:
 	@echo "... edit_cache"
 	@echo "... pcl_processing"
 	@echo "... rebuild_cache"
+	@echo "... recognition_master"
 	@echo "... rosbuild_precompile"
 	@echo "... rosbuild_premsgsrvgen"
 	@echo "... rospack_genmsg"
@@ -421,6 +450,9 @@ help:
 	@echo "... src/pcl_processing.o"
 	@echo "... src/pcl_processing.i"
 	@echo "... src/pcl_processing.s"
+	@echo "... src/recognition_master.o"
+	@echo "... src/recognition_master.i"
+	@echo "... src/recognition_master.s"
 	@echo "... src/test.o"
 	@echo "... src/test.i"
 	@echo "... src/test.s"
