@@ -146,7 +146,7 @@ void ImageFetchSmooth::compareModelWithScene(FeatureCloud& model)
 
   pcl::PointCloud<pcl::PointXYZ> outputAlignResult;
   sacIA.align(outputAlignResult);
-  float alignScore = sacIA.getFitnessScore(0.001f);
+  float alignScore = sacIA.getFitnessScore(0.0001f);
   Eigen::Matrix4f resTransform = sacIA.getFinalTransformation();
 
   // DEBUG Output
