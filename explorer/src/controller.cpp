@@ -1186,11 +1186,8 @@ void receive_object(const Object::ConstPtr &msg)
 	printf("i = %d, j = %d\n",pixel.i,pixel.j);
 
 
-    std_msgs::String say;
-    std::stringstream ss;
-    ss << "I see something";
-    say.data = ss.str();
-    chatter_pub.publish(say);
+    string say_out = string("espeak \"") + "I see something" + string("\"");
+    system(say_out.c_str());
 }
 
 
@@ -1255,7 +1252,6 @@ int main(int argc, char** argv)
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
 	object_sub = nh.subscribe("/motion/Object",1000,receive_object);
-	chatter_pub = nh.advertise<std_msgs::String>("robot/talk", 1000);
 
 
 	// Map init
@@ -1267,11 +1263,8 @@ int main(int argc, char** argv)
 
 
 	// Robot_talk
-    std_msgs::String msg;
-    std::stringstream ss;
-    ss << "Go";
-    msg.data = ss.str();
-    chatter_pub.publish(msg);
+    string say_out = string("espeak \"") + "Go" + string("\"");
+    system(say_out.c_str());
 
 
 	ros::Rate loop_rate(100);
