@@ -16,6 +16,9 @@
 #include "headers/controller.h"
 #include <differential_drive/Servomotors.h>
 
+#include "std_msgs/String.h"
+#include <sstream>
+
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -54,7 +57,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 	// Wall follower
-	if(actions.empty() & priority.empty())
+	if(actions.empty())
 	{
 		double x_cmd = x + x_cmd_traj;
 		double y_cmd;
@@ -74,6 +77,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	// Do a special movement
 	else
 	{
+		/*
 		if(busy & !priority.empty())
 		{
 			busy = false;
@@ -84,10 +88,12 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			s.rotation_angle = 0;
 			stop_EKF_pub.publish(s);
 		}
+		*/
 
 
 		if(!busy)
 		{
+			/*
 			if(!priority.empty())
 			{
 				actions.clear();
@@ -97,7 +103,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			{
 				current_action = actions.front();
 			}
+			*/
 
+			current_action = actions.front();
 			busy = true;
 
 			if(current_action.n != ACTION_GOTO_FORWARD)
@@ -122,7 +130,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
 				diff_ang = angle(diff_ang);
 
-				speed.V = 5*rho*dist*r;
+				speed.V = rho*dist*r;
 				speed.W = -2*r/l*alpha*diff_ang;
 
 				// Done
@@ -388,10 +396,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	bool s7 = (msg->ch7 > bumper_threshold); // center
 	bool s8 = (msg->ch8 > bumper_threshold); // left
 
-	s6 = s7 = s8 = false;
+	//s6 = s7 = s8 = false;
+	s7 = false;
 
 
-	if(priority.empty())
+	//if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION))
+	if(actions.empty())
 	{
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
@@ -404,7 +414,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 				action.n = ACTION_ROTATION;
 				if(s1 < s2){action.parameter1 = -M_PI/2;}
 				else {action.parameter1 = M_PI/2;}
-				priority.push_back(action);
+				actions.push_back(action);
 
 				//printf("Front wall\n");
 
@@ -420,23 +430,6 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 
 		// Bumpers
-		if(s6)
-		{
-			Action action;
-			x_collision = x;
-
-			action.n = ACTION_BACKWARD;
-			action.parameter1 = x_backward_dist;
-			priority.push_back(action);
-
-			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.05*cos(theta_true) + 0.02*sin(theta_true);
-			action.parameter2 = y_true + 0.05*sin(theta_true) - 0.02*cos(theta_true);
-			priority.push_back(action);
-
-			return;
-		}
-
 		if(s8)
 		{
 			Action action;
@@ -444,12 +437,29 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			priority.push_back(action);
+			actions.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.05*cos(theta_true) - 0.02*sin(theta_true);
-			action.parameter2 = y_true + 0.05*sin(theta_true) + 0.02*cos(theta_true);
-			priority.push_back(action);
+			action.parameter1 = x_true + 0.05*cos(theta_true) + 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.05*sin(theta_true) - 0.04*cos(theta_true);
+			actions.push_back(action);
+
+			return;
+		}
+
+		if(s6)
+		{
+			Action action;
+			x_collision = x;
+
+			action.n = ACTION_BACKWARD;
+			action.parameter1 = x_backward_dist;
+			actions.push_back(action);
+
+			action.n = ACTION_GOTO_FORWARD;
+			action.parameter1 = x_true + 0.05*cos(theta_true) - 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.05*sin(theta_true) + 0.04*cos(theta_true);
+			actions.push_back(action);
 
 			return;
 		}
@@ -460,12 +470,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			priority.push_back(action);
+			actions.push_back(action);
 
 			action.n = ACTION_ROTATION;
 			if(s1 < s2){action.parameter1 = -M_PI/2;}
 			else {action.parameter1 = M_PI/2;}
-			priority.push_back(action);
+			actions.push_back(action);
 
 			return;
 		}
@@ -958,7 +968,12 @@ Node pixelToNode(Pixel pixel)
 	return node;
 }
 
-
+/**
+ * @brief isPath  Check whether already explored path exists between Node n1 and n2
+ * @param n1
+ * @param n2
+ * @return
+ */
 bool isPath(Node n1, Node n2)
 {
 	Pixel p1 = nodeToPixel(n1);
@@ -1169,6 +1184,10 @@ void receive_object(const Object::ConstPtr &msg)
 
 	printf("x_object = %f, y_object = %f\n",x_object,y_object);
 	printf("i = %d, j = %d\n",pixel.i,pixel.j);
+
+
+    string say_out = string("espeak \"") + "I see something" + string("\"");
+    system(say_out.c_str());
 }
 
 
@@ -1235,12 +1254,17 @@ int main(int argc, char** argv)
 	object_sub = nh.subscribe("/motion/Object",1000,receive_object);
 
 
+	// Map init
 	proc_map = Mat::zeros(height,width,CV_8UC1);
 	robot_map = Mat::zeros(height,width,CV_8UC1);
 	wall_map = Mat::zeros(height,width,CV_8UC1);
 
-
 	create_node(0,0);
+
+
+	// Robot_talk
+    string say_out = string("espeak \"") + "Go" + string("\"");
+    system(say_out.c_str());
 
 
 	ros::Rate loop_rate(100);

@@ -44,7 +44,7 @@ struct Action
 struct Node
 {
 	double x,y;
-	std::vector<Node> connectedTo;
+	std::vector<Node> connectedTo; // check every time !
 
 	bool operator==(const Node& n) const
 	{
@@ -66,7 +66,6 @@ ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 ros::Subscriber odometry_sub;
 ros::Subscriber object_sub;
-
 
 
 // Control filter parameters

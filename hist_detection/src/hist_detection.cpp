@@ -32,7 +32,7 @@ void init()
 	char link[512];
 	for(int i = 1; i <= nb_images; i++)
 	{
-		sprintf(link,"/home/robo/ros_workspace/hist_detection/src/images/%d.jpg",i);
+		sprintf(link,"/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/hist_detection/src/images/%d.jpg",i);
 
 		Mat src, dst;
 
