@@ -249,6 +249,34 @@ class Color_Filter
 			}
 		}
 
+
+
+		/// Get the moments
+		std::vector<cv::Moments> mu(contours_poly.size() );
+		for( unsigned int i = 0; i < contours_poly.size(); i++ )
+		{
+			mu[i] = moments( contours_poly[i], false );
+		}
+
+		///  Get the mass centers:
+		std::vector<cv::Point> mc( contours_poly.size() );
+		for( int i = 0; i < contours_poly.size(); i++ )
+		{
+			mc[i] = cv::Point( (int)mu[i].m10/mu[i].m00 , (int)mu[i].m01/mu[i].m00 );
+			int x = mc[i].x;
+			int y = mc[i].y;
+			std::cout<<"mc["<<i<<"].x "<<mc[i].x<<std::endl;
+			std::cout<<"mc["<<i<<"].y "<<mc[i].y<<std::endl;
+			cv::Vec3b pixel = hsv_image.at<cv::Vec3b>(y,x);
+	         int h = pixel[0];
+	         int s = pixel[1];
+	         int v = pixel[2];
+	         std::cout << "h:" << h<< " s:" << s << " v:" << v << std::endl;
+
+		}
+		std::cout<<""<<std::endl;
+
+
 		/// Approximate contours to polygons + get bounding rectangles
 		cv::Rect rect;
 		std::vector<cv::Rect> boundRect;
@@ -327,7 +355,7 @@ class Color_Filter
 		//Publish filtered image
 		cv_bridge::CvImagePtr img_ptr = cv_ptr;
 		filter_image.copyTo(img_ptr->image);
-  	img_pub_.publish(img_ptr->toImageMsg());
+		img_pub_.publish(img_ptr->toImageMsg());
 
 		if (FLAG_SHOW_IMAGE)
 		{

@@ -19,6 +19,9 @@
 #include <string.h>
 #include <opencv2/objdetect/objdetect.hpp> //groupRectangles
 
+#include "recognition_constants.hpp"
+#include <typeinfo>
+
 //for the keyboard input (will remove later and only use the Trackbar)
 #include "std_msgs/String.h"
 #include <sstream>      //std::stringstream
