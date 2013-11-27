@@ -54,7 +54,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 	// Wall follower
-	if(actions.empty())
+	if(actions.empty() & priority.empty())
 	{
 		double x_cmd = x + x_cmd_traj;
 		double y_cmd;
@@ -74,9 +74,30 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	// Do a special movement
 	else
 	{
+		if(busy & !priority.empty())
+		{
+			busy = false;
+
+			// Relaunch EKF
+			Stop_EKF s;
+			s.stop = false;
+			s.rotation_angle = 0;
+			stop_EKF_pub.publish(s);
+		}
+
+
 		if(!busy)
 		{
-			current_action = actions.front();
+			if(!priority.empty())
+			{
+				actions.clear();
+				current_action = priority.front();
+			}
+			else
+			{
+				current_action = actions.front();
+			}
+
 			busy = true;
 
 			if(current_action.n != ACTION_GOTO_FORWARD)
@@ -280,23 +301,42 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			// Forward with correction
 			if(current_action.n == ACTION_GOTO_FORWARD)
 			{
-				double x_cmd = current_action.parameter1;
-				double y_cmd = current_action.parameter2;
+				static double x_cmd;
+				static double y_cmd;
 
 				// Init
-				static double distance;
 				static bool flag;
 				if(!flag)
 				{
-					distance = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
+					x_cmd = current_action.parameter1;
+					y_cmd = current_action.parameter2;
+
+					diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
+					if((x_cmd-x_true) < 0)
+					{
+						if((y_cmd-y_true) > 0)
+						{
+							diff_ang += M_PI;
+						}
+						else
+						{
+							diff_ang -= M_PI;
+						}
+					}
+					diff_ang = angle(diff_ang);
+					double rotation = nPi2(diff_ang)*(M_PI/2);
+
+					y_cmd = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true))*sin(diff_ang-rotation);
+					x_cmd = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true))*cos(diff_ang-rotation);
+
 					flag = true;
 				}
 
 
-				diff_ang = -theta;
+				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
 				diff_ang = angle(diff_ang);
 
-				dist = distance-x;
+				dist = x_cmd-x;
 
 				// Saturations
 				if(dist > x_cmd_traj)
@@ -351,7 +391,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s6 = s7 = s8 = false;
 
 
-	if(actions.empty())
+	if(priority.empty())
 	{
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
@@ -364,7 +404,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 				action.n = ACTION_ROTATION;
 				if(s1 < s2){action.parameter1 = -M_PI/2;}
 				else {action.parameter1 = M_PI/2;}
-				actions.push_back(action);
+				priority.push_back(action);
 
 				//printf("Front wall\n");
 
@@ -387,12 +427,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			actions.push_back(action);
+			priority.push_back(action);
 
-			action.n = ACTION_GOTO;
-			action.parameter1 = x_true + 0.07*cos(theta_true) + 0.02*sin(theta_true);
-			action.parameter2 = y_true + 0.07*sin(theta_true) - 0.02*cos(theta_true);
-			actions.push_back(action);
+			action.n = ACTION_GOTO_FORWARD;
+			action.parameter1 = x_true + 0.05*cos(theta_true) + 0.02*sin(theta_true);
+			action.parameter2 = y_true + 0.05*sin(theta_true) - 0.02*cos(theta_true);
+			priority.push_back(action);
 
 			return;
 		}
@@ -404,12 +444,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			actions.push_back(action);
+			priority.push_back(action);
 
-			action.n = ACTION_GOTO;
+			action.n = ACTION_GOTO_FORWARD;
 			action.parameter1 = x_true + 0.05*cos(theta_true) - 0.02*sin(theta_true);
 			action.parameter2 = y_true + 0.05*sin(theta_true) + 0.02*cos(theta_true);
-			actions.push_back(action);
+			priority.push_back(action);
 
 			return;
 		}
@@ -420,12 +460,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			actions.push_back(action);
+			priority.push_back(action);
 
 			action.n = ACTION_ROTATION;
 			if(s1 < s2){action.parameter1 = -M_PI/2;}
 			else {action.parameter1 = M_PI/2;}
-			actions.push_back(action);
+			priority.push_back(action);
 
 			return;
 		}
@@ -438,9 +478,9 @@ void update_map(double s1, double s2)
 	// Robot
 	int rx = (x_true-origin_x)/resolution;
 	int ry = (y_true-origin_y)/resolution;
-	for(int i = -2; i <= 2; i++)
+	for(int i = -5; i <= 5; i++)
 	{
-		for(int j = -2; j <= 2; j++)
+		for(int j = -5; j <= 5; j++)
 		{
 			if(((ry+j)*width+(rx+i) >= 0) | ((ry+j)*width+(rx+i) < width*height))
 			{
@@ -508,7 +548,7 @@ void update_map(double s1, double s2)
 void Hough()
 {
 	vector<Vec2f> lines;
-	HoughLines(wall_map, lines, 1, 90*CV_PI/180, 7, 0, 0 );
+	HoughLines(wall_map, lines, 1, 90*CV_PI/180, 10, 0, 0 );
 
 	for( size_t i = 0; i < lines.size(); i++ )
 	{
@@ -544,7 +584,7 @@ void merge_areas()
 	{
 		for(int j = 0; j < width; j++)
 		{
-			if((robot_map.at<uchar>(i,j) == 100) & (map.at<uchar>(i,j) == 0))
+			if(robot_map.at<uchar>(i,j) == 100)
 			{
 				map.at<uchar>(i,j) = 100;
 			}
@@ -552,20 +592,19 @@ void merge_areas()
 	}
 
 
-	int sz = 5;
-	for(int i = 0; i < (height-sz); i++)
+	for(int i = 0; i < (height-sz1); i++)
 	{
-		for(int j = 0; j < (width-sz); j++)
+		for(int j = 0; j < (width-sz2); j++)
 		{
 			if((map.at<uchar>(i,j) == 100) &
-					(map.at<uchar>(i+sz-1,j) == 100) &
-					(map.at<uchar>(i,j+sz-1) == 100) &
-					(map.at<uchar>(i+sz-1,j+sz-1) == 100))
+					(map.at<uchar>(i+sz1-1,j) == 100) &
+					(map.at<uchar>(i,j+sz2-1) == 100) &
+					(map.at<uchar>(i+sz1-1,j+sz2-1) == 100))
 			{
 				bool flag = false;
-				for(int n = 0; n < sz; n++)
+				for(int n = 0; n < sz1; n++)
 				{
-					for(int m = 0; m < sz; m++)
+					for(int m = 0; m < sz2; m++)
 					{
 						if(map.at<uchar>(i+n,j+m) == 255)
 						{
@@ -575,9 +614,9 @@ void merge_areas()
 				}
 				if(!flag)
 				{
-					for(int n = 0; n < sz; n++)
+					for(int n = 0; n < sz1; n++)
 					{
-						for(int m = 0; m < sz; m++)
+						for(int m = 0; m < sz2; m++)
 						{
 							map.at<uchar>(i+n,j+m) = 100;
 						}
@@ -616,8 +655,8 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(i+2,j+sz1-2) = 200;
-				create_interesting_node(i+2,j+sz1-2);
+				map.at<uchar>(i+5,j+sz1-2) = 200;
+				create_interesting_node(i+5,j+sz1-2);
 			}
 		}
 	}
@@ -645,8 +684,8 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(i+2,j+1) = 200;
-				create_interesting_node(i+2,j+1);
+				map.at<uchar>(i+5,j+1) = 200;
+				create_interesting_node(i+5,j+1);
 			}
 		}
 	}
@@ -674,8 +713,8 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+1,i+2) = 200;
-				create_interesting_node(j+1,i+2);
+				map.at<uchar>(j+1,i+5) = 200;
+				create_interesting_node(j+1,i+5);
 			}
 		}
 	}
@@ -703,8 +742,8 @@ void interesting_nodes()
 			}
 			if(!flag)
 			{
-				map.at<uchar>(j+sz1-2,i+2) = 200;
-				create_interesting_node(j+sz1-2,i+2);
+				map.at<uchar>(j+sz1-2,i+5) = 200;
+				create_interesting_node(j+sz1-2,i+5);
 			}
 		}
 	}
@@ -851,41 +890,48 @@ void path_finding(Node n)
 }
 
 
-std::list<Action> path(Node n1, Node n2)
+int hash_value(Node const &n) {
+    boost::hash<int> hasher;
+    return hasher(n.x) + hasher(n.y);
+}
+typedef std::vector<Node> Path;
+typedef boost::unordered_map<Node,Path> Hash;
+
+std::vector<Node> path(Node n1, Node n2)
 {
-	std::list<Action> path;
-	std::vector<Node> begin,end;
-
-	boost::unordered_map<Node,double> u_map;
-
+	Path path;
+	Hash hash,end;
 
 	for(int i = 0; i < discrete_map.size(); i++)
 	{
-		Node n = discrete_map.at(i);
-
-		if(isPath(n1,n))
+		if(isPath(n1,discrete_map.at(i)))
 		{
-			begin.push_back(n);
-			//u_map.insert(std::pair<Node,double>(n,0));
+			hash[discrete_map.at(i)] = Path();
 		}
-
-		if(isPath(n2,n))
+		if(isPath(n2,discrete_map.at(i)))
 		{
-			end.push_back(n);
+			end[discrete_map.at(i)] = Path();
 		}
 	}
-
 
 	// BFS
-	int i = 0;
-	//while(i < u_map.end())
+	Hash::iterator it;
+	for(it = hash.begin(); it != hash.end(); it++)
 	{
+		Node n = it->first;
+		Path p = hash.at(n);
 
+		if(end.count(n) != 0)
+		{
+			path = p;
+			path.push_back(n);
+		}
+
+		for(int i = 0; i < p.size(); i++)
+		{
+			hash[p.at(i)] = Path();
+		}
 	}
-
-	//u_map.count();
-
-
 
 	return path;
 }
@@ -910,19 +956,6 @@ Node pixelToNode(Pixel pixel)
 	node.x = pixel.j*resolution+origin_x;
 	node.y = (height-pixel.i-1)*resolution+origin_y;
 	return node;
-}
-
-
-void update_nodes_list(Node node)
-{
-	for(int i = 0; i < discrete_map.size(); i++)
-	{
-		Node n = discrete_map.at(i);
-		if(isPath(n,node))
-		{
-			n.connectedTo.push_back(node);
-		}
-	}
 }
 
 
@@ -1049,6 +1082,19 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 }
 
 
+void update_nodes_list(Node node)
+{
+	for(int i = 0; i < discrete_map.size(); i++)
+	{
+		if(isPath(discrete_map.at(i),node))
+		{
+			node.connectedTo.push_back(discrete_map.at(i));
+			discrete_map.at(i).connectedTo.push_back(node);
+		}
+	}
+}
+
+
 void create_node(double x, double y)
 {
 	Node n;
@@ -1057,7 +1103,7 @@ void create_node(double x, double y)
 	n.x = x;
 	n.y = y;
 
-	// Update nodes list
+	// Updates nodes list
 	update_nodes_list(n);
 
 	discrete_map.push_back(n);
