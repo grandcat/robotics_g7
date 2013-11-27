@@ -11,6 +11,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
 // PCL: normals & feature
@@ -85,6 +86,12 @@ void ImageFetchSmooth::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_
   pcl::PointCloud<pcl::PointXYZ>::Ptr pclProcessed(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(cloudVoxel, *pclFiltered);
   ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
+
+  // Rotate whole point cloud to correct sensor orientation (pose)
+  Eigen::Quaternionf rotateZ;
+  Eigen::Affine3f baseRotation;
+  baseRotation = Eigen::AngleAxisf(M_PI/6, Eigen::Vector3f::UnitZ());
+  pcl::transformPointCloud(*pclFiltered, *pclFiltered, baseRotation);
 
   // TESTING
   static FeatureCloud objModel;
