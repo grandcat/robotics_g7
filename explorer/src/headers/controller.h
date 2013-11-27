@@ -62,11 +62,11 @@ struct Pixel
 ros::Publisher speed_pub;
 ros::Publisher stop_EKF_pub;
 ros::Publisher servo_pub;
+ros::Publisher chatter_pub;
 ros::Subscriber EKF_sub;
 ros::Subscriber sensors_sub;
 ros::Subscriber odometry_sub;
 ros::Subscriber object_sub;
-
 
 
 // Control filter parameters
