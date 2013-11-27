@@ -32,6 +32,12 @@ enum EACTIONS {
 	ACTION_GOTO_ROTATION,
 };
 
+enum BUSY {
+	NOT_BUSY = 1,
+	BUSY_PRIORITY,
+	BUSY_ACTIONS,
+};
+
 struct Action
 {
 	enum EACTIONS n;
@@ -76,7 +82,7 @@ const double alpha = 5; // 10
 const double x_cmd_traj = 0.2;
 const double y_cmd_traj = 0.20;
 double y_cmd_change = 0.0;
-const double x_backward_dist = 0.05;
+const double x_backward_dist = 0.07;
 const double x_forward_dist = 0.18;
 const double dist_front_wall = 0.24;
 const double x_catch_wall = 0.17;
@@ -96,7 +102,7 @@ const double theta_error = 2;
 const double dist_error = 0.02;
 
 // Actions sequence
-bool busy = false;
+enum BUSY busy = NOT_BUSY;
 std::list<Action> actions;
 std::list<Action> priority;
 Action current_action;
@@ -123,6 +129,8 @@ const int sz1 = 11;
 const int sz2 = 11;
 
 bool visited_flag = false;
+
+std::vector<Pixel> objects;
 
 
 // Receive functions
@@ -171,6 +179,9 @@ void goto_node(Node node);
 double angle(double theta);
 
 int nPi2(double theta);
+
+
+void correct_odometry();
 
 
 #endif /* CONTROLLER_H_ */
