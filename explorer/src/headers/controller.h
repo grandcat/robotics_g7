@@ -44,7 +44,7 @@ struct Action
 struct Node
 {
 	double x,y;
-	std::vector<Node> connectedTo;
+	std::vector<Node> connectedTo; // check every time !
 
 	bool operator==(const Node& n) const
 	{
