@@ -16,9 +16,6 @@
 #include "headers/controller.h"
 #include <differential_drive/Servomotors.h>
 
-#include "std_msgs/String.h"
-#include <sstream>
-
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -57,7 +54,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 	// Wall follower
-	if(actions.empty())
+	if(actions.empty() & priority.empty())
 	{
 		double x_cmd = x + x_cmd_traj;
 		double y_cmd;
@@ -77,10 +74,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	// Do a special movement
 	else
 	{
-		/*
-		if(busy & !priority.empty())
+		if((busy == BUSY_ACTIONS) & !priority.empty())
 		{
-			busy = false;
+			busy = NOT_BUSY;
 
 			// Relaunch EKF
 			Stop_EKF s;
@@ -88,25 +84,22 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			s.rotation_angle = 0;
 			stop_EKF_pub.publish(s);
 		}
-		*/
 
 
-		if(!busy)
+		if(busy == NOT_BUSY)
 		{
-			/*
 			if(!priority.empty())
 			{
 				actions.clear();
 				current_action = priority.front();
+				busy = BUSY_PRIORITY;
 			}
 			else
 			{
 				current_action = actions.front();
+				busy = BUSY_ACTIONS;
 			}
-			*/
 
-			current_action = actions.front();
-			busy = true;
 
 			if(current_action.n != ACTION_GOTO_FORWARD)
 			{
@@ -136,8 +129,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Done
 				if(dist*dist < x_error*x_error)
 				{
-					actions.pop_front();
-					busy = false;
+					if(busy == BUSY_ACTIONS) {actions.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+
+					busy = NOT_BUSY;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -167,8 +162,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				{
 					create_node(x_true,y_true);
 
-					actions.pop_front();
-					busy = false;
+					if(busy == BUSY_ACTIONS) {actions.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+
+					busy = NOT_BUSY;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -232,8 +229,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					// Done
 					if(dist*dist < x_error*x_error)
 					{
-						actions.pop_front();
-						busy = false;
+						if(busy == BUSY_ACTIONS) {actions.pop_front();}
+						if(busy == BUSY_PRIORITY) {priority.pop_front();}
+
+						busy = NOT_BUSY;
 
 						// Relaunch EKF
 						Stop_EKF s;
@@ -290,8 +289,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Done
 				if(fabs(diff_ang) < M_PI/180*theta_error)
 				{
-					actions.pop_front();
-					busy = false;
+					if(busy == BUSY_ACTIONS) {actions.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+
+					busy = NOT_BUSY;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -362,8 +363,10 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 				if(dist < dist_error)
 				{
-					actions.pop_front();
-					busy = false;
+					if(busy == BUSY_ACTIONS) {actions.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+
+					busy = NOT_BUSY;
 
 					printf("Done !\n");
 				}
@@ -400,8 +403,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
-	//if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION))
-	if(actions.empty())
+	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION))
+	//if(actions.empty())
 	{
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
@@ -414,7 +417,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 				action.n = ACTION_ROTATION;
 				if(s1 < s2){action.parameter1 = -M_PI/2;}
 				else {action.parameter1 = M_PI/2;}
-				actions.push_back(action);
+				priority.push_back(action);
 
 				//printf("Front wall\n");
 
@@ -440,9 +443,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			actions.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.05*cos(theta_true) + 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.05*sin(theta_true) - 0.04*cos(theta_true);
-			actions.push_back(action);
+			action.parameter1 = x_true + 0.07*cos(theta_true) + 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.07*sin(theta_true) - 0.04*cos(theta_true);
+			priority.push_back(action);
 
 			return;
 		}
@@ -457,9 +460,9 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			actions.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.05*cos(theta_true) - 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.05*sin(theta_true) + 0.04*cos(theta_true);
-			actions.push_back(action);
+			action.parameter1 = x_true + 0.07*cos(theta_true) - 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.07*sin(theta_true) + 0.04*cos(theta_true);
+			priority.push_back(action);
 
 			return;
 		}
@@ -470,12 +473,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			actions.push_back(action);
+			priority.push_back(action);
 
 			action.n = ACTION_ROTATION;
 			if(s1 < s2){action.parameter1 = -M_PI/2;}
 			else {action.parameter1 = M_PI/2;}
-			actions.push_back(action);
+			priority.push_back(action);
 
 			return;
 		}
@@ -534,6 +537,14 @@ void update_map(double s1, double s2)
 
 	// Explore
 	interesting_nodes();
+
+
+	// Objects
+	for(int i = 0; i < objects.size(); i++)
+	{
+		Pixel object = objects.at(i);
+		map.at<uchar>(object.i,object.j) = 250;
+	}
 
 
 	proc_map = map.clone();
@@ -1182,6 +1193,8 @@ void receive_object(const Object::ConstPtr &msg)
 	node.y = y_object;
 	Pixel pixel = nodeToPixel(node);
 
+	objects.push_back(pixel);
+
 	printf("x_object = %f, y_object = %f\n",x_object,y_object);
 	printf("i = %d, j = %d\n",pixel.i,pixel.j);
 
@@ -1238,6 +1251,12 @@ int nPi2(double theta)
 	}
 
 	return res/2;
+}
+
+
+void correct_odometry()
+{
+
 }
 
 
