@@ -302,7 +302,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 					flag = false;
 
-					printf("rotation = %f\n",rotation);
+					//printf("rotation = %f\n",rotation);
 				}
 			}
 
@@ -339,6 +339,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					x_cmd = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true))*cos(diff_ang-rotation);
 
 					flag = true;
+
+					printf("Goto forward\n");
 				}
 
 
@@ -419,7 +421,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 				else {action.parameter1 = M_PI/2;}
 				priority.push_back(action);
 
-				//printf("Front wall\n");
+				printf("Front wall\n");
 
 				return;
 			}
@@ -447,6 +449,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			action.parameter2 = y_true + 0.07*sin(theta_true) - 0.04*cos(theta_true);
 			priority.push_back(action);
 
+			printf("Hurt wall\n");
+
 			return;
 		}
 
@@ -464,9 +468,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			action.parameter2 = y_true + 0.07*sin(theta_true) + 0.04*cos(theta_true);
 			priority.push_back(action);
 
+			printf("Hurt wall\n");
+
 			return;
 		}
 
+		/*
 		if(s7)
 		{
 			Action action;
@@ -482,6 +489,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			return;
 		}
+		*/
 	}
 }
 
@@ -1149,7 +1157,7 @@ void create_node(double x, double y)
 	discrete_map.push_back(n);
 
 	// Debug
-	printf("New node:  x = %f, y = %f\n",x,y);
+	//printf("New node:  x = %f, y = %f\n",x,y);
 }
 
 
