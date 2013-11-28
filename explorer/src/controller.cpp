@@ -440,7 +440,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			actions.push_back(action);
+			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
 			action.parameter1 = x_true + 0.07*cos(theta_true) + 0.04*sin(theta_true);
@@ -457,7 +457,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
-			actions.push_back(action);
+			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
 			action.parameter1 = x_true + 0.07*cos(theta_true) - 0.04*sin(theta_true);
