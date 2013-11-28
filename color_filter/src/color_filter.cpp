@@ -341,22 +341,43 @@ class Color_Filter
 			if (i == boundRect.size()) MERGE_DONE = true;
 		}
 
-
-
-		//Create ros-message
-		color_filter::Objects obj_msg;
-		obj_msg.ROI.reserve( contours_poly.size() );
-		for (unsigned int i=0; i < boundRect.size(); i++)
+		bool flag_send_msg = false;
+		if (boundRect.size() == 1)
 		{
-			cv::Rect rect = boundRect[i];
-			color_filter::Rect2D_ rect2D_msg;
-			rect2D_msg.x = rect.x;
-			rect2D_msg.y = rect.y;
-			rect2D_msg.height = rect.height;
-			rect2D_msg.width = rect.width;
-			obj_msg.ROI.push_back(rect2D_msg);
+			std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
+			std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
+			std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
+			if ((boundRect[0] & prev_rect).height == 0) //if its not overlapping with the previous rectangle, its a new object
+			{
+				ROI_id_counter++;
+				prev_rect = boundRect[0];
+				flag_send_msg = true;
+			}
+			else
+			{
+				prev_rect = boundRect[0];
+			}
 		}
-		obj_pub_.publish(obj_msg);
+		else
+			prev_rect = cv::Rect();
+		//Create ros-message
+		if (flag_send_msg)
+		{
+			color_filter::Objects obj_msg;
+			obj_msg.ROI.reserve( contours_poly.size() );
+			for (unsigned int i=0; i < boundRect.size(); i++)
+			{
+				cv::Rect rect = boundRect[i];
+				color_filter::Rect2D_ rect2D_msg;
+				rect2D_msg.x = rect.x;
+				rect2D_msg.y = rect.y;
+				rect2D_msg.height = rect.height;
+				rect2D_msg.width = rect.width;
+				obj_msg.ROI.push_back(rect2D_msg);
+				obj_msg.ROI_id = ROI_id_counter;
+			}
+			obj_pub_.publish(obj_msg);
+		}
 
 
 

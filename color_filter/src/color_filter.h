@@ -82,4 +82,8 @@ Filter_mode mode;
 double minArea = 1000.0;
 double maxArea = 100000.0;
 
+//previous ROI
+cv::Rect prev_rect;
+int ROI_id_counter = 0;
+
 #endif /* COLOR_FILTER_H_ */
