@@ -1242,6 +1242,11 @@ void receive_object(const Object::ConstPtr &msg)
     	string say_out = string("espeak \"") + "It is a lemon" + string("\"");
     	system(say_out.c_str());
     }
+
+	Action action;
+	action.n = ACTION_ROTATION;
+	action.parameter1 = M_PI;
+	priority.push_back(action);
 }
 
 
