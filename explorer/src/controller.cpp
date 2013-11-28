@@ -24,6 +24,7 @@
 
 #include <boost/unordered_map.hpp>
 
+
 using namespace differential_drive;
 using namespace cv;
 using namespace explorer;
@@ -117,7 +118,14 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			if(current_action.n == ACTION_BACKWARD)
 			{
 				double x_cmd = x - x_cmd_traj;
-				double y_cmd = y;
+
+				static double y_cmd;
+				static bool flag;
+				if(!flag)
+				{
+					y_cmd = y;
+					flag = true;
+				}
 
 				dist = x_collision-x-x_backward_dist;
 				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
@@ -302,7 +310,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 					flag = false;
 
-					printf("rotation = %f\n",rotation);
+					//printf("rotation = %f\n",rotation);
 				}
 			}
 
@@ -339,6 +347,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					x_cmd = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true))*cos(diff_ang-rotation);
 
 					flag = true;
+
+					printf("Goto forward\n");
 				}
 
 
@@ -419,7 +429,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 				else {action.parameter1 = M_PI/2;}
 				priority.push_back(action);
 
-				//printf("Front wall\n");
+				printf("Front wall\n");
 
 				return;
 			}
@@ -443,9 +453,11 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.07*cos(theta_true) + 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.07*sin(theta_true) - 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.08*cos(theta_true) + 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.08*sin(theta_true) - 0.04*cos(theta_true);
 			priority.push_back(action);
+
+			printf("Hurt wall\n");
 
 			return;
 		}
@@ -460,13 +472,16 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.07*cos(theta_true) - 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.07*sin(theta_true) + 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.08*cos(theta_true) - 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.08*sin(theta_true) + 0.04*cos(theta_true);
 			priority.push_back(action);
+
+			printf("Hurt wall\n");
 
 			return;
 		}
 
+		/*
 		if(s7)
 		{
 			Action action;
@@ -482,6 +497,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			return;
 		}
+		*/
 	}
 }
 
@@ -566,7 +582,7 @@ void update_map(double s1, double s2)
 
 	// Check visited area
 	visited_flag = visited_area();
-	if(visited_flag & actions.empty())
+	if(visited_flag & actions.empty() & priority.empty())
 	{
 		//printf("Already visited !\n");
 		path_finding(find_closest_node(toDiscover));
@@ -1149,7 +1165,7 @@ void create_node(double x, double y)
 	discrete_map.push_back(n);
 
 	// Debug
-	printf("New node:  x = %f, y = %f\n",x,y);
+	//printf("New node:  x = %f, y = %f\n",x,y);
 }
 
 
@@ -1215,6 +1231,22 @@ void receive_object(const Object::ConstPtr &msg)
 
     string say_out = string("espeak \"") + "I see something" + string("\"");
     system(say_out.c_str());
+
+    if(msg->id == 9)
+    {
+    	string say_out = string("espeak \"") + "It is a giraffe" + string("\"");
+    	system(say_out.c_str());
+    }
+    if(msg->id == 12)
+    {
+    	string say_out = string("espeak \"") + "It is a lemon" + string("\"");
+    	system(say_out.c_str());
+    }
+
+	Action action;
+	action.n = ACTION_ROTATION;
+	action.parameter1 = M_PI;
+	priority.push_back(action);
 }
 
 

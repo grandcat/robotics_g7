@@ -6,14 +6,15 @@ import struct
 
 
 class Object(genpy.Message):
-  _md5sum = "ff8d7d66dd3e4b731ef14a45d38888b6"
+  _md5sum = "5c7813bac898b240a3132b5e1f4ee812"
   _type = "explorer/Object"
   _has_header = False #flag to mark the presence of a Header object
   _full_text = """float32 x
 float32 y
+int32 id
 """
-  __slots__ = ['x','y']
-  _slot_types = ['float32','float32']
+  __slots__ = ['x','y','id']
+  _slot_types = ['float32','float32','int32']
 
   def __init__(self, *args, **kwds):
     """
@@ -23,7 +24,7 @@ float32 y
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       x,y
+       x,y,id
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -36,9 +37,12 @@ float32 y
         self.x = 0.
       if self.y is None:
         self.y = 0.
+      if self.id is None:
+        self.id = 0
     else:
       self.x = 0.
       self.y = 0.
+      self.id = 0
 
   def _get_types(self):
     """
@@ -53,7 +57,7 @@ float32 y
     """
     try:
       _x = self
-      buff.write(_struct_2f.pack(_x.x, _x.y))
+      buff.write(_struct_2fi.pack(_x.x, _x.y, _x.id))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -66,8 +70,8 @@ float32 y
       end = 0
       _x = self
       start = end
-      end += 8
-      (_x.x, _x.y,) = _struct_2f.unpack(str[start:end])
+      end += 12
+      (_x.x, _x.y, _x.id,) = _struct_2fi.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -81,7 +85,7 @@ float32 y
     """
     try:
       _x = self
-      buff.write(_struct_2f.pack(_x.x, _x.y))
+      buff.write(_struct_2fi.pack(_x.x, _x.y, _x.id))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -95,11 +99,11 @@ float32 y
       end = 0
       _x = self
       start = end
-      end += 8
-      (_x.x, _x.y,) = _struct_2f.unpack(str[start:end])
+      end += 12
+      (_x.x, _x.y, _x.id,) = _struct_2fi.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
-_struct_2f = struct.Struct("<2f")
+_struct_2fi = struct.Struct("<2fi")
