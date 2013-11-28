@@ -2,6 +2,7 @@
 #include "color_filter/Rect2D_.h"
 
 #include <cv_bridge/cv_bridge.h>
+#include <opencv2/highgui/highgui.hpp>      // CV GUI
 #include <sensor_msgs/image_encodings.h>
 
 namespace objRecognition
@@ -32,11 +33,42 @@ namespace objRecognition
 
     explorer::Object relMazePos = translateCvToMap(detectedObjects[biggestObj].y + detectedObjects[biggestObj].height / 2,
                                                    detectedObjects[biggestObj].x + detectedObjects[biggestObj].width / 2);
+
     // If position couldn't determined, reject frame
     if (relMazePos.x == -1)
       return;
 
+    ROS_INFO("Used positon, y: %i, x: %i", detectedObjects[biggestObj].y + detectedObjects[biggestObj].height / 2,
+             detectedObjects[biggestObj].x + detectedObjects[biggestObj].width / 2);
+    // DEBUG print
+    for (int yPos = -10; yPos <= 10; ++yPos) {
+      for (int xPos = -10; xPos <= 10; ++xPos) {
+        curDepthImg.at<float>(detectedObjects[biggestObj].y + detectedObjects[biggestObj].height / 2 + yPos,
+                              detectedObjects[biggestObj].x + detectedObjects[biggestObj].width / 2 + xPos) = 255;
+      }
+    }
+    cv::imshow("Depth image with marked point", curDepthImg);
+    cvWaitKey(10);
+
+    // Check whether obj id was also detected, otherwise reject information
+    if (lastRecognizedId == OBJTYPE_NO_OBJECT)
+      return;
+
+    relMazePos.id = (int)lastRecognizedId;
     pub_recognition_result.publish(relMazePos);
+
+//    // DEBUG (TODO: remove!!)
+//    sub_obj_detection.shutdown();
+
+  }
+
+  /**
+   * @brief RecognitionMaster::rcvObjType Store obj type information for processing later in rcvSlaveRecognition
+   * @param msg
+   */
+  void RecognitionMaster::rcvObjType(const color_filter::Objects::ConstPtr& msg)
+  {
+
 
   }
 
@@ -77,7 +109,7 @@ namespace objRecognition
                     if ((((y + j - 5) < curDepthImg.rows) & ((x + i - 5) < curDepthImg.cols))
                                     && (((y + j - 5) >= 0) & ((x + i - 5) >= 0))) {
                             float curDepth = curDepthImg.at<float>(y + j - 5, x + i - 5);
-                                ROS_INFO("Raw value: %f", curDepth);
+//                                ROS_INFO("Raw value: %f", curDepth);
                             if (!isnan(curDepth)) {
                                     sumDistance += curDepth;
                                     ++nAvg;
@@ -87,11 +119,13 @@ namespace objRecognition
     }
     if (nAvg != 0) {
             relMazePos.x = sumDistance / nAvg * 1000;
-    } else {
-            relMazePos.x = 0;
-    }
+            // calculate y approximation
+            relMazePos.y = (320 - x) * (relMazePos.x / 530);
 
-    relMazePos.y = 0; // TODO: needs more calculations and a noise-free depth image (use point cloud later maybe)
+    } else {
+            relMazePos.x = -1;
+    }
+//    relMazePos.y = 0; // TODO: needs more calculations and a noise-free depth image (use point cloud later maybe)
 
     return relMazePos;
   }

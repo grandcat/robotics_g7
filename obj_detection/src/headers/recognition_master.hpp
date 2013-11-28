@@ -2,6 +2,7 @@
 #define RECOGNITION_MASTER_HPP
 
 #include <ros/ros.h>
+#include "../recognition_constants.hpp"
 // Message headers (for communication)
 #include "explorer/Object.h"
 #include "color_filter/Objects.h"
@@ -16,11 +17,13 @@ class RecognitionMaster
 {
 public:
   RecognitionMaster(ros::NodeHandle &nh)
-    : nh_(nh), it_(nh), cRejectedFrames(0)
+    : nh_(nh), it_(nh), cRejectedFrames(0),lastRecognizedId(OBJTYPE_NO_OBJECT)
   {
     // Subscribe to Recognition slaves & publish results
     sub_obj_detection = nh_.subscribe("/recognition/detect", 5,
                                           &objRecognition::RecognitionMaster::rcvSlaveRecognition, this);
+    sub_obj_recogn_type = nh_.subscribe("/recognition/detect", 1,
+                                        &objRecognition::RecognitionMaster::rcvSlaveRecognition, this);
     subscribeDepthImg();  // TODO: remove with optimization
     pub_recognition_result = nh_.advertise<explorer::Object>("/recognition/object_pos_relative", 5);
     ROS_INFO("Object recognition master: Subscribed to recognition slaves, advertising to explorer.");
@@ -40,23 +43,25 @@ public:
 
   void rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg);
 
+  void rcvObjType(const color_filter::Objects::ConstPtr &msg);
+
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
 
   explorer::Object translateCvToMap(int y, int x);
 
 
-
-
 private:
   // ROS connection
   ros::NodeHandle& nh_;
-  ros::Subscriber sub_obj_detection;
+  ros::Subscriber sub_obj_detection, sub_obj_recogn_type;
   ros::Publisher pub_recognition_result;
   // Depth image (for distance)
   image_transport::ImageTransport it_;
   image_transport::Subscriber sub_depth_img;
   cv::Mat curDepthImg;
   int cRejectedFrames;                        //< counts not used depth frames since last position estimation
+  // Object type
+  enum EObjectTypes lastRecognizedId;
 };
 
 
