@@ -24,6 +24,7 @@
 
 #include <boost/unordered_map.hpp>
 
+
 using namespace differential_drive;
 using namespace cv;
 using namespace explorer;
@@ -1230,6 +1231,17 @@ void receive_object(const Object::ConstPtr &msg)
 
     string say_out = string("espeak \"") + "I see something" + string("\"");
     system(say_out.c_str());
+
+    if(msg->id == 9)
+    {
+    	string say_out = string("espeak \"") + "It is a giraffe" + string("\"");
+    	system(say_out.c_str());
+    }
+    if(msg->id == 12)
+    {
+    	string say_out = string("espeak \"") + "It is a lemon" + string("\"");
+    	system(say_out.c_str());
+    }
 }
 
 
