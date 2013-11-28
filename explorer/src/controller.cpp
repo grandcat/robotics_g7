@@ -24,6 +24,9 @@
 
 #include <boost/unordered_map.hpp>
 
+#include "std_msgs/String.h"
+#include <sstream>
+
 
 using namespace differential_drive;
 using namespace cv;
@@ -1228,33 +1231,29 @@ void receive_object(const Object::ConstPtr &msg)
 	printf("x_object = %f, y_object = %f\n",x_object,y_object);
 	printf("i = %d, j = %d\n",pixel.i,pixel.j);
 
-	Action action;
-	action.n = ACTION_STOP;
-	priority.push_back(action);
 
-    string say_out = string("espeak \"") + "I see something" + string("\"");
-    system(say_out.c_str());
+	// Talk
+    std_msgs::String talk;
+    std::stringstream ss;
+    ss << "I see something";
+    talk.data = ss.str();
+    chatter_pub.publish(talk);
 
     if(msg->id == 9)
     {
-    	string say_out = string("espeak \"") + "It is a giraffe" + string("\"");
-    	system(say_out.c_str());
+    	ss << "It is a giraffe";
     }
     if(msg->id == 12)
     {
-    	string say_out = string("espeak \"") + "It is a lemon" + string("\"");
-    	system(say_out.c_str());
+    	ss << "It is a lemon";
     }
     if(msg->id == 11)
     {
-    	string say_out = string("espeak \"") + "It is a hippo" + string("\"");
-    	system(say_out.c_str());
+    	ss << "It is a hippo";
     }
 
-
-
-
-
+    talk.data = ss.str();
+    chatter_pub.publish(talk);
 }
 
 
@@ -1325,6 +1324,7 @@ int main(int argc, char** argv)
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
     object_sub = nh.subscribe("/recognition/object_pos_relative",1,receive_object);
+    chatter_pub = nh.advertise<std_msgs::String>("robot/talk", 10);
 
 
 	// Map init

@@ -7,9 +7,13 @@
   <node pkg="explorer" name="motors" type="motors"/>
   <node pkg="explorer" name="EKF" type="EKF"/>
   <node pkg="explorer" name="controller" type="controller" output="screen"/>
+  
   <node pkg="color_filter" name="color_filter" type="color_filter" output="screen"/>
   <node pkg="object_recognition" name="recognition" type="object_recognition" output="screen"/>
   <node pkg="obj_detection" name="recogntion_master" type="recognition_master" output="screen"/>
+  
+  <node pkg="robot_talk" name="robot_talk" type="robot_talk"/>
+  
   <!-- <node pkg="explorer" name="phidgets" type="phidgets" output="screen"/> -->
 
 </launch>
