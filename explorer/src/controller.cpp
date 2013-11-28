@@ -445,8 +445,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.07*cos(theta_true) + 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.07*sin(theta_true) - 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.08*cos(theta_true) + 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.08*sin(theta_true) - 0.04*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -464,8 +464,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.07*cos(theta_true) - 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.07*sin(theta_true) + 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.08*cos(theta_true) - 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.08*sin(theta_true) + 0.04*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -574,7 +574,7 @@ void update_map(double s1, double s2)
 
 	// Check visited area
 	visited_flag = visited_area();
-	if(visited_flag & actions.empty())
+	if(visited_flag & actions.empty() & priority.empty())
 	{
 		//printf("Already visited !\n");
 		path_finding(find_closest_node(toDiscover));
