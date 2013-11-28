@@ -117,7 +117,14 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			if(current_action.n == ACTION_BACKWARD)
 			{
 				double x_cmd = x - x_cmd_traj;
-				double y_cmd = y;
+
+				static double y_cmd;
+				static bool flag;
+				if(!flag)
+				{
+					y_cmd = y;
+					flag = true;
+				}
 
 				dist = x_collision-x-x_backward_dist;
 				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
