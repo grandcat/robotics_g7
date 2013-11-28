@@ -14,13 +14,10 @@
 #include <dirent.h>
 #include "std_msgs/String.h"
 
-#include "recognition_constants.hpp"
-#include <object_recognition/Recognized_objects.h> //msg for recognized object
-
 using namespace cv;
 namespace enc = sensor_msgs::image_encodings;
 
-//static const char WINDOW[] = "Image window";
+static const char WINDOW[] = "Image window";
 
 struct ImgHist 
 {
@@ -39,39 +36,16 @@ struct Features
 struct IdImg 
 {
 	int obj;
-	std::string name;
 	ImgHist colorHist;
 	Features feat;
-	double score_hist;
-	double score_feat;
-	double score_total;
-
-    bool operator<(const IdImg& a) const
-    {
-        return a.score_total < score_total;
-    }
-
-
-    friend std::ostream & operator<<(std::ostream & stream, const IdImg &a)
-    {
-    	stream 	<< "id: "<<a.obj<<"\nName: "<<a.name<<"\nTotal score: "<<a.score_total
-    			<<"\nHist score: "<<a.score_hist<<"\nFeat score: "<<a.score_feat;
-    	return stream;
-    }
-
-
 };
 
-
-
-
 static const std::string objects[] = {"pepper", "lemon", "pear", "carrot", "giraff", "tiger", "hippo"};
-//static const std::string objects[] = {"AVOCADO","BANANA","BROCCOLI","CARROT","CHILI","CORN","ELEPHANT","GIRAFFE","GREEN_PUMPKIN","HIPPO","LEMON","LION","ONION","PEACH","PEAR","POTATO","TIGER","TOMATO","WATERMELON","ZEBRA","RED_PLATE"};
 
 vector<IdImg> trainImg;
 int keypThreshold = 30;
 vector<int> identified;
-vector<double> obj_scores;
+
 /*
  * Subtract background based on RGB color
  */
@@ -251,25 +225,17 @@ Features featureDetector(Mat img)
 /*
  * Try to identify the object by comparing color histogram, hue and feature detection to train images
  */
-std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
+int identifyObject(ImgHist hist, Features feat)
 {
-	std::vector<IdImg> matched_objects(trainImg.size()); //vector that will hold information from all tested objects
 	// Match color histogram
 	int bestColorMatch = 0;
 	double bestRes = 0.7;	//0.7
 	//double bestResH = 0.5;
 	for(int i=0; i < trainImg.size(); ++i) {
-
-
 		double resB = compareHist(hist.bHist, trainImg[i].colorHist.bHist, CV_COMP_CORREL);
 		double resG = compareHist(hist.gHist, trainImg[i].colorHist.gHist, CV_COMP_CORREL);
 		double resR = compareHist(hist.rHist, trainImg[i].colorHist.rHist, CV_COMP_CORREL);
 		double resH = compareHist(hist.hsvHist, trainImg[i].colorHist.hsvHist, CV_COMP_CORREL);
-
-		/////////////////////////////////////////////////////////
-		matched_objects[i].obj = trainImg[i].obj;
-		matched_objects[i].name = objects[trainImg[i].obj-1];
-		matched_objects[i].score_hist = resB*resB + resG*resG + resR*resR + resH*resH;
 
 		// Not a match if negative correlation
 		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
@@ -297,11 +263,6 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
 
 		// Check percent of keypoints that match
 		float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
-
-		///////////////////////////////////////////////////////////
-		matched_objects[i].score_feat = (double)res;
-		matched_objects[i].score_total = matched_objects[i].score_hist * matched_objects[i].score_feat;
-
 		if(res > matchPercent) {
 			matchPercent = res;
 			bestDescriptMatch = trainImg[i].obj;
@@ -312,54 +273,8 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
 			}
 		}
 	}
-
-	std::sort(matched_objects.begin(), matched_objects.end());
-
-	return matched_objects;
-//	//take out the 3 best unique matches (FOR LATER!!!)
-//	int max_size = 3;
-//	int saved_obj = 0;
-//	bool flag_unique_obj = true;
-//	std::vector<IdImg> best_matches(max_size);
-//	for (int i=0; i< matched_objects.size(); i++)
-//	{
-//		if (saved_obj == max_size) break;
-//
-//		else if (saved_obj == 0)
-//		{
-//			best_matches[saved_obj] = matched_objects[i];
-//			saved_obj++;
-//			continue;
-//		}
-//		else
-//		{
-//			//check if we have not already saved the same object
-//
-//			for (int j = 0; j < saved_obj; j++)
-//			{
-//				if (best_matches[j].obj == matched_objects[i].obj) flag_unique_obj = false;
-//			}
-//			if (flag_unique_obj)
-//			{
-//				best_matches[saved_obj] = matched_objects[i];
-//				saved_obj++;
-//				flag_unique_obj = true;
-//			}
-//		}
-//
-//	}
-//
-//	for (int i = 0; i < best_matches.size(); i++)
-//	{
-//		std::cout<<best_matches[i]<<std::endl;
-//	}
-//	std::cout<<""<<std::endl;
-
-
-
 	//std::cout << "Best match descriptors: " << bestDescriptMatch << std::endl;
 
-	/*
 	if(bestDescriptMatch == bestColorMatch) {
 		return bestColorMatch;
 	} else if(bestDescriptMatch != bestColorMatch && bestColorMatch != 0) {
@@ -367,7 +282,6 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
 	} else {
 		return bestDescriptMatch;
 	}
-	*/
 }
 
 
@@ -421,7 +335,6 @@ class ImageConverter
   image_transport::Publisher image_pub_;
 	image_transport::Subscriber filter_sub_;
 	//ros::Subscriber filter_sub_2_;
-	ros::Publisher obj_pub_;
 
 
 public:
@@ -437,14 +350,13 @@ public:
 		//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
 		filter_sub_ = it_.subscribe("/color_filter/filtered_image", 1, &ImageConverter::imageCb, this);
 		//filter_sub_2_ = it_.subscribe(" /recognition/detect", 1, &ImageConverter::imageCb, this);
-		obj_pub_ = nh_.advertise<object_recognition::Recognized_objects>("/recognition/recognized", 1);
 
-    //cv::namedWindow(WINDOW);
+    cv::namedWindow(WINDOW);
   }
 
   ~ImageConverter()
   {
-	  cv::destroyAllWindows();
+    cv::destroyWindow(WINDOW);
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -471,8 +383,6 @@ public:
 		int featSize = featureDetector(src).keypoints.size();
 		//std::cout << "Nr keypoints: " << featSize << std::endl;
 
-		int type; //{"pepper", "lemon", "pear", "carrot", "giraff", "tiger", "hippo"};
-
 		// Try to recognize object if enough keys are detected
 		if(featSize > keypThreshold) {
 			
@@ -484,52 +394,24 @@ public:
 			Features feat = featureDetector(src);
 			//showKeypoints(src, feat);
 
-			// Identify object(s)
-			std::vector<IdImg> objects = identifyObject(hist, feat);
-
-
-			if (objects[0].obj == 1) // pepper
-				type = 6;
-			else if (objects[0].obj == 2) // lemon
-				type = 12;
-			else if (objects[0].obj == 3) //pear
-				type = 16;
-			else if (objects[0].obj == 4) //carrot
-				type = 5;
-			else if (objects[0].obj == 5) //giraff
-				type = 9;
-			else if (objects[0].obj == 6) //tiger
-				type = 18;
-			else if (objects[0].obj == 7) //hippo
-				type = 11;
-
+			// Identify object
+			int obj = identifyObject(hist, feat);
 
 			//Check if already identified object
-//			if(obj != 0) {
-//				bool addObj = false;
-//				int nrIdentified = identified.size();
-//				if(nrIdentified == 0 || (nrIdentified > 0 && identified[nrIdentified-1] != obj)) {
-//					identified.push_back(obj);
-//					std::cout << "Identified: " << objects[obj-1] << std::endl;
-//				}
-//			}
+			if(obj != 0) {
+				bool addObj = false;
+				int nrIdentified = identified.size();
+				if(nrIdentified == 0 || (nrIdentified > 0 && identified[nrIdentified-1] != obj)) {
+					identified.push_back(obj);
+					std::cout << "Identified: " << objects[obj-1] << std::endl;	
+				}
+			}
 
 			//Publish message when object is detectec
 			//image_pub_.publish(obj);
 		}
-		else //no object found
-		{
-			type = 0;
-		}
 
-		//Create ros-message
-		object_recognition::Recognized_objects obj_msg;
-		obj_msg.obj_type.push_back(type);
-		obj_pub_.publish(obj_msg);
-
-
-
-    //cv::imshow(WINDOW, src);
+    cv::imshow(WINDOW, src);
     cv::waitKey(3);
   }
 };
@@ -556,12 +438,10 @@ int main(int argc, char** argv)
 		drawHistograms(hist);
 		Features feat = featureDetector(src);
 		showKeypoints(src, feat);
-		//std::vector<IdImg> obj = identifyObject(hist, feat);
+		int obj = identifyObject(hist, feat);
 		waitKey(0);
 	} else {
 	  ImageConverter ic;
-	  std::cout<<"Up and running!"<<std::endl;
-	  std::cout<<"Messages are being sent to /recognition/recognized"<<std::endl;
 	  ros::spin();
 	}
 
