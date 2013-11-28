@@ -6,6 +6,7 @@
 // Message headers (for communication)
 #include "explorer/Object.h"
 #include "color_filter/Objects.h"
+#include <object_recognition/Recognized_objects.h>
 // Primesense images (distance of object)
 #include <image_transport/image_transport.h>
 #include <opencv/cv.h>
@@ -20,10 +21,10 @@ public:
     : nh_(nh), it_(nh), cRejectedFrames(0),lastRecognizedId(OBJTYPE_NO_OBJECT)
   {
     // Subscribe to Recognition slaves & publish results
-    sub_obj_detection = nh_.subscribe("/recognition/detect", 5,
+    sub_obj_detection = nh_.subscribe("/recognition/detect", 1,
                                           &objRecognition::RecognitionMaster::rcvSlaveRecognition, this);
-    sub_obj_recogn_type = nh_.subscribe("/recognition/detect", 1,
-                                        &objRecognition::RecognitionMaster::rcvSlaveRecognition, this);
+    sub_obj_recogn_type = nh_.subscribe("/recognition/recognized", 1,
+                                        &objRecognition::RecognitionMaster::rcvObjType, this);
     subscribeDepthImg();  // TODO: remove with optimization
     pub_recognition_result = nh_.advertise<explorer::Object>("/recognition/object_pos_relative", 5);
     ROS_INFO("Object recognition master: Subscribed to recognition slaves, advertising to explorer.");
@@ -43,7 +44,7 @@ public:
 
   void rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg);
 
-  void rcvObjType(const color_filter::Objects::ConstPtr &msg);
+  void rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg);
 
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
 

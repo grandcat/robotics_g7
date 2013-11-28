@@ -379,7 +379,7 @@ void train()
 	// Get all trainimages
 	vector<std::string> files;
   class dirent *ent;
-  std::string dirName = "src/trainimages";
+  std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages";
   DIR *dir = opendir(dirName.c_str());
   while ((ent = readdir(dir)) != NULL) {
     const std::string fileName = ent->d_name;
@@ -543,7 +543,11 @@ int main(int argc, char** argv)
 	initModule_nonfree();	// For using SURF
 
 	// Train on test images
+        ROS_INFO("1");
+
 	train();
+
+        ROS_INFO("2");
 
 	// Testing on image
 	if(argc > 1) {

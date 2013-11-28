@@ -47,15 +47,20 @@ namespace objRecognition
                               detectedObjects[biggestObj].x + detectedObjects[biggestObj].width / 2 + xPos) = 255;
       }
     }
-    cv::imshow("Depth image with marked point", curDepthImg);
-    cvWaitKey(10);
+    // cv::imshow("Depth image with marked point", curDepthImg);
+    // cvWaitKey(10);
 
     // Check whether obj id was also detected, otherwise reject information
-    if (lastRecognizedId == OBJTYPE_NO_OBJECT)
+    if (lastRecognizedId == OBJTYPE_NO_OBJECT || cDetectedObjs > 1)
+    {
+      ROS_INFO("Rejected basic obj detection, more than 2 objects or feature detection didn*t work");
       return;
-
+    }
     relMazePos.id = (int)lastRecognizedId;
     pub_recognition_result.publish(relMazePos);
+
+    // TESTING:
+    ros::Duration(5).sleep();
 
 //    // DEBUG (TODO: remove!!)
 //    sub_obj_detection.shutdown();
@@ -66,16 +71,17 @@ namespace objRecognition
    * @brief RecognitionMaster::rcvObjType Store obj type information for processing later in rcvSlaveRecognition
    * @param msg
    */
-  void RecognitionMaster::rcvObjType(const color_filter::Objects::ConstPtr& msg)
+  void RecognitionMaster::rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg)
   {
-
-
+    std::vector<int> detectedObjTypes = msg->obj_type;
+    lastRecognizedId = (enum EObjectTypes)detectedObjTypes[0];
   }
 
   void RecognitionMaster::rcvDepthImg(const sensor_msgs::ImageConstPtr& msg)
   {
     ++cRejectedFrames;
     // TODO: deactivate subscription if no depth pos was requested for 10 frames
+   ros::Duration(0.5).sleep();
 
     // Convert depth image to OpenCV Mat format
     cv_bridge::CvImagePtr cv_ptr;
@@ -118,7 +124,7 @@ namespace objRecognition
             }
     }
     if (nAvg != 0) {
-            relMazePos.x = sumDistance / nAvg * 1000;
+            relMazePos.x = sumDistance / nAvg;// * 1000;
             // calculate y approximation
             relMazePos.y = (320 - x) * (relMazePos.x / 530);
 

@@ -1215,8 +1215,8 @@ Node find_closest_node(std::vector<Node> vector)
 
 void receive_object(const Object::ConstPtr &msg)
 {
-	double x_object = x_true + cos(theta_true);
-	double y_object = y_true + sin(theta_true);
+	double x_object = x_true + (msg->x+0.1)*cos(theta_true) - msg->y*sin(theta_true);
+	double y_object = y_true + (msg->x+0.1)*sin(theta_true) + msg->y*cos(theta_true);
 
 	Node node;
 	node.x = x_object;
@@ -1228,6 +1228,9 @@ void receive_object(const Object::ConstPtr &msg)
 	printf("x_object = %f, y_object = %f\n",x_object,y_object);
 	printf("i = %d, j = %d\n",pixel.i,pixel.j);
 
+	Action action;
+	action.n = ACTION_STOP;
+	priority.push_back(action);
 
     string say_out = string("espeak \"") + "I see something" + string("\"");
     system(say_out.c_str());
@@ -1242,11 +1245,16 @@ void receive_object(const Object::ConstPtr &msg)
     	string say_out = string("espeak \"") + "It is a lemon" + string("\"");
     	system(say_out.c_str());
     }
+    if(msg->id == 11)
+    {
+    	string say_out = string("espeak \"") + "It is a hippo" + string("\"");
+    	system(say_out.c_str());
+    }
 
-	Action action;
-	action.n = ACTION_ROTATION;
-	action.parameter1 = M_PI;
-	priority.push_back(action);
+
+
+
+
 }
 
 
@@ -1313,10 +1321,10 @@ int main(int argc, char** argv)
 	speed_pub = nh.advertise<explorer::Speed>("/motion/Speed",100);
 	stop_EKF_pub =nh.advertise<Stop_EKF>("/motion/Stop_EKF",100);
 	EKF_sub = nh.subscribe("/motion/EKF",1000,receive_EKF);
-	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
+	sensors_sub = nh.subscribe("/sensors/ADC",100,receive_sensors);
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
-	object_sub = nh.subscribe("/motion/Object",1000,receive_object);
+    object_sub = nh.subscribe("/recognition/object_pos_relative",1,receive_object);
 
 
 	// Map init

@@ -179,6 +179,8 @@ class Color_Filter
 
 	void color_filter(const sensor_msgs::ImageConstPtr& msg)
 	{
+                ros::Duration(0.5).sleep();
+
 		cv_bridge::CvImagePtr cv_ptr;
 		try
 		{
