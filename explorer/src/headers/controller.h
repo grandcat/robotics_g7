@@ -81,7 +81,7 @@ const double alpha = 5; // 10
 
 // Distances
 const double x_cmd_traj = 0.2;
-const double y_cmd_traj = 0.20;
+const double y_cmd_traj = 0.18; //0.20
 double y_cmd_change = 0.0;
 const double x_backward_dist = 0.09;
 const double x_forward_dist = 0.18;
