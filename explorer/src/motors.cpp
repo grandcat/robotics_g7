@@ -10,6 +10,7 @@
 #include <differential_drive/Encoders.h>
 #include "headers/parameters.h"
 #include "explorer/Speed.h"
+#include "explorer/Stop_EKF.h"
 
 using namespace differential_drive;
 using namespace explorer;
@@ -122,11 +123,19 @@ void receive_enc(const Encoders::ConstPtr &msg)
 }
 
 
-
 void receive_speed(const explorer::Speed::ConstPtr &msg)
 {
 	speed_instructionV = msg->V;
 	speed_instructionW = msg->W;
+}
+
+
+void receive_stop(const explorer::Stop_EKF::ConstPtr &msg)
+{
+	if(msg->stop & (msg->rotation_angle != 0))
+	{
+		integralV = integralW = 0;
+	}
 }
 
 
@@ -137,6 +146,8 @@ int main(int argc, char** argv)
 	pwm_pub = nh.advertise<PWM>("/motion/PWM", 1);
 	speed_sub = nh.subscribe("/motion/Speed",1000,receive_speed);
 	enc_sub = nh.subscribe("/motion/Encoders",1000,receive_enc);
+
+	ros::Subscriber stop_EKF_sub = nh.subscribe("/motion/Stop_EKF",100,receive_stop);
 
 	ros::Rate loop_rate(100);
 

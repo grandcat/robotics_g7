@@ -601,6 +601,15 @@ void update_map(double s1, double s2)
 
 void Hough()
 {
+    vector<Vec4i> lines;
+    HoughLinesP(wall_map,lines, 1,CV_PI/2,3,3,8);
+    for( size_t i = 0; i < lines.size(); i++ )
+    {
+        line(map, Point(lines[i][0], lines[i][1]),
+            Point(lines[i][2], lines[i][3]), Scalar(255), 1 );
+    }
+
+	/*
 	vector<Vec2f> lines;
 	HoughLines(wall_map, lines, 1, 90*CV_PI/180, 10, 0, 0 );
 
@@ -629,6 +638,7 @@ void Hough()
 			}
 		}
 	}
+	*/
 }
 
 
