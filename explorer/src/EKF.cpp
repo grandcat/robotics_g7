@@ -213,7 +213,7 @@ double angle(double th)
 void init()
 {
 	sigma = 1E-10 * MatrixXd::Identity(4,4);
-	sigma(2,2) = 1E-4;
+	sigma(2,2) = 1E-6; //-4
 	sigma(3,3) = 1E-6;
 	R = 1E-10 * MatrixXd::Identity(4,4);
 	R(3,3) = 1E-8;
