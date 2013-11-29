@@ -343,6 +343,21 @@ tools_pcl_objects_cutter/fast:
 .PHONY : tools_pcl_objects_cutter/fast
 
 # target to build an object file
+src/color_filter.o:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/color_filter.o
+.PHONY : src/color_filter.o
+
+# target to preprocess a source file
+src/color_filter.i:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/color_filter.i
+.PHONY : src/color_filter.i
+
+# target to generate assembly for a file
+src/color_filter.s:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/color_filter.s
+.PHONY : src/color_filter.s
+
+# target to build an object file
 src/pcl_detection.o:
 	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.o
 .PHONY : src/pcl_detection.o
@@ -444,6 +459,9 @@ help:
 	@echo "... test_depth"
 	@echo "... tests"
 	@echo "... tools_pcl_objects_cutter"
+	@echo "... src/color_filter.o"
+	@echo "... src/color_filter.i"
+	@echo "... src/color_filter.s"
 	@echo "... src/pcl_detection.o"
 	@echo "... src/pcl_detection.i"
 	@echo "... src/pcl_detection.s"

@@ -519,7 +519,7 @@ public:
 		}
 		else //no object found
 		{
-			type = 0;
+                        type = (int)objRecognition::OBJTYPE_NO_OBJECT;
 		}
 
 		//Create ros-message
@@ -543,11 +543,9 @@ int main(int argc, char** argv)
 	initModule_nonfree();	// For using SURF
 
 	// Train on test images
-        ROS_INFO("1");
+        ROS_INFO("[Object features] Start training.");
 
-	train();
-
-        ROS_INFO("2");
+        train();
 
 	// Testing on image
 	if(argc > 1) {
@@ -564,8 +562,8 @@ int main(int argc, char** argv)
 		waitKey(0);
 	} else {
 	  ImageConverter ic;
-	  std::cout<<"Up and running!"<<std::endl;
-	  std::cout<<"Messages are being sent to /recognition/recognized"<<std::endl;
+          ROS_INFO("Up and running!");
+          ROS_INFO("Messages are being sent to /recognition/recognized");
 	  ros::spin();
 	}
 

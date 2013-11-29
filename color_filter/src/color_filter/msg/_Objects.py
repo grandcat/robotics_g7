@@ -7,10 +7,12 @@ import struct
 import color_filter.msg
 
 class Objects(genpy.Message):
-  _md5sum = "8981031fc651ec77cc7286e6bae53124"
+  _md5sum = "c0faa35c817b768e1343340247270ab6"
   _type = "color_filter/Objects"
   _has_header = False #flag to mark the presence of a Header object
   _full_text = """Rect2D_[] ROI
+int32 ROI_id
+
 ================================================================================
 MSG: color_filter/Rect2D_
 int32 x
@@ -18,8 +20,8 @@ int32 y
 int32 width
 int32 height
 """
-  __slots__ = ['ROI']
-  _slot_types = ['color_filter/Rect2D_[]']
+  __slots__ = ['ROI','ROI_id']
+  _slot_types = ['color_filter/Rect2D_[]','int32']
 
   def __init__(self, *args, **kwds):
     """
@@ -29,7 +31,7 @@ int32 height
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       ROI
+       ROI,ROI_id
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -40,8 +42,11 @@ int32 height
       #message fields cannot be None, assign default values for those that are
       if self.ROI is None:
         self.ROI = []
+      if self.ROI_id is None:
+        self.ROI_id = 0
     else:
       self.ROI = []
+      self.ROI_id = 0
 
   def _get_types(self):
     """
@@ -60,6 +65,7 @@ int32 height
       for val1 in self.ROI:
         _x = val1
         buff.write(_struct_4i.pack(_x.x, _x.y, _x.width, _x.height))
+      buff.write(_struct_i.pack(self.ROI_id))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -83,6 +89,9 @@ int32 height
         end += 16
         (_x.x, _x.y, _x.width, _x.height,) = _struct_4i.unpack(str[start:end])
         self.ROI.append(val1)
+      start = end
+      end += 4
+      (self.ROI_id,) = _struct_i.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
@@ -100,6 +109,7 @@ int32 height
       for val1 in self.ROI:
         _x = val1
         buff.write(_struct_4i.pack(_x.x, _x.y, _x.width, _x.height))
+      buff.write(_struct_i.pack(self.ROI_id))
     except struct.error as se: self._check_types(se)
     except TypeError as te: self._check_types(te)
 
@@ -124,9 +134,13 @@ int32 height
         end += 16
         (_x.x, _x.y, _x.width, _x.height,) = _struct_4i.unpack(str[start:end])
         self.ROI.append(val1)
+      start = end
+      end += 4
+      (self.ROI_id,) = _struct_i.unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
+_struct_i = struct.Struct("<i")
 _struct_4i = struct.Struct("<4i")

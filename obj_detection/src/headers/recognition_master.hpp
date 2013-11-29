@@ -2,7 +2,7 @@
 #define RECOGNITION_MASTER_HPP
 
 #include <ros/ros.h>
-#include "../recognition_constants.hpp"
+#include "recognition_constants.hpp"
 // Message headers (for communication)
 #include "explorer/Object.h"
 #include "color_filter/Objects.h"

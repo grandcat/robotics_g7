@@ -304,15 +304,15 @@ class Color_Filter
 		//could not get the damned openCV-merging-rectangles-function to work properly.
 		//Had to create my own way of merging intersecting rectangles!
 		bool MERGE_DONE = false;
-		int i = 0;
+                unsigned int i = 0;
 		while(!MERGE_DONE && boundRect.size()>1)
 		{
 			bool have_merged = false;
 			for (unsigned int j = i+1; j<boundRect.size(); j++)
 			{
-				cv::Rect rect_a = boundRect[i];
+                                cv::Rect &rect_a = boundRect[i];
 
-				cv::Rect rect_b = boundRect[j];
+                                cv::Rect &rect_b = boundRect[j];
 				cv::Rect intersect = rect_a & rect_b;
 				if (intersect.height != 0 && intersect.width != 0) //rectangles intersect!
 				{
@@ -493,7 +493,7 @@ int main(int argc, char** argv)
 	if (argc != 1)
 	{
 		if (atoi(argv[1]) == 1)
-		{
+                {
 			FLAG_SHOW_IMAGE = true;
 		}
 		else if (atoi(argv[1]) >= 2)
