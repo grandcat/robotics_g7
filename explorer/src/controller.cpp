@@ -110,6 +110,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Stop EKF
 				Stop_EKF s;
 				s.stop = true;
+				s.rotation_angle = current_action.parameter1;
 				stop_EKF_pub.publish(s);
 			}
 		}
