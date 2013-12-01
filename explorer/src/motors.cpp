@@ -142,7 +142,7 @@ void receive_stop(const explorer::Stop_EKF::ConstPtr &msg)
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "motorsVW");
+	ros::init(argc, argv, "motors");
 	ros::NodeHandle nh;
 	pwm_pub = nh.advertise<PWM>("/motion/PWM", 1);
 	speed_sub = nh.subscribe("/motion/Speed",1000,receive_speed);

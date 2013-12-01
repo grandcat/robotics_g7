@@ -27,6 +27,9 @@
 #include "std_msgs/String.h"
 #include <sstream>
 
+#include <iostream>
+#include <fstream>
+
 
 using namespace differential_drive;
 using namespace cv;
@@ -711,11 +714,13 @@ void interesting_nodes()
 					if(map.at<uchar>(i+n,j+m) != 0)
 					{
 						flag = true;
+						break;
 					}
 				}
 				if(map.at<uchar>(i+n,j+sz1-1) != 100)
 				{
 					flag = true;
+					break;
 				}
 			}
 			if(!flag)
@@ -740,11 +745,13 @@ void interesting_nodes()
 					if(map.at<uchar>(i+n,j+m) != 0)
 					{
 						flag = true;
+						break;
 					}
 				}
 				if(map.at<uchar>(i+n,j) != 100)
 				{
 					flag = true;
+					break;
 				}
 			}
 			if(!flag)
@@ -769,11 +776,13 @@ void interesting_nodes()
 					if(map.at<uchar>(j+m,i+n) != 0)
 					{
 						flag = true;
+						break;
 					}
 				}
 				if(map.at<uchar>(j,i+n) != 100)
 				{
 					flag = true;
+					break;
 				}
 			}
 			if(!flag)
@@ -798,11 +807,13 @@ void interesting_nodes()
 					if(map.at<uchar>(j+m,i+n) != 0)
 					{
 						flag = true;
+						break;
 					}
 				}
 				if(map.at<uchar>(j+sz1-1,i+n) != 100)
 				{
 					flag = true;
+					break;
 				}
 			}
 			if(!flag)
@@ -850,6 +861,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p.i+i,p.j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 		else
@@ -857,6 +869,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p.i-i,p.j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 
@@ -868,6 +881,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p_true.i,p.j+j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 		else
@@ -875,6 +889,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p_true.i,p.j-j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 	}
@@ -901,6 +916,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p.i+i,p_true.j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 		else
@@ -908,6 +924,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p.i-i,p_true.j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 
@@ -919,6 +936,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p.i,p.j+j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 		else
@@ -926,6 +944,7 @@ void path_finding(Node n)
 			if(map.at<uchar>(p.i,p.j-j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 	}
@@ -1152,19 +1171,6 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 }
 
 
-void update_nodes_list(Node node)
-{
-	for(int i = 0; i < discrete_map.size(); i++)
-	{
-		if(isPath(discrete_map.at(i),node))
-		{
-			node.connectedTo.push_back(discrete_map.at(i));
-			discrete_map.at(i).connectedTo.push_back(node);
-		}
-	}
-}
-
-
 void create_node(double x, double y)
 {
 	Node n;
@@ -1173,13 +1179,10 @@ void create_node(double x, double y)
 	n.x = x;
 	n.y = y;
 
-	// Updates nodes list
-	update_nodes_list(n);
-
 	discrete_map.push_back(n);
 
 	// Debug
-	//printf("New node:  x = %f, y = %f\n",x,y);
+	printf("New node:  x = %f, y = %f\n",x,y);
 }
 
 
@@ -1327,7 +1330,10 @@ void correct_odometry()
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "controller");
-	ros::NodeHandle nh;
+	ros::NodeHandle nh("~");
+
+	nh.getParam("mode",mode);
+
 	speed_pub = nh.advertise<explorer::Speed>("/motion/Speed",100);
 	stop_EKF_pub =nh.advertise<Stop_EKF>("/motion/Stop_EKF",100);
 	EKF_sub = nh.subscribe("/motion/EKF",1000,receive_EKF);
@@ -1343,12 +1349,27 @@ int main(int argc, char** argv)
 	robot_map = Mat::zeros(height,width,CV_8UC1);
 	wall_map = Mat::zeros(height,width,CV_8UC1);
 
-	create_node(0,0);
-
 
 	// Robot_talk
     string say_out = string("espeak \"") + "Go" + string("\"");
     system(say_out.c_str());
+
+
+    // Mode
+    if(mode == 0)
+    {
+    	create_node(0,0);
+    }
+
+    if(mode == 1)
+    {
+    	// Open discrete_map
+    	discrete_map.resize(1000);
+    	std::ifstream is("/home/robo/discrete_map.txt",std::ios::binary);
+    	is.read(reinterpret_cast<char*>(&discrete_map),discrete_map.size());
+    	is.close();
+    }
+
 
 
 	ros::Rate loop_rate(100);
@@ -1358,6 +1379,17 @@ int main(int argc, char** argv)
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
+
+
+    if(mode == 0)
+    {
+    	// Save discrete map
+    	discrete_map.resize(1000);
+    	std::ofstream os("/home/robo/discrete_map.txt",std::ios::binary);
+    	os.write(reinterpret_cast<const char*>(&discrete_map),discrete_map.size());
+    	os.close();
+    }
+
 
 	return 0;
 }

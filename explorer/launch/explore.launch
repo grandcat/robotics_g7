@@ -7,7 +7,7 @@
   <node pkg="explorer" name="motors" type="motors"/>
   <node pkg="explorer" name="EKF" type="EKF"/>
   <node pkg="explorer" name="controller" type="controller" output="screen">
-  	<param name="mode" value="1"/>
+  	<param name="mode" value="0"/>
   </node>	
   
   <node pkg="color_filter" name="color_filter" type="color_filter" output="screen"/>

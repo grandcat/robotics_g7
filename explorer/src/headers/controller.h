@@ -50,7 +50,7 @@ struct Action
 struct Node
 {
 	double x,y;
-	std::vector<Node> connectedTo; // check every time !
+	bool directions[4];
 
 	bool operator==(const Node& n) const
 	{
@@ -61,6 +61,15 @@ struct Node
 struct Pixel
 {
 	int i,j;
+};
+
+
+// Modes
+int mode;
+
+enum MODE {
+	EXPLORE = 0,
+	GOTO_TARGETS,
 };
 
 
@@ -117,6 +126,8 @@ double s1,s2;
 
 // Map
 std::vector<Node> discrete_map;
+std::vector<Node> targets;
+
 std::vector<Node> toDiscover;
 
 Mat proc_map, robot_map, wall_map, map;
@@ -152,8 +163,6 @@ void Hough();
 void merge_areas();
 
 void interesting_nodes();
-
-void update_nodes_list(Node node);
 
 void create_node(double x, double y);
 
