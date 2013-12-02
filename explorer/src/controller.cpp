@@ -304,6 +304,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Done
 				if(fabs(diff_ang) < M_PI/180*theta_error)
 				{
+					create_node(x_true,y_true);
+
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front();}
 
@@ -565,7 +567,7 @@ void update_map(double s1, double s2)
 	// Objects
 	for(int i = 0; i < objects.size(); i++)
 	{
-		Pixel object = objects.at(i);
+		Pixel object = nodeToPixel(objects.at(i));
 
 
 		map.at<uchar>(object.i,object.j) = 250;
@@ -587,6 +589,22 @@ void update_map(double s1, double s2)
 	proc_map = map.clone();
 
 
+	// Goto target
+	if(goto_target)
+	{
+		Node n;
+		n.x = x_true;
+		n.y = y_true;
+
+		Path p = path(n,target);
+
+		if(p.size() != 0)
+		{
+			goto_node(p.at(0));
+		}
+	}
+
+
 	// Check visited area
 	visited_flag = visited_area();
 	if(visited_flag & actions.empty() & priority.empty())
@@ -598,6 +616,7 @@ void update_map(double s1, double s2)
 
 	namedWindow("Map",CV_WINDOW_NORMAL);
 	imshow("Map",proc_map);
+
 
 	cvWaitKey(10);
 }
@@ -960,28 +979,10 @@ void path_finding(Node n)
 
 		return;
 	}
-
-
-	/*
-	// No path
-	if(flag1 & flag2)
-	{
-		Action action;
-		action.n = ACTION_STOP;
-		actions.push_back(action);
-	}
-	 */
 }
 
 
-int hash_value(Node const &n) {
-    boost::hash<int> hasher;
-    return hasher(n.x) + hasher(n.y);
-}
-typedef std::vector<Node> Path;
-typedef boost::unordered_map<Node,Path> Hash;
-
-std::vector<Node> path(Node n1, Node n2)
+Path path(Node n1, Node n2)
 {
 	Path path;
 	Hash hash,end;
@@ -990,11 +991,15 @@ std::vector<Node> path(Node n1, Node n2)
 	{
 		if(isPath(n1,discrete_map.at(i)))
 		{
-			hash[discrete_map.at(i)] = Path();
+			Path p;
+			p.push_back(discrete_map.at(i));
+			hash[discrete_map.at(i)] = p;
 		}
 		if(isPath(n2,discrete_map.at(i)))
 		{
-			end[discrete_map.at(i)] = Path();
+			Path p;
+			p.push_back(discrete_map.at(i));
+			end[discrete_map.at(i)] = p;
 		}
 	}
 
@@ -1007,13 +1012,21 @@ std::vector<Node> path(Node n1, Node n2)
 
 		if(end.count(n) != 0)
 		{
-			path = p;
-			path.push_back(n);
+			break;
 		}
 
-		for(int i = 0; i < p.size(); i++)
+		// Expand nodes
+		for(int i = 0; i < discrete_map.size(); i++)
 		{
-			hash[p.at(i)] = Path();
+			if(!(discrete_map.at(i) == n))
+			{
+				if(isPath(n,discrete_map.at(i)))
+				{
+					Path pp = p;
+					pp.push_back(discrete_map.at(i));
+					hash[discrete_map.at(i)] = pp;
+				}
+			}
 		}
 	}
 
@@ -1065,6 +1078,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p1.i+i,p1.j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 		else
@@ -1072,6 +1086,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p1.i-i,p1.j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 
@@ -1083,6 +1098,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p2.i,p1.j+j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 		else
@@ -1090,6 +1106,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p2.i,p1.j-j) != 100)
 			{
 				flag1 = true;
+				break;
 			}
 		}
 	}
@@ -1108,6 +1125,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p1.i+i,p2.j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 		else
@@ -1115,6 +1133,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p1.i-i,p2.j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 
@@ -1126,6 +1145,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p1.i,p1.j+j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 		else
@@ -1133,6 +1153,7 @@ bool isPath(Node n1, Node n2)
 			if(map.at<uchar>(p1.i,p1.j-j) != 100)
 			{
 				flag2 = true;
+				break;
 			}
 		}
 	}
@@ -1232,18 +1253,19 @@ Node find_closest_node(std::vector<Node> vector)
 
 void receive_object(const Object::ConstPtr &msg)
 {
-	double x_object = x_true + (msg->x+0.1)*cos(theta_true) - msg->y*sin(theta_true);
-	double y_object = y_true + (msg->x+0.1)*sin(theta_true) + msg->y*cos(theta_true);
+	double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
+	double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
 
 	Node node;
+
+	// Update vectors
 	node.x = x_object;
 	node.y = y_object;
-	Pixel pixel = nodeToPixel(node);
+	objects.push_back(node);
 
-	objects.push_back(pixel);
-
-	printf("x_object = %f, y_object = %f\n",x_object,y_object);
-	printf("i = %d, j = %d\n",pixel.i,pixel.j);
+	node.x = x_true;
+	node.y = y_true;
+	near_objects.push_back(node);
 
 
 	// Talk
@@ -1268,6 +1290,12 @@ void receive_object(const Object::ConstPtr &msg)
 
     talk.data = ss.str();
     chatter_pub.publish(talk);
+
+
+    // Goto start
+    target.x = 0;
+    target.y = 0;
+    goto_target = true;
 }
 
 
@@ -1356,18 +1384,69 @@ int main(int argc, char** argv)
 
 
     // Mode
-    if(mode == 0)
+    if(mode == EXPLORE)
     {
     	create_node(0,0);
     }
 
-    if(mode == 1)
+    if(mode == GOTO_TARGETS)
     {
     	// Open discrete_map
-    	discrete_map.resize(1000);
+    	discrete_map.resize(500);
     	std::ifstream is("/home/robo/discrete_map.txt",std::ios::binary);
     	is.read(reinterpret_cast<char*>(&discrete_map),discrete_map.size());
     	is.close();
+
+    	for(int i = 1; i < discrete_map.size(); i++)
+    	{
+    		if((discrete_map.at(i).x == 0) & (discrete_map.at(i).y == 0))
+    		{
+    			discrete_map.resize(i);
+    			break;
+    		}
+    	}
+
+
+    	// Open objects
+    	objects.resize(500);
+    	std::ifstream is2("/home/robo/objects.txt",std::ios::binary);
+    	is2.read(reinterpret_cast<char*>(&objects),objects.size());
+    	is2.close();
+
+    	for(int i = 0; i < objects.size(); i++)
+    	{
+    		if((objects.at(i).x == 0) & (objects.at(i).y == 0))
+    		{
+    			objects.resize(i);
+    			break;
+    		}
+    	}
+
+
+    	// Open near_objects
+    	near_objects.resize(500);
+    	std::ifstream is3("/home/robo/near_objects.txt",std::ios::binary);
+    	is3.read(reinterpret_cast<char*>(&near_objects),near_objects.size());
+    	is3.close();
+
+    	for(int i = 0; i < near_objects.size(); i++)
+    	{
+    		if((near_objects.at(i).x == 0) & (near_objects.at(i).y == 0))
+    		{
+    			near_objects.resize(i);
+    			break;
+    		}
+    	}
+
+
+    	// Open maps
+    	robot_map = imread("/home/robo/robot_map.png",1);
+
+
+    	// Goto one object
+    	target.x = near_objects.at(0).x;
+    	target.y = near_objects.at(0).y;
+    	goto_target = true;
     }
 
 
@@ -1381,16 +1460,33 @@ int main(int argc, char** argv)
 	}
 
 
-    if(mode == 0)
+    if(mode == EXPLORE)
     {
     	// Save discrete map
-    	discrete_map.resize(1000);
+    	discrete_map.resize(500);
     	std::ofstream os("/home/robo/discrete_map.txt",std::ios::binary);
     	os.write(reinterpret_cast<const char*>(&discrete_map),discrete_map.size());
     	os.close();
 
-    	// Save proc_map
-    	imwrite( "home/robo/map.jpg",proc_map);
+    	// Save objects
+    	objects.resize(500);
+    	std::ofstream os2("/home/robo/objects.txt",std::ios::binary);
+    	os2.write(reinterpret_cast<const char*>(&objects),objects.size());
+    	os2.close();
+
+    	// Save near_objects
+    	near_objects.resize(500);
+    	std::ofstream os3("/home/robo/near_objects.txt",std::ios::binary);
+    	os3.write(reinterpret_cast<const char*>(&near_objects),near_objects.size());
+    	os3.close();
+
+    	// Save maps
+    	vector<int> compression_params;
+    	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    	compression_params.push_back(0);
+
+    	imwrite("/home/robo/robot_map.png",robot_map,compression_params);
+    	imwrite("/home/robo/wall_map.png",wall_map,compression_params);
     }
 
 

@@ -18,6 +18,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <boost/unordered_map.hpp>
+
 using namespace differential_drive;
 using namespace cv;
 using namespace explorer;
@@ -50,7 +52,6 @@ struct Action
 struct Node
 {
 	double x,y;
-	bool directions[4];
 
 	bool operator==(const Node& n) const
 	{
@@ -65,7 +66,7 @@ struct Pixel
 
 
 // Modes
-int mode;
+int mode = 0;
 
 enum MODE {
 	EXPLORE = 0,
@@ -88,6 +89,7 @@ ros::Subscriber object_sub;
 const double rho = 13; // 9
 const double alpha = 5; // 10
 
+
 // Distances
 const double x_cmd_traj = 0.2;
 const double y_cmd_traj = 0.18; //0.20
@@ -97,19 +99,23 @@ const double x_forward_dist = 0.18;
 const double dist_front_wall = 0.23; // 0.24
 const double x_catch_wall = 0.17;
 
+
 // Temporary variable
 double x;
 double x_pb;
 double theta_cmd;
 double x_collision;
 
+
 // Odometry
 double x_true,y_true,theta_true;
+
 
 // Errors
 const double x_error = 0.01;
 const double theta_error = 2;
 const double dist_error = 0.02;
+
 
 // Actions sequence
 enum BUSY busy = NOT_BUSY;
@@ -117,16 +123,25 @@ std::list<Action> actions;
 std::list<Action> priority;
 Action current_action;
 
+
+// Go somewhere
+bool goto_target = false;
+Node target;
+
+
 // IR sensor mean
 const int obstacle = 2;
 int cmpt;
 
+
 // IR sensor value
 double s1,s2;
 
+
 // Map
 std::vector<Node> discrete_map;
-std::vector<Node> targets;
+std::vector<Node> objects;
+std::vector<Node> near_objects;
 
 std::vector<Node> toDiscover;
 
@@ -142,7 +157,14 @@ const int sz2 = 11;
 
 bool visited_flag = false;
 
-std::vector<Pixel> objects;
+
+// Path
+int hash_value(Node const &n) {
+    boost::hash<int> hasher;
+    return hasher(n.x) + hasher(n.y);
+}
+typedef std::vector<Node> Path;
+typedef boost::unordered_map<Node,Path> Hash;
 
 
 // Receive functions
@@ -173,6 +195,8 @@ void interesting_node();
 Node find_closest_node(std::vector<Node> vector);
 
 void path_finding(Node node);
+
+Path path(Node n1, Node n2);
 
 bool visited_area();
 

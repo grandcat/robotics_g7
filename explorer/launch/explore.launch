@@ -1,8 +1,5 @@
 <launch>
 
-  <include file="$(find openni_launch)/launch/openni.launch">
-  </include>
-
   <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
   <node pkg="explorer" name="motors" type="motors"/>
   <node pkg="explorer" name="EKF" type="EKF"/>
@@ -16,6 +13,4 @@
   
   <node pkg="robot_talk" name="robot_talk" type="robot_talk"/>
   
-  <!-- <node pkg="explorer" name="phidgets" type="phidgets" output="screen"/> -->
-
 </launch>

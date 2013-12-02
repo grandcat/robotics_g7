@@ -30,5 +30,10 @@ const double b_long = -1.0321;
 // Bumper threshold
 const int bumper_threshold = 500;
 
+// Primesense
+// Position
+const double x_prime = 0;
+const double y_prime = 0;
+
 
 #endif /* PARAMETERS_H_ */
