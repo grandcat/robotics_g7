@@ -40,6 +40,9 @@ namespace objRecognition
   struct rectObject {
     unsigned int ROI_id;
     cv::Rect rect;
+    struct base {
+      int id;
+    };
   };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

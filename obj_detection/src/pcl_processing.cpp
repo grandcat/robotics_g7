@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 
   ROS_INFO("Starting pcl converter.");
 
-  objRecognition::ImageFetchSmooth processPipeline(nh);
+  objRecognition::PclRecognition processPipeline(nh);
   processPipeline.start();
 
 //  // Create a ROS subscriber for thle input point cloud

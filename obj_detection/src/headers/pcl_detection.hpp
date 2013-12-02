@@ -10,6 +10,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 // PCL recognition
 #include <pcl/search/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
@@ -80,14 +82,28 @@ private:
 /**
  * @brief ImageFetchSmooth class
  */
-class ImageFetchSmooth
+class PclRecognition
 {
+  /*
+   * Configuration
+   */
+  // Manual camera pose calibration
+  static const float camera_translation_z = -0.47;
+  static const float camera_pose_rotation = -33.0 / 180.0 * M_PI;
+
+  /*
+   * Class PclRecognition
+   */
 public:
-  ImageFetchSmooth(ros::NodeHandle& nh) : nh_(nh), processingActive(false), cWaitFrames(0)
+  PclRecognition(ros::NodeHandle& nh) : nh_(nh), processingActive(false), cWaitFrames(0)
   {
+    // Initialize camera pose transformation
+    cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
+        Eigen::Translation3f(Eigen::Vector3f(0, 0, camera_translation_z));
+
     // Subscribe to Primesense camera and publish debugging data
     sub_pcl_primesense = nh_.subscribe("/camera/depth_registered/points", 1,
-                                       &objRecognition::ImageFetchSmooth::rcvPointCloud, this);
+                                       &objRecognition::PclRecognition::rcvPointCloud, this);
     pub_pcl_filtered = nh_.advertise<sensor_msgs::PointCloud2>("/camera/filtered_points", 1);
     ROS_INFO("pcl_detection: Subscribed to pointcloud data.");
 
@@ -126,6 +142,7 @@ private:
   int cWaitFrames;
 
   // Point cloud data
+  Eigen::Affine3f cameraPoseTransform;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pclFiltered;
   // Sample Consensus Initial Alignment
   pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> sacIA;

@@ -20,6 +20,11 @@ public:
   RecognitionMaster(ros::NodeHandle &nh)
     : nh_(nh), it_(nh), cRejectedFrames(0),lastRecognizedId(OBJTYPE_NO_OBJECT)
   {
+    // Subscribe to RGB & depth image: Processing by slaves and estimation of objects position
+    sub_rgb_img = it_.subscribe("/camera/rgb/image_color", 1,
+                                &objRecognition::RecognitionMaster::runRecognitionPipeline, this);
+    // TODO: Initialize recognition slave: color_filter
+
     // Subscribe to Recognition slaves & publish results
     sub_obj_detection = nh_.subscribe("/recognition/detect", 1,
                                           &objRecognition::RecognitionMaster::rcvSlaveRecognition, this);
@@ -42,19 +47,23 @@ public:
     }
   }
 
-  void rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg);
-
-  void rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg);
+  void runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg);
 
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
 
   explorer::Object translateCvToMap(int y, int x);
+
+  // Deprecated functions
+  void rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg);
+  void rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg);
+  // END Deprecated functions
 
 
 private:
   // ROS connection
   ros::NodeHandle& nh_;
   ros::Subscriber sub_obj_detection, sub_obj_recogn_type;
+  image_transport::Subscriber sub_rgb_img;
   ros::Publisher pub_recognition_result;
   // Depth image (for distance)
   image_transport::ImageTransport it_;

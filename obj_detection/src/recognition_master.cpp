@@ -8,6 +8,18 @@
 namespace objRecognition
 {
 
+/**
+ * @brief RecognitionMaster::runRecognitionPipeline
+ *  Start of the recongition pipeline. This will execute the necessary recognition slaves at a given frame
+ *  rate and calculate results.
+ * @param msg Primesense image
+ */
+void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg)
+{
+  // TODO: disable recognition when turning 90 degree
+
+}
+
 void RecognitionMaster::rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg)
 {
   std::vector<color_filter::Rect2D_> detectedObjects = msg->ROI;
@@ -54,21 +66,20 @@ void RecognitionMaster::rcvSlaveRecognition(const color_filter::Objects::ConstPt
         }
     }
 
-  // cv::imshow("Depth image with marked point", curDepthImg);
-  // cvWaitKey(10);
+  cv::imshow("Depth image with marked point", curDepthImg);
+  cvWaitKey(10);
   // Check whether obj id was also detected, otherwise reject information
   if (lastRecognizedId == OBJTYPE_NO_OBJECT || cDetectedObjs > 1)
     {
-      ROS_INFO("Rejected basic obj detection, more than 2 objects or feature detection didn*t work");
+      ROS_INFO("Rejected basic obj detection, more than 2 objects or feature detection didn't work");
       return;
     }
 
   relMazePos.id = (int)lastRecognizedId;
+  ROS_INFO("Detected object: %s", TEXT_OBJECTS[lastRecognizedId].c_str());
   pub_recognition_result.publish(relMazePos);
-  // TESTING:
+  // TESTING (sleeping after each processing is good for system performance)
   ros::Duration(5).sleep();
-//    // DEBUG (TODO: remove!!)
-//    sub_obj_detection.shutdown();
 }
 
 /**

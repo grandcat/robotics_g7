@@ -56,7 +56,7 @@ void FeatureCloud::computeFeatureDescriptor()
  * Class ImageFetchSmooth
  *
  */
-void ImageFetchSmooth::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_raw)
+void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_raw)
 {
   if (!processingActive)  // TODO: replace by shutdown subscribtion when not needed
     {
@@ -81,24 +81,20 @@ void ImageFetchSmooth::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_
   pclVoxelFilter.setLeafSize(VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE);
   pclVoxelFilter.filter(cloudVoxel);
 
-  // Convert to PCL data representation for more advanced treatment of Pointclouds
+//  // Convert to PCL data representation for more advanced treatment of Pointclouds
   pclFiltered = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pclProcessed(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(cloudVoxel, *pclFiltered);
   ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
 
   // Rotate whole point cloud to correct sensor orientation (pose)
-//  Eigen::Affine3f baseRotation;
-//  baseRotation = Eigen::AngleAxisf(-12.0 / 180.0 * M_PI, Eigen::Vector3f::UnitX());
-//  pcl::transformPointCloud(*pclFiltered, *pclFiltered, baseRotation);
+//  cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
+//      Eigen::Translation3f(Eigen::Vector3f(0, 0, camera_translation_z));
+  pcl::transformPointCloud(*pclFiltered, *pclFiltered, cameraPoseTransform);
 //  // TEST
 //  sensor_msgs::PointCloud2 output;
 //  pcl::toROSMsg(*pclFiltered, output);
 //  pub_pcl_filtered.publish(output);
-
-  // TESTING
-  static FeatureCloud objModel;
-  compareModelWithScene(objModel);
 
 //  //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoiseFree(new pcl::PointCloud<pcl::PointXYZ>);
 //  //  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
@@ -107,35 +103,48 @@ void ImageFetchSmooth::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_
 //  //  pclOutlierFilter.setStddevMulThresh(1.0);
 //  //  pclOutlierFilter.filter(*cloudNoiseFree);
 
-//  // Determine plane surfaces (only vertical walls)
-//  Eigen::Vector3f axisBackPlane = Eigen::Vector3f(0.0, 0.0, 1.0);
+  // Determine plane surfaces
+  Eigen::Vector3f axisBottomPlane = Eigen::Vector3f(0.0, 1.0, 0.0); // bottom plane
 
-//  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-//  pcl::PointIndices::Ptr inlierIndices(new pcl::PointIndices);
-//  pcl::SACSegmentation<pcl::PointXYZ> pclSegmentation;
-//  pclSegmentation.setInputCloud(pclFiltered);
-//  pclSegmentation.setOptimizeCoefficients(true);
-//  pclSegmentation.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-//  pclSegmentation.setMethodType(pcl::SAC_RANSAC);
-//  pclSegmentation.setAxis(axisBackPlane);     // only check for
-//  pclSegmentation.setEpsAngle(12.0f * (M_PI/180.0f));
-//  pclSegmentation.setDistanceThreshold(0.02); // how close point must be to object to be inlier
-//  pclSegmentation.setMaxIterations(1000);
-//  pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
-//  // Remove points of possible walls
-//  pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
-//  pclObstacle.setInputCloud(pclFiltered);
-//  pclObstacle.setIndices(inlierIndices);
-//  pclObstacle.setNegative(true);    // inverse: remove walls
-//  pclObstacle.filter(*pclProcessed);
+  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr inlierIndices(new pcl::PointIndices);
+  pcl::SACSegmentation<pcl::PointXYZ> pclSegmentation;
+  pclSegmentation.setInputCloud(pclFiltered);
+  pclSegmentation.setOptimizeCoefficients(true);
+  pclSegmentation.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+  pclSegmentation.setMethodType(pcl::SAC_RANSAC);
+  pclSegmentation.setAxis(axisBottomPlane);
+  pclSegmentation.setEpsAngle(35.0f * (M_PI/180.0f));
+  pclSegmentation.setDistanceThreshold(0.01); // how close point must be to object to be inlier
+  pclSegmentation.setMaxIterations(1000);
+  pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
+  // Remove points of possible walls
+  pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
+  pclObstacle.setInputCloud(pclFiltered);
+  pclObstacle.setIndices(inlierIndices);
+  pclObstacle.setNegative(true);    // inverse: remove walls
+  pclObstacle.filter(*pclProcessed);
+  // Determine and remove back plane
+  pclSegmentation.setInputCloud(pclProcessed);
+  pclSegmentation.setAxis(Eigen::Vector3f(0.0, 0.0, 1.0));  // back plane
+  pclSegmentation.setDistanceThreshold(0.02);
+  pclSegmentation.segment(*inlierIndices, *coefficients);
+  pclObstacle.setInputCloud(pclProcessed);
+  pclObstacle.setIndices(inlierIndices);
+  pclObstacle.filter(*pclProcessed);
+  ros::message_operations::Printer< ::pcl::ModelCoefficients> mC();
 
-//  // Generate debugging output for rViz
-//  sensor_msgs::PointCloud2 output;
-//  pcl::toROSMsg(*pclFiltered, output);
-//  pub_pcl_filtered.publish(output);
+  // TESTING PCL Object recognition
+//  static FeatureCloud objModel;
+//  compareModelWithScene(objModel);
+
+  // Generate debugging output for rViz
+  sensor_msgs::PointCloud2 output;
+  pcl::toROSMsg(*pclProcessed, output);
+  pub_pcl_filtered.publish(output);
 }
 
-void ImageFetchSmooth::compareModelWithScene(FeatureCloud& model)
+void PclRecognition::compareModelWithScene(FeatureCloud& model)
 {
   // Params of Sample Consensus Intial Alignment algorithm
   sacIA.setMinSampleDistance(0.05f);
