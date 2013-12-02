@@ -94,7 +94,7 @@ const double y_cmd_traj = 0.18; //0.20
 double y_cmd_change = 0.0;
 const double x_backward_dist = 0.09;
 const double x_forward_dist = 0.18;
-const double dist_front_wall = 0.24;
+const double dist_front_wall = 0.23; // 0.24
 const double x_catch_wall = 0.17;
 
 // Temporary variable
@@ -131,10 +131,10 @@ std::vector<Node> targets;
 std::vector<Node> toDiscover;
 
 Mat proc_map, robot_map, wall_map, map;
-const int origin_x = -4;
-const int origin_y = -4;
-const int height = 400;
-const int width = 400;
+const int origin_x = -6;
+const int origin_y = -6;
+const int height = 600;
+const int width = 600;
 const double resolution = 0.02;
 
 const int sz1 = 11;

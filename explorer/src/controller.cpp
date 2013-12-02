@@ -1388,6 +1388,9 @@ int main(int argc, char** argv)
     	std::ofstream os("/home/robo/discrete_map.txt",std::ios::binary);
     	os.write(reinterpret_cast<const char*>(&discrete_map),discrete_map.size());
     	os.close();
+
+    	// Save proc_map
+    	imwrite( "home/robo/map.jpg",proc_map);
     }
 
 
