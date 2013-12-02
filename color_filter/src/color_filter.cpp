@@ -1,21 +1,53 @@
 #include "color_filter.h"
 
+struct ObjectRectangle
+{
+	unsigned int ROI_id;
+	cv::Rect boundRect;
+};
+
+struct DetectedObject:ObjectRectangle
+{
+	std::vector<cv::Point> contours_poly;
+	cv::RotatedRect rotatedRect;
+	cv::Point mc;
+
+//    friend std::ostream & operator<<(std::ostream & stream, const DetectedObject &a)
+//    {
+//    	stream 	<< "id: "<<a.ROI_id<<"\ncontours_poly: "<<a.contours_poly.size()<<"\nboundRect: ["<<a.boundRect.tl()<<", "<<a.boundRect.br()<<"]"
+//    			<<"\nrotatedRect: "<<a.rotatedRect.angle<<"\nmc: "<<a.mc;
+//    	return stream;
+//    }
+
+};
+
+
 class Color_Filter
 {
-	ros::NodeHandle nh_;
-	image_transport::ImageTransport it_;
-	image_transport::Subscriber image_sub_;
-	ros::Subscriber keyboard_sub;
-	ros::Publisher obj_pub_;
-	image_transport::Publisher img_pub_;
+	private:
+		ros::NodeHandle nh_;
+		image_transport::ImageTransport it_;
+		image_transport::Subscriber image_sub_;
+		ros::Subscriber keyboard_sub;
+		ros::Publisher obj_pub_;
+		image_transport::Publisher img_pub_;
+
+		//previous ROI
+		std::vector<ObjectRectangle> prev_rects;
+		int ROI_id_counter;
+		//stored information about the objects detected in the image
+		std::vector<DetectedObject> objects;
+
+
 
 	public:
-	Color_Filter(): it_(nh_)
+	Color_Filter(): it_(nh_), ROI_id_counter(0)
 	{
 		image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
 		keyboard_sub = nh_.subscribe("/keyboard/input", 1, &Color_Filter::ChangeThreshold, this);
 		img_pub_ = it_.advertise("/color_filter/filtered_image", 1);
 		obj_pub_ = nh_.advertise<color_filter::Objects>("/recognition/detect", 1);
+
 	}
 
 	~Color_Filter()
@@ -49,7 +81,7 @@ class Color_Filter
 
 	void color_filter(const sensor_msgs::ImageConstPtr& msg)
 	{
-                ros::Duration(0.5).sleep();
+                //ros::Duration(0.5).sleep();
 
 		cv_bridge::CvImagePtr cv_ptr;
 		try
@@ -68,13 +100,14 @@ class Color_Filter
 		//remove top part of image (set to black)
 		int y_remove = 100;
 		for(int i=0; i<y_remove; i++)
+		{
 		   for(int j=0; j<src_image.cols; j++)
 		   {
 			   src_image.at<cv::Vec3b>(i,j)[0] = 0;
 			   src_image.at<cv::Vec3b>(i,j)[1] = 0;
 			   src_image.at<cv::Vec3b>(i,j)[2] = 0;
 		   }
-
+		}
 
 		cv::cvtColor(src_image, hsv_image,CV_BGR2HSV);
 		cv::inRange(hsv_image,cv::Scalar(wall_H_MIN,wall_S_MIN,wall_V_MIN),cv::Scalar(wall_H_MAX,wall_S_MAX,wall_V_MAX),im_walls);
@@ -100,6 +133,7 @@ class Color_Filter
 //CONTOURS DETECTION!
 ///*
 		//http://docs.opencv.org/doc/tutorials/imgproc/shapedescriptors/bounding_rects_circles/bounding_rects_circles.html
+
 		std::vector<std::vector<cv::Point> > contours;
 		std::vector<cv::Vec4i> hierarchy;
 
@@ -111,143 +145,178 @@ class Color_Filter
 		/// Find contours
 		findContours( filter_image_bin, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
 
-		std::vector< std::vector<cv::Point> > contours_poly;
+		//clear the object vector, and creates a temporary vector storing all detectable things
+		objects.clear();
+		objects.reserve(contours.size());
+		std::vector<DetectedObject> temp_objects;
+		temp_objects.reserve(contours.size());
+		DetectedObject newObj;
+
 		std::vector<cv::Point> cur_contours_poly;
-		contours_poly.reserve(contours.size()); //reserve space
 		for(unsigned int i = 0; i < contours.size(); i++ )
 		{
 			approxPolyDP( cv::Mat(contours[i]), cur_contours_poly, 3, true );
 			double area = contourArea(cur_contours_poly);
-			//std::cout<<"Area of contour nr "<<i<<": "<<area<<std::endl;
-			if (area >= minArea && area<= maxArea) //save the closed approximated contour if it's area is "lagom"
+			if (area >= minArea && area <= maxArea) //only store objects with "lagom" area
 			{
-				//std::cout<<"\nContour is lagom! nr "<<i<<": "<<area<<std::endl;
-				contours_poly.push_back(cur_contours_poly);
+				newObj.contours_poly = cur_contours_poly;
+				temp_objects.push_back(newObj);
 			}
 		}
 
 
-
-//		/// Get the moments
-//		std::vector<cv::Moments> mu(contours_poly.size() );
-//		for( unsigned int i = 0; i < contours_poly.size(); i++ )
-//		{
-//			mu[i] = moments( contours_poly[i], false );
-//		}
-//
-//		///  Get the mass centers:
-//		std::vector<cv::Point> mc( contours_poly.size() );
-//		for( int i = 0; i < contours_poly.size(); i++ )
-//		{
-//			mc[i] = cv::Point( (int)mu[i].m10/mu[i].m00 , (int)mu[i].m01/mu[i].m00 );
-//			int x = mc[i].x;
-//			int y = mc[i].y;
-//			std::cout<<"mc["<<i<<"].x "<<mc[i].x<<std::endl;
-//			std::cout<<"mc["<<i<<"].y "<<mc[i].y<<std::endl;
-//			cv::Vec3b pixel = hsv_image.at<cv::Vec3b>(y,x);
-//	         int h = pixel[0];
-//	         int s = pixel[1];
-//	         int v = pixel[2];
-//	         std::cout << "h:" << h<< " s:" << s << " v:" << v << std::endl;
-//
-//		}
-//		std::cout<<""<<std::endl;
-
-
-		/// Approximate contours to polygons + get bounding rectangles
-		cv::Rect rect;
-		std::vector<cv::Rect> boundRect;
-		boundRect.reserve( contours_poly.size() );
-		for(unsigned int i = 0; i < contours_poly.size(); i++ )
+		//remove objects that are to narrow to be a real object
+		for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
 		{
-			rect = boundingRect( cv::Mat(contours_poly[i]) );
-			double ratio = (double)std::max(rect.height,rect.width)  / (double)std::min(rect.height,rect.width);
-			//std::cout<<ratio<<std::endl;
-			if (ratio > 4.3) //if it's a too narrow rectangle, ignore it
-			{
+
+			it->rotatedRect = minAreaRect( cv::Mat(it->contours_poly) );
+
+			double ratio = (double)std::max( it->rotatedRect.size.height , it->rotatedRect.size.width ) /
+						(double)std::min( it->rotatedRect.size.height , it->rotatedRect.size.width );
+
+			if (ratio > minRatio) //if it's a too narrow rectangle, ignore it
 				continue;
-			}
-			boundRect.push_back(rect);
+
+			it->boundRect = boundingRect( cv::Mat(it->contours_poly) );
+
+			/// Get the mass centers using the moment of each contour
+			cv::Moments mu = moments( it->contours_poly, false );
+
+			it->mc = cv::Point( (int)mu.m10/mu.m00 , (int)mu.m01/mu.m00 );
+			objects.push_back(*it); //copy the object and put it in the vector called objects
 
 		}
 
-		//could not get the damned openCV-merging-rectangles-function to work properly.
-		//Had to create my own way of merging intersecting rectangles!
-		bool MERGE_DONE = false;
-                unsigned int i = 0;
-		while(!MERGE_DONE && boundRect.size()>1)
+		//track objects
+
+		//if there where no previous rectangles, add some!
+		unsigned int prev_rects_size = prev_rects.size();
+		if (prev_rects_size == 0)
 		{
-			bool have_merged = false;
-			for (unsigned int j = i+1; j<boundRect.size(); j++)
+			for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
 			{
-                                cv::Rect &rect_a = boundRect[i];
-
-                                cv::Rect &rect_b = boundRect[j];
-				cv::Rect intersect = rect_a & rect_b;
-				if (intersect.height != 0 && intersect.width != 0) //rectangles intersect!
-				{
-					int x = std::min(rect_a.x , rect_b.x);
-					int y = std::min(rect_a.y , rect_b.y);
-					int width = std::max(rect_a.br().x , rect_b.br().x) - x;
-					int height = std::max(rect_a.br().y , rect_b.br().y) - y;
-					cv::Rect merged_rect(x,y,width, height);
-
-					boundRect[i] = merged_rect; //write over the old rectangle with the bigger one
-					boundRect.erase(boundRect.begin() + j); //delete the rectangle that is already merged
-
-					have_merged = true;
-					break;
-				}
-			}
-
-			//if we have merged two rectangles, start all over again in case there exist
-			//rectangles that will intersect with the new bigger added rectangle.
-			if (have_merged)
-			{
-				i = 0;
-				continue;
-			}
-			i++;
-			if (i == boundRect.size()) MERGE_DONE = true;
-		}
-
-		bool flag_send_msg = false;
-		if (boundRect.size() == 1)
-		{
-			//std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
-			//std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
-			//std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
-			if ((boundRect[0] & prev_rect).height == 0) //if its not overlapping with the previous rectangle, its a new object
-			{
-				ROI_id_counter++;
-				prev_rect = boundRect[0];
-				flag_send_msg = true;
-			}
-			else
-			{
-				prev_rect = boundRect[0];
+				ObjectRectangle newRect;
+				it->ROI_id = ROI_id_counter;
+				newRect.ROI_id = ROI_id_counter;
+				newRect.boundRect = it->boundRect;
+				++ROI_id_counter;
+				prev_rects.push_back(newRect);
 			}
 		}
+
+		/*
 		else
-			prev_rect = cv::Rect();
-		//Create ros-message
-		if (flag_send_msg)
 		{
-			color_filter::Objects obj_msg;
-			obj_msg.ROI.reserve( contours_poly.size() );
-			for (unsigned int i=0; i < boundRect.size(); i++)
+			for(std::vector<ObjectRectangle>::iterator it = prev_rects.begin(); it != prev_rects.end(); ++it)
 			{
-				cv::Rect rect = boundRect[i];
-				color_filter::Rect2D_ rect2D_msg;
-				rect2D_msg.x = rect.x;
-				rect2D_msg.y = rect.y;
-				rect2D_msg.height = rect.height;
-				rect2D_msg.width = rect.width;
-				obj_msg.ROI.push_back(rect2D_msg);
-				obj_msg.ROI_id = ROI_id_counter;
+
+
 			}
-			obj_pub_.publish(obj_msg);
 		}
+		*/
+
+		//		if (boundRect.size() == 1)
+		//		{
+		//			//std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
+		//			//std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
+		//			//std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
+		//			if ((boundRect[0] & prev_rect).height == 0) //if its not overlapping with the previous rectangle, its a new object
+		//			{
+		//				ROI_id_counter++;
+		//				prev_rect = boundRect[0];
+		//				flag_send_msg = true;
+		//			}
+		//			else
+		//			{
+		//				prev_rect = boundRect[0];
+		//			}
+		//		}
+		//		else
+		//			prev_rect = cv::Rect();
+
+
+
+
+//		//could not get the damned openCV-merging-rectangles-function to work properly.
+//		//Had to create my own way of merging intersecting rectangles!
+//		bool MERGE_DONE = false;
+//                unsigned int i = 0;
+//		while(!MERGE_DONE && boundRect.size()>1)
+//		{
+//			bool have_merged = false;
+//			for (unsigned int j = i+1; j<boundRect.size(); j++)
+//			{
+//                                cv::Rect &rect_a = boundRect[i];
+//
+//                                cv::Rect &rect_b = boundRect[j];
+//				cv::Rect intersect = rect_a & rect_b;
+//				if (intersect.height != 0 && intersect.width != 0) //rectangles intersect!
+//				{
+//					int x = std::min(rect_a.x , rect_b.x);
+//					int y = std::min(rect_a.y , rect_b.y);
+//					int width = std::max(rect_a.br().x , rect_b.br().x) - x;
+//					int height = std::max(rect_a.br().y , rect_b.br().y) - y;
+//					cv::Rect merged_rect(x,y,width, height);
+//
+//					boundRect[i] = merged_rect; //write over the old rectangle with the bigger one
+//					boundRect.erase(boundRect.begin() + j); //delete the rectangle that is already merged
+//
+//					have_merged = true;
+//					break;
+//				}
+//			}
+//
+//			//if we have merged two rectangles, start all over again in case there exist
+//			//rectangles that will intersect with the new bigger added rectangle.
+//			if (have_merged)
+//			{
+//				i = 0;
+//				continue;
+//			}
+//			i++;
+//			if (i == boundRect.size()) MERGE_DONE = true;
+//		}
+//
+//		bool flag_send_msg = false;
+//		if (boundRect.size() == 1)
+//		{
+//			//std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
+//			//std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
+//			//std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
+//			if ((boundRect[0] & prev_rect).height == 0) //if its not overlapping with the previous rectangle, its a new object
+//			{
+//				ROI_id_counter++;
+//				prev_rect = boundRect[0];
+//				flag_send_msg = true;
+//			}
+//			else
+//			{
+//				prev_rect = boundRect[0];
+//			}
+//		}
+//		else
+//			prev_rect = cv::Rect();
+//
+//
+//
+//		//Create ros-message
+//		if (flag_send_msg)
+//		{
+//			color_filter::Objects obj_msg;
+//			obj_msg.ROI.reserve( contours_poly.size() );
+//			for (unsigned int i=0; i < boundRect.size(); i++)
+//			{
+//				cv::Rect rect = boundRect[i];
+//				color_filter::Rect2D_ rect2D_msg;
+//				rect2D_msg.x = rect.x;
+//				rect2D_msg.y = rect.y;
+//				rect2D_msg.height = rect.height;
+//				rect2D_msg.width = rect.width;
+//				obj_msg.ROI.push_back(rect2D_msg);
+//				obj_msg.ROI_id = ROI_id_counter;
+//			}
+//			obj_pub_.publish(obj_msg);
+//		}
 
 
 
@@ -256,20 +325,34 @@ class Color_Filter
 		{
 			cv::imshow("Original", src_image);
 
-			/// Draw polygonal contour + bonding rectangles
 			cv::Mat drawing = cv::Mat::zeros( filter_image_bin.size(), CV_8UC3 );
+			cv::Scalar color_red = cv::Scalar( 0, 0, 255 );
+			cv::Scalar color_blue = cv::Scalar( 255, 0, 0);
+			cv::Scalar color_white = cv::Scalar( 255, 255, 255);
 
-			for(unsigned int i = 0; i< contours_poly.size(); i++ )
+
+			cv::Point2f rect_points[4];
+			for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
 			{
-				cv::Scalar color = cv::Scalar( 0, 0, 255 );
-				drawContours( drawing, contours_poly, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+				//draw the mass centers
+				line(drawing, it->mc, it->mc, color_white, 10, 8, 0);
+
+				rectangle( drawing, it->boundRect.tl(), it->boundRect.br(), color_red, 2, 8, 0 );
+
+				//draw rotatedRect
+				it->rotatedRect.points( rect_points );
+				for( int j = 0; j < 4; j++ )
+					line( drawing, rect_points[j], rect_points[(j+1)%4], color_blue, 1, 8 );
+
+				//http://opencv-users.1802565.n2.nabble.com/draw-only-one-contour-using-drawContours-td7404400.html
+				std::vector<std::vector<cv::Point> > T = std::vector<std::vector<cv::Point> >(1,it->contours_poly);
+				for (unsigned int i = 0; i < T.size(); i++)
+					drawContours( drawing, T,i, color_red, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+
 			}
-			for(unsigned int i = 0; i< boundRect.size(); i++ )
-			{
-				cv::Scalar color = cv::Scalar( 0, 0, 255 );
-				rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
-			}
+
 			imshow( "Found objects", drawing );
+
 			cv::waitKey(3);
 		}
 
