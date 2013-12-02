@@ -41,139 +41,9 @@ class Color_Filter
 			}
 			return;
 		}
-
-
-		puts("---------------------");
-		if (msg->data.c_str()[0] == '1')
-		{
-			puts("Wall filter parameters");
-			mode = WALLS;
-			H_MIN = wall_H_MIN;
-			H_MAX = wall_H_MAX;
-			S_MIN = wall_S_MIN;
-			S_MAX = wall_S_MAX;
-			V_MIN = wall_V_MIN;
-			V_MAX = wall_V_MAX;
-		}
-		else if (msg->data.c_str()[0] == '2')
-		{
-			puts("Floor filter parameters");
-			mode = FLOOR;
-			H_MIN = floor_H_MIN;
-			H_MAX = floor_H_MAX;
-			S_MIN = floor_S_MIN;
-			S_MAX = floor_S_MAX;
-			V_MIN = floor_V_MIN;
-			V_MAX = floor_V_MAX;
-		}
-
-
-		//Hue-part
-		if ( tolower(msg->data.c_str()[1]) == 'a')
-		{
-			H_MIN -= CHANGE;
-			if (H_MIN < 0)
-				H_MIN = 0;
-		}
-		else if ( tolower(msg->data.c_str()[1]) == 'q')
-		{
-			H_MIN += CHANGE;
-			if (H_MIN > H_MAX)
-				H_MIN = H_MAX;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 's')
-		{
-			H_MAX -= CHANGE;
-			if (H_MAX < H_MIN)
-				H_MAX = H_MIN;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 'w')
-		{
-			H_MAX += CHANGE;
-			if (H_MAX > MAX)
-				H_MAX = MAX;
-		}
-
-		//Saturate-part
-		else if (tolower(msg->data.c_str()[1]) == 'd')
-		{
-			S_MIN -= CHANGE;
-			if (S_MIN < 0)
-				S_MIN = 0;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 'e')
-		{
-			S_MIN += CHANGE;
-			if (S_MIN > S_MAX)
-				S_MIN = S_MAX;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 'f')
-		{
-			S_MAX -= CHANGE;
-			if (S_MAX < S_MIN)
-				S_MAX = S_MIN;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 'r')
-		{
-			S_MAX += CHANGE;
-			if (S_MAX > MAX)
-				S_MAX = MAX;
-		}
-
-		//Value-part
-		else if (tolower(msg->data.c_str()[1]) == 'g')
-		{
-			V_MIN -= CHANGE;
-			if (V_MIN < 0)
-				V_MIN = 0;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 't')
-		{
-			V_MIN += CHANGE;
-			if (V_MIN > V_MAX)
-				V_MIN = V_MAX;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 'h')
-		{
-			V_MAX -= CHANGE;
-			if (V_MAX < V_MIN)
-				V_MAX = V_MIN;
-		}
-		else if (tolower(msg->data.c_str()[1]) == 'y')
-		{
-			V_MAX += CHANGE;
-			if (V_MAX > MAX)
-				V_MAX = MAX;
-		}
-
-		//update
-		switch(mode)
-		{
-			case WALLS:
-			{
-				wall_H_MIN = H_MIN;
-				wall_H_MAX = H_MAX;
-				wall_S_MIN = S_MIN;
-				wall_S_MAX = S_MAX;
-				wall_V_MIN = V_MIN;
-				wall_V_MAX = V_MAX;
-				break;
-			}
-			case FLOOR:
-			{
-				floor_H_MIN = H_MIN;
-				floor_H_MAX = H_MAX;
-				floor_S_MIN = S_MIN;
-				floor_S_MAX = S_MAX;
-				floor_V_MIN = V_MIN;
-				floor_V_MAX = V_MAX;
-				break;
-			}
-
-		}
-
-		std::cout<<"H_MIN: "<< H_MIN<<" H_MAX: "<<H_MAX<< " S_MIN: "<<S_MIN<<" S_MAX: "<<S_MAX<<" V_MIN: "<<V_MIN<<" V_MAX: "<<V_MAX<<std::endl;
 	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -344,9 +214,9 @@ class Color_Filter
 		bool flag_send_msg = false;
 		if (boundRect.size() == 1)
 		{
-			std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
-			std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
-			std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
+			//std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
+			//std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
+			//std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
 			if ((boundRect[0] & prev_rect).height == 0) //if its not overlapping with the previous rectangle, its a new object
 			{
 				ROI_id_counter++;
@@ -475,14 +345,6 @@ class Color_Filter
 
 void on_trackbar( int, void* ) //for later use
 {
-	/*
- alpha = (double) alpha_slider/alpha_slider_max ;
- beta = ( 1.0 - alpha );
-
- addWeighted( src1, alpha, src2, beta, 0.0, dst);
-
- imshow( "Linear Blend", dst );
- */
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -500,26 +362,40 @@ int main(int argc, char** argv)
 		{
 			//FLAG_SHOW_IMAGE = true;
 			FLAG_CHANGE_THRESHOLD = true;
+			cv::namedWindow("Trackbar walls", 1);
+			cv::namedWindow("Trackbar floor", 1);
+			cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &wall_H_MIN, 180, on_trackbar);
+			cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &wall_H_MAX, 180, on_trackbar);
+			cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &wall_S_MIN, 255, on_trackbar);
+			cv::createTrackbar( "Walls SAT MAX:", "Trackbar walls", &wall_S_MAX, 255, on_trackbar);
+			cv::createTrackbar( "Walls VAL MIN:", "Trackbar walls", &wall_V_MIN, 255, on_trackbar);
+			cv::createTrackbar( "Walls VAL MAX:", "Trackbar walls", &wall_V_MAX, 255, on_trackbar);
+
+			cv::createTrackbar( "Floor HUE MIN:", "Trackbar floor", &floor_H_MIN, 180, on_trackbar);
+			cv::createTrackbar( "Floor HUE MAX:", "Trackbar floor", &floor_H_MAX, 180, on_trackbar);
+			cv::createTrackbar( "Floor SAT MIN:", "Trackbar floor", &floor_S_MIN, 255, on_trackbar);
+			cv::createTrackbar( "Floor SAT MAX:", "Trackbar floor", &floor_S_MAX, 255, on_trackbar);
+			cv::createTrackbar( "Floor VAL MIN:", "Trackbar floor", &floor_V_MIN, 255, on_trackbar);
+			cv::createTrackbar( "Floor VAL MAX:", "Trackbar floor", &floor_V_MAX, 255, on_trackbar);
+
+			/// Show some stuff
+			on_trackbar( wall_H_MIN, 0 );
+			on_trackbar( wall_H_MAX, 0 );
+			on_trackbar( wall_S_MIN, 0 );
+			on_trackbar( wall_S_MAX, 0 );
+			on_trackbar( wall_V_MIN, 0 );
+			on_trackbar( wall_V_MAX, 0 );
+
+			on_trackbar( floor_H_MIN, 0 );
+			on_trackbar( floor_H_MAX, 0 );
+			on_trackbar( floor_S_MIN, 0 );
+			on_trackbar( floor_S_MAX, 0 );
+			on_trackbar( floor_V_MIN, 0 );
+			on_trackbar( floor_V_MAX, 0 );
 		}
 	}
-	/*
-	cv::Mat drawing = cv::Mat::zeros( 400,400, CV_8UC3 );
-	cv::Scalar color = cv::Scalar( 0, 0, 255 );
-	cv::Point p1_tl,p1_br,p2_tl,p2_br;
 
-	p1_tl.x = 10;
-	p1_tl.y = 10;
-	p1_br.x = 200;
-	p1_br.y = 200;
-	p2_tl.x = 50;
-	p2_tl.y = 50;
-	p2_br.x = 250;
-	p2_br.y = 250;
 
-	rectangle( drawing, p1_tl, p1_br, color, 2, 8, 0 );
-	rectangle( drawing, p2_tl, p2_br, color, 2, 8, 0 );
-	cv::imshow("test",drawing);
-	*/
 	//cv::namedWindow("Linear Blend", 1);
 	//cv::createTrackbar( " Threshold:", "Linear Blend", &floor_S_MAX, 255, on_trackbar);
 	/// Show some stuff
