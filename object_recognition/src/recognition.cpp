@@ -380,6 +380,7 @@ void train()
 	vector<std::string> files;
   class dirent *ent;
   std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages";
+  //std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages/test_4_objects";
   DIR *dir = opendir(dirName.c_str());
   while ((ent = readdir(dir)) != NULL) {
     const std::string fileName = ent->d_name;
@@ -395,6 +396,7 @@ void train()
   // Calculate color histogram and feature detection on train images
 	for(int i=0; i < files.size(); ++i) {
     const std::string fullFileName = dirName + "/" + files[i];
+    //std::cout<<"fullFileName: "<<fullFileName<<std::endl;
 		Mat img = imread(fullFileName);
 
 		IdImg dummy;
@@ -403,9 +405,11 @@ void train()
 		std::stringstream ss;
   	ss << files[i][0] << files[i][1];
   	int n;
+  	//string name;
   	std::istringstream(ss.str()) >> n;
+  	//std::istringstream(ss.str()) >> name;
 		dummy.obj = n;
-	
+  		//dummy.name = name;
 		dummy.colorHist = colorDetectionRGB(img);
 		dummy.feat = featureDetector(img);
 		trainImg.push_back(dummy);
