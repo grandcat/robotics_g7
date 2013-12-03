@@ -258,7 +258,7 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
 	int bestColorMatch = 0;
 	double bestRes = 0.7;	//0.7
 	//double bestResH = 0.5;
-	for(int i=0; i < trainImg.size(); ++i) {
+	for(unsigned int i=0; i < trainImg.size(); ++i) {
 
 
 		double resB = compareHist(hist.bHist, trainImg[i].colorHist.bHist, CV_COMP_CORREL);
@@ -289,7 +289,7 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
 	// Match descriptors
 	int bestDescriptMatch = 0;
 	float matchPercent = 0.5;
-	for(int i=0; i < trainImg.size(); ++i) {
+	for(unsigned int i=0; i < trainImg.size(); ++i) {
 		// Use BruteForceMatcher
 		BFMatcher matcher(cv::NORM_L1, true);
 		vector<cv::DMatch> matches;
@@ -379,8 +379,8 @@ void train()
 	// Get all trainimages
 	vector<std::string> files;
   class dirent *ent;
-  std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages";
-  //std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages/test_4_objects";
+  //std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages";
+  std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages/test_4_objects";
   DIR *dir = opendir(dirName.c_str());
   while ((ent = readdir(dir)) != NULL) {
     const std::string fileName = ent->d_name;
@@ -394,25 +394,31 @@ void train()
   closedir(dir);
 
   // Calculate color histogram and feature detection on train images
-	for(int i=0; i < files.size(); ++i) {
-    const std::string fullFileName = dirName + "/" + files[i];
-    //std::cout<<"fullFileName: "<<fullFileName<<std::endl;
+	for(unsigned int i=0; i < files.size(); ++i) {
+		const std::string fullFileName = dirName + "/" + files[i];
+		std::cout<<"fullFileName: "<<fullFileName<<std::endl;
 		Mat img = imread(fullFileName);
 
 		IdImg dummy;
-		
+
 		// Get object id from file name
 		std::stringstream ss;
-  	ss << files[i][0] << files[i][1];
-  	int n;
-  	//string name;
-  	std::istringstream(ss.str()) >> n;
-  	//std::istringstream(ss.str()) >> name;
+		ss << files[i][0] << files[i][1]; //ss will contain the first part of the filename
+
+		std::cout<<"ss: "<<ss.str()<<std::endl;
+
+		//string name;
+
+
+		int n;
+		std::istringstream(ss.str()) >> n;
+		//std::istringstream(ss.str()) >> name;
 		dummy.obj = n;
-  		//dummy.name = name;
 		dummy.colorHist = colorDetectionRGB(img);
 		dummy.feat = featureDetector(img);
 		trainImg.push_back(dummy);
+
+
 	}
 }
 
@@ -492,20 +498,22 @@ public:
 			std::vector<IdImg> objects = identifyObject(hist, feat);
 
 
-			if (objects[0].obj == 1) // pepper
-				type = 6;
-			else if (objects[0].obj == 2) // lemon
-				type = 12;
-			else if (objects[0].obj == 3) //pear
-				type = 16;
-			else if (objects[0].obj == 4) //carrot
-				type = 5;
-			else if (objects[0].obj == 5) //giraff
-				type = 9;
-			else if (objects[0].obj == 6) //tiger
-				type = 18;
-			else if (objects[0].obj == 7) //hippo
-				type = 11;
+
+//			if (objects[0].obj == 1) // pepper
+//				type = 6;
+//			else if (objects[0].obj == 2) // lemon
+//				type = 12;
+//			else if (objects[0].obj == 3) //pear
+//				type = 16;
+//			else if (objects[0].obj == 4) //carrot
+//				type = 5;
+//			else if (objects[0].obj == 5) //giraff
+//				type = 9;
+//			else if (objects[0].obj == 6) //tiger
+//				type = 18;
+//			else if (objects[0].obj == 7) //hippo
+//				type = 11;
+			type = objects[0].obj;
 
 
 			//Check if already identified object
@@ -551,6 +559,7 @@ int main(int argc, char** argv)
 
         train();
 
+
 	// Testing on image
 	if(argc > 1) {
 		Mat src = imread( argv[1] );
@@ -566,10 +575,12 @@ int main(int argc, char** argv)
 		waitKey(0);
 	} else {
 	  ImageConverter ic;
-          ROS_INFO("Up and running!");
+          ROS_INFO("object recognition is up and running!");
           ROS_INFO("Messages are being sent to /recognition/recognized");
 	  ros::spin();
 	}
+
+
 
   return 0;
 }
