@@ -1,8 +1,10 @@
-#ifndef RECOGNITION_MASTER_HPP
+﻿#ifndef RECOGNITION_MASTER_HPP
 #define RECOGNITION_MASTER_HPP
 
 #include <ros/ros.h>
 #include "recognition_constants.hpp"
+// Object recognition: color filter
+#include "color_filter.hpp"
 // Message headers (for communication)
 #include "explorer/Object.h"
 #include "color_filter/Objects.h"
@@ -18,7 +20,7 @@ class RecognitionMaster
 {
 public:
   RecognitionMaster(ros::NodeHandle &nh)
-    : nh_(nh), it_(nh), cRejectedFrames(0),lastRecognizedId(OBJTYPE_NO_OBJECT)
+    : nh_(nh), it_(nh), cRejectedFrames(0), lastRecognizedId(OBJTYPE_NO_OBJECT)
   {
     // Subscribe to RGB & depth image: Processing by slaves and estimation of objects position
     sub_rgb_img = it_.subscribe("/camera/rgb/image_color", 1,
@@ -61,10 +63,14 @@ public:
 
 private:
   // ROS connection
-  ros::NodeHandle& nh_;
+  ros::NodeHandle nh_;
   ros::Subscriber sub_obj_detection, sub_obj_recogn_type;
   image_transport::Subscriber sub_rgb_img;
   ros::Publisher pub_recognition_result;
+
+  // Recognition slaves: color_filter, feature_recognition
+  Color_Filter objRecog_Colorfilter;
+
   // Depth image (for distance)
   image_transport::ImageTransport it_;
   image_transport::Subscriber sub_depth_img;

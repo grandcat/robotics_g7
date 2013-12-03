@@ -14,10 +14,10 @@
 
 namespace objRecognition
 {
-
-void on_trackbar( int, void* ) //for later use
-{
-}
+// Fine tuning settings
+Cf_Params params_walls, params_floor;
+// Debug setting
+Filter_mode mode;
 
 /**
  * @brief Color_Filter::ChangeThreshold
@@ -41,40 +41,48 @@ void Color_Filter::ChangeThreshold(const std_msgs::String::ConstPtr &msg)
     }
 }
 
+/**
+ * @brief on_trackbar
+ *  Local function to react on slider movements
+ */
+void on_trackbar( int, void* ) //for later use
+{
+}
+
 void Color_Filter::showConfigurationPanel()
 {
   //FLAG_SHOW_IMAGE = true;
   FLAG_CHANGE_THRESHOLD = true;
   cv::namedWindow("Trackbar walls", 1);
-  cv::namedWindow("Trackbar floor", 1);
-  cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &wall_H_MIN, 180, on_trackbar);
-  cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &wall_H_MAX, 180, on_trackbar);
-  cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &wall_S_MIN, 255, on_trackbar);
-  cv::createTrackbar( "Walls SAT MAX:", "Trackbar walls", &wall_S_MAX, 255, on_trackbar);
-  cv::createTrackbar( "Walls VAL MIN:", "Trackbar walls", &wall_V_MIN, 255, on_trackbar);
-  cv::createTrackbar( "Walls VAL MAX:", "Trackbar walls", &wall_V_MAX, 255, on_trackbar);
+    cv::namedWindow("Trackbar floor", 1);
+    cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &params_walls.H_MIN, 180, on_trackbar);
+    cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &params_walls.H_MAX, 180, on_trackbar);
+    cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &params_walls.S_MIN, 255, on_trackbar);
+  cv::createTrackbar( "Walls SAT MAX:", "Trackbar walls", &params_walls.S_MAX, 255, on_trackbar);
+  cv::createTrackbar( "Walls VAL MIN:", "Trackbar walls", &params_walls.V_MIN, 255, on_trackbar);
+  cv::createTrackbar( "Walls VAL MAX:", "Trackbar walls", &params_walls.V_MAX, 255, on_trackbar);
 
-  cv::createTrackbar( "Floor HUE MIN:", "Trackbar floor", &floor_H_MIN, 180, on_trackbar);
-  cv::createTrackbar( "Floor HUE MAX:", "Trackbar floor", &floor_H_MAX, 180, on_trackbar);
-  cv::createTrackbar( "Floor SAT MIN:", "Trackbar floor", &floor_S_MIN, 255, on_trackbar);
-  cv::createTrackbar( "Floor SAT MAX:", "Trackbar floor", &floor_S_MAX, 255, on_trackbar);
-  cv::createTrackbar( "Floor VAL MIN:", "Trackbar floor", &floor_V_MIN, 255, on_trackbar);
-  cv::createTrackbar( "Floor VAL MAX:", "Trackbar floor", &floor_V_MAX, 255, on_trackbar);
+  cv::createTrackbar( "Floor HUE MIN:", "Trackbar floor", &params_floor.H_MIN, 180, on_trackbar);
+  cv::createTrackbar( "Floor HUE MAX:", "Trackbar floor", &params_floor.H_MAX, 180, on_trackbar);
+  cv::createTrackbar( "Floor SAT MIN:", "Trackbar floor", &params_floor.S_MIN, 255, on_trackbar);
+  cv::createTrackbar( "Floor SAT MAX:", "Trackbar floor", &params_floor.S_MAX, 255, on_trackbar);
+  cv::createTrackbar( "Floor VAL MIN:", "Trackbar floor", &params_floor.V_MIN, 255, on_trackbar);
+  cv::createTrackbar( "Floor VAL MAX:", "Trackbar floor", &params_floor.V_MAX, 255, on_trackbar);
 
   /// Show some stuff
-  on_trackbar( wall_H_MIN, 0 );
-  on_trackbar( wall_H_MAX, 0 );
-  on_trackbar( wall_S_MIN, 0 );
-  on_trackbar( wall_S_MAX, 0 );
-  on_trackbar( wall_V_MIN, 0 );
-  on_trackbar( wall_V_MAX, 0 );
+  on_trackbar( params_walls.H_MIN, 0 );
+  on_trackbar( params_walls.H_MAX, 0 );
+  on_trackbar( params_walls.S_MIN, 0 );
+  on_trackbar( params_walls.S_MAX, 0 );
+  on_trackbar( params_walls.V_MIN, 0 );
+  on_trackbar( params_walls.V_MAX, 0 );
 
-  on_trackbar( floor_H_MIN, 0 );
-  on_trackbar( floor_H_MAX, 0 );
-  on_trackbar( floor_S_MIN, 0 );
-  on_trackbar( floor_S_MAX, 0 );
-  on_trackbar( floor_V_MIN, 0 );
-  on_trackbar( floor_V_MAX, 0 );
+  on_trackbar( params_floor.H_MIN, 0 );
+  on_trackbar( params_floor.H_MAX, 0 );
+  on_trackbar( params_floor.S_MIN, 0 );
+  on_trackbar( params_floor.S_MAX, 0 );
+  on_trackbar( params_floor.V_MIN, 0 );
+  on_trackbar( params_floor.V_MAX, 0 );
 }
 
 /**
@@ -112,8 +120,9 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg)
     }
 
   cv::cvtColor(src_image, hsv_image,CV_BGR2HSV);
-  cv::inRange(hsv_image,cv::Scalar(wall_H_MIN,wall_S_MIN,wall_V_MIN),cv::Scalar(wall_H_MAX,wall_S_MAX,wall_V_MAX),im_walls);
-  cv::inRange(hsv_image,cv::Scalar(floor_H_MIN,floor_S_MIN,floor_V_MIN),cv::Scalar(floor_H_MAX,floor_S_MAX,floor_V_MAX),im_floor);
+  cv::inRange(hsv_image,cv::Scalar(params_walls.H_MIN, params_walls.S_MIN, params_walls.V_MIN),
+              cv::Scalar(params_walls.H_MAX, params_walls.S_MAX, params_walls.V_MAX), im_walls);
+  cv::inRange(hsv_image,cv::Scalar(params_floor.H_MIN,params_floor.S_MIN,params_floor.V_MIN),cv::Scalar(params_floor.H_MAX,params_floor.S_MAX,params_floor.V_MAX),im_floor);
   bitwise_not(im_walls, remove_walls); //invert the pixels so that the walls are removed
   bitwise_not(im_floor, remove_floor); //invert the pixels so that the floor is removed
   bitwise_and(remove_walls, remove_floor, remove_background); //Grayscale image with the background removed
@@ -440,42 +449,42 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg)
 //			FLAG_CHANGE_THRESHOLD = true;
 //			cv::namedWindow("Trackbar walls", 1);
 //			cv::namedWindow("Trackbar floor", 1);
-//			cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &wall_H_MIN, 180, on_trackbar);
-//			cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &wall_H_MAX, 180, on_trackbar);
-//			cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &wall_S_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Walls SAT MAX:", "Trackbar walls", &wall_S_MAX, 255, on_trackbar);
-//			cv::createTrackbar( "Walls VAL MIN:", "Trackbar walls", &wall_V_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Walls VAL MAX:", "Trackbar walls", &wall_V_MAX, 255, on_trackbar);
+//			cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &params_walls.H_MIN, 180, on_trackbar);
+//			cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &params_walls.H_MAX, 180, on_trackbar);
+//			cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &params_walls.S_MIN, 255, on_trackbar);
+//			cv::createTrackbar( "Walls SAT MAX:", "Trackbar walls", &params_walls.S_MAX, 255, on_trackbar);
+//			cv::createTrackbar( "Walls VAL MIN:", "Trackbar walls", &params_walls.V_MIN, 255, on_trackbar);
+//			cv::createTrackbar( "Walls VAL MAX:", "Trackbar walls", &params_walls.V_MAX, 255, on_trackbar);
 
-//			cv::createTrackbar( "Floor HUE MIN:", "Trackbar floor", &floor_H_MIN, 180, on_trackbar);
-//			cv::createTrackbar( "Floor HUE MAX:", "Trackbar floor", &floor_H_MAX, 180, on_trackbar);
-//			cv::createTrackbar( "Floor SAT MIN:", "Trackbar floor", &floor_S_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Floor SAT MAX:", "Trackbar floor", &floor_S_MAX, 255, on_trackbar);
-//			cv::createTrackbar( "Floor VAL MIN:", "Trackbar floor", &floor_V_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Floor VAL MAX:", "Trackbar floor", &floor_V_MAX, 255, on_trackbar);
+//			cv::createTrackbar( "Floor HUE MIN:", "Trackbar floor", &params_floor.H_MIN, 180, on_trackbar);
+//			cv::createTrackbar( "Floor HUE MAX:", "Trackbar floor", &params_floor.H_MAX, 180, on_trackbar);
+//			cv::createTrackbar( "Floor SAT MIN:", "Trackbar floor", &params_floor.S_MIN, 255, on_trackbar);
+//			cv::createTrackbar( "Floor SAT MAX:", "Trackbar floor", &params_floor.S_MAX, 255, on_trackbar);
+//			cv::createTrackbar( "Floor VAL MIN:", "Trackbar floor", &params_floor.V_MIN, 255, on_trackbar);
+//			cv::createTrackbar( "Floor VAL MAX:", "Trackbar floor", &params_floor.V_MAX, 255, on_trackbar);
 
 //			/// Show some stuff
-//			on_trackbar( wall_H_MIN, 0 );
-//			on_trackbar( wall_H_MAX, 0 );
-//			on_trackbar( wall_S_MIN, 0 );
-//			on_trackbar( wall_S_MAX, 0 );
-//			on_trackbar( wall_V_MIN, 0 );
-//			on_trackbar( wall_V_MAX, 0 );
+//			on_trackbar( params_walls.H_MIN, 0 );
+//			on_trackbar( params_walls.H_MAX, 0 );
+//			on_trackbar( params_walls.S_MIN, 0 );
+//			on_trackbar( params_walls.S_MAX, 0 );
+//			on_trackbar( params_walls.V_MIN, 0 );
+//			on_trackbar( params_walls.V_MAX, 0 );
 
-//			on_trackbar( floor_H_MIN, 0 );
-//			on_trackbar( floor_H_MAX, 0 );
-//			on_trackbar( floor_S_MIN, 0 );
-//			on_trackbar( floor_S_MAX, 0 );
-//			on_trackbar( floor_V_MIN, 0 );
-//			on_trackbar( floor_V_MAX, 0 );
+//			on_trackbar( params_floor.H_MIN, 0 );
+//			on_trackbar( params_floor.H_MAX, 0 );
+//			on_trackbar( params_floor.S_MIN, 0 );
+//			on_trackbar( params_floor.S_MAX, 0 );
+//			on_trackbar( params_floor.V_MIN, 0 );
+//			on_trackbar( params_floor.V_MAX, 0 );
 //		}
 //	}
 
 
 //	//cv::namedWindow("Linear Blend", 1);
-//	//cv::createTrackbar( " Threshold:", "Linear Blend", &floor_S_MAX, 255, on_trackbar);
+//	//cv::createTrackbar( " Threshold:", "Linear Blend", &params_floor.S_MAX, 255, on_trackbar);
 //	/// Show some stuff
-//	//on_trackbar( floor_S_MAX, 0 );
+//	//on_trackbar( params_floor.S_MAX, 0 );
 
 
 

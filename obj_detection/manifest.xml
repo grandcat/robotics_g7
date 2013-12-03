@@ -15,7 +15,6 @@
   <depend package="pcl_ros"/>
   <!-- Dependencies to obj recognition threads -->
   <depend package="explorer"/>
-  <depend package="color_filter"/>
   <depend package="object_recognition"/>
   <depend package="sensor_msgs"/>
   <depend package="cv_bridge"/>
