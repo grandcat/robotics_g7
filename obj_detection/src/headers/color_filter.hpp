@@ -18,47 +18,27 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/objdetect/objdetect.hpp> //groupRectangles
 
-#include "recognition_constants.hpp"
+//#include "recognition_constants.hpp"
 
 #include <color_filter/Rect2D_.h> //msg for ROI of an object
 #include <color_filter/Objects.h>//msg containing ROI:s of objects
 
 namespace objRecognition
 {
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////  Global variables  ////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool FLAG_SHOW_IMAGE = false;
-bool FLAG_CHANGE_THRESHOLD = false;
-
 // initial min and max HSV filter values.
 // these can be changed in runtime through the keyboard node (TODO, add trackbar instead)
 const int CHANGE = 10;
 const int MAX = 256;
 
-int H_MIN = 0;
-int H_MAX = MAX;
-int S_MIN = 0;
-int S_MAX = 106;
-int V_MIN = 0;
-int V_MAX = MAX;
+struct Cf_Params
+{
+  int H_MIN, H_MAX;
+  int S_MIN, S_MAX;
+  int V_MIN, V_MAX;
 
-//walls
-int wall_H_MIN = 0;
-int wall_H_MAX = MAX;
-int wall_S_MIN = 0;
-int wall_S_MAX = 106;
-int wall_V_MIN = 0;
-int wall_V_MAX = MAX;
-
-//floor
-int floor_H_MIN = 0;
-int floor_H_MAX = MAX;
-int floor_S_MIN = 0;
-int floor_S_MAX = 106;
-int floor_V_MIN = 0;
-int floor_V_MAX = MAX;
+  Cf_Params() :
+    H_MIN(0), H_MAX(MAX), S_MIN(0), S_MAX(MAX), V_MIN(0), V_MAX(MAX) {}
+};
 
 
 //flag for which filter we are adjusting
@@ -67,15 +47,14 @@ enum Filter_mode
   WALLS = 0,
   FLOOR = 1
 };
-Filter_mode mode;
 
 //object contour parameters
-double minArea = 1000.0;
-double maxArea = 100000.0;
+const double minArea = 1000.0;
+const double maxArea = 100000.0;
 
 //object rectangle parameter
 //double minRatio = 4.3;
-double minRatio = 5;
+const double minRatio = 5;
 
 
 struct ObjectRectangle
@@ -110,6 +89,10 @@ private:
   ros::Publisher obj_pub_;
   image_transport::Publisher img_pub_;
 
+  // Debug settings
+  bool FLAG_SHOW_IMAGE;
+  bool FLAG_CHANGE_THRESHOLD;
+
   // previous ROI
   std::vector<ObjectRectangle> prev_rects;
   int ROI_id_counter;
@@ -117,7 +100,8 @@ private:
   std::vector<DetectedObject> objects;
 
 public:
-  Color_Filter(ros::NodeHandle& nh): nh_(nh), it_(nh), ROI_id_counter(0)
+  Color_Filter() : it_(nh_), ROI_id_counter(0),
+    FLAG_SHOW_IMAGE(false), FLAG_CHANGE_THRESHOLD(false)
   {
 //    image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
     keyboard_sub = nh_.subscribe("/keyboard/input", 1, &Color_Filter::ChangeThreshold, this);
@@ -152,7 +136,7 @@ public:
    * @param pShow
    *  Activate (= default) or deactivate debug windows
    */
-  void showDebugOutput(bool pShow = true)
+  inline void showDebugOutput(bool pShow = true)
   {
     FLAG_SHOW_IMAGE = pShow;
   }

@@ -847,8 +847,8 @@ void interesting_nodes()
 
 bool visited_area()
 {
-	int rx = (x_true-origin_x+0.2*cos(theta_true))/resolution;
-	int ry = (y_true-origin_y+0.2*sin(theta_true))/resolution;
+	int rx = (x_true-origin_x+0.15*cos(theta_true))/resolution; // 0.2
+	int ry = (y_true-origin_y+0.15*sin(theta_true))/resolution; // 0.2
 
 	if(proc_map.at<uchar>(height-ry-1,rx) == 100)
 	{
