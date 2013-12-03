@@ -132,11 +132,11 @@ void receive_speed(const explorer::Speed::ConstPtr &msg)
 
 void receive_stop(const explorer::Stop_EKF::ConstPtr &msg)
 {
-	if(msg->stop & (msg->rotation_angle != 0))
-	{
+	//if(msg->stop & (msg->rotation_angle != 0))
+	//{
 		integralV = integralW = 0;
 		p_errorV = p_errorW = 0;
-	}
+	//}
 }
 
 
