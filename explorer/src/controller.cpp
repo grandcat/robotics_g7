@@ -31,6 +31,8 @@
 #include <fstream>
 #include <algorithm>
 
+#include "../../object_recognition/src/recognition_constants.hpp"
+
 
 using namespace differential_drive;
 using namespace cv;
@@ -85,6 +87,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		if((busy == BUSY_ACTIONS) & !priority.empty())
 		{
 			busy = NOT_BUSY;
+			current_action.n = ACTION_NO;
 
 			// Relaunch EKF
 			Stop_EKF s;
@@ -148,6 +151,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -181,6 +185,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -248,6 +253,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 						if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 						busy = NOT_BUSY;
+						current_action.n = ACTION_NO;
 
 						// Relaunch EKF
 						Stop_EKF s;
@@ -310,6 +316,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -386,6 +393,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					printf("Done !\n");
 				}
@@ -1275,17 +1283,30 @@ void receive_object(const Object::ConstPtr &msg)
 	talk.data = ss.str();
 	chatter_pub.publish(talk);
 
-	if(msg->id == 9)
+	switch(msg->id)
 	{
-		ss << "It is a giraffe";
-	}
-	if(msg->id == 12)
-	{
-		ss << "It is a lemon";
-	}
-	if(msg->id == 11)
-	{
-		ss << "It is a hippo";
+	case objRecognition::OBJTYPE_AVOCADO : {ss << "It is an avocado"; break;}
+	case objRecognition::OBJTYPE_BANANA : {ss << "It is a banana"; break;}
+	case objRecognition::OBJTYPE_BROCCOLI : {ss << "It is a broccoli"; break;}
+	case objRecognition::OBJTYPE_CARROT : {ss << "It is a carrot"; break;}
+	case objRecognition::OBJTYPE_CHILI : {ss << "It is a chili"; break;}
+	case objRecognition::OBJTYPE_CORN : {ss << "It is a corn"; break;}
+	case objRecognition::OBJTYPE_ELEPHANT : {ss << "It is an elephant"; break;}
+	case objRecognition::OBJTYPE_GIRAFFE : {ss << "It is a giraffe"; break;}
+	case objRecognition::OBJTYPE_GREEN_PUMPKIN : {ss << "It is a green pumpkin"; break;}
+	case objRecognition::OBJTYPE_HIPPO : {ss << "It is a hippo"; break;}
+	case objRecognition::OBJTYPE_LEMON : {ss << "It is a lemon"; break;}
+	case objRecognition::OBJTYPE_LION : {ss << "It is a lion"; break;}
+	case objRecognition::OBJTYPE_ONION : {ss << "It is an onion"; break;}
+	case objRecognition::OBJTYPE_PEACH : {ss << "It is a peach"; break;}
+	case objRecognition::OBJTYPE_PEAR : {ss << "It is a pear"; break;}
+	case objRecognition::OBJTYPE_POTATO : {ss << "It is a potato"; break;}
+	case objRecognition::OBJTYPE_TIGER : {ss << "It is a tiger"; break;}
+	case objRecognition::OBJTYPE_TOMATO : {ss << "It is a tomato"; break;}
+	case objRecognition::OBJTYPE_WATERMELON : {ss << "It is a watermelon"; break;}
+	case objRecognition::OBJTYPE_ZEBRA : {ss << "It is a zebra"; break;}
+	case objRecognition::OBJTYPE_RED_PLATE : {ss << "It is a red plate"; break;}
+	default : break;
 	}
 
 	talk.data = ss.str();
