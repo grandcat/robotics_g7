@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 
 using namespace differential_drive;
@@ -422,7 +423,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 
 	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
-	//if(actions.empty())
+		//if(actions.empty())
 	{
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
@@ -505,7 +506,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 			return;
 		}
-		*/
+		 */
 	}
 }
 
@@ -623,13 +624,13 @@ void update_map(double s1, double s2)
 
 void Hough()
 {
-    vector<Vec4i> lines;
-    HoughLinesP(wall_map,lines, 1,CV_PI/2,3,3,8);
-    for( size_t i = 0; i < lines.size(); i++ )
-    {
-        line(map, Point(lines[i][0], lines[i][1]),
-            Point(lines[i][2], lines[i][3]), Scalar(255), 1 );
-    }
+	vector<Vec4i> lines;
+	HoughLinesP(wall_map,lines, 1,CV_PI/2,3,3,8);
+	for( size_t i = 0; i < lines.size(); i++ )
+	{
+		line(map, Point(lines[i][0], lines[i][1]),
+				Point(lines[i][2], lines[i][3]), Scalar(255), 1 );
+	}
 
 	/*
 	vector<Vec2f> lines;
@@ -660,7 +661,7 @@ void Hough()
 			}
 		}
 	}
-	*/
+	 */
 }
 
 
@@ -1268,33 +1269,33 @@ void receive_object(const Object::ConstPtr &msg)
 
 
 	// Talk
-    std_msgs::String talk;
-    std::stringstream ss;
-    ss << "I see something";
-    talk.data = ss.str();
-    chatter_pub.publish(talk);
+	std_msgs::String talk;
+	std::stringstream ss;
+	ss << "I see something";
+	talk.data = ss.str();
+	chatter_pub.publish(talk);
 
-    if(msg->id == 9)
-    {
-    	ss << "It is a giraffe";
-    }
-    if(msg->id == 12)
-    {
-    	ss << "It is a lemon";
-    }
-    if(msg->id == 11)
-    {
-    	ss << "It is a hippo";
-    }
+	if(msg->id == 9)
+	{
+		ss << "It is a giraffe";
+	}
+	if(msg->id == 12)
+	{
+		ss << "It is a lemon";
+	}
+	if(msg->id == 11)
+	{
+		ss << "It is a hippo";
+	}
 
-    talk.data = ss.str();
-    chatter_pub.publish(talk);
+	talk.data = ss.str();
+	chatter_pub.publish(talk);
 
 
-    // Goto start
-    target.x = 0;
-    target.y = 0;
-    goto_target = true;
+	// Goto start
+	target.x = 0;
+	target.y = 0;
+	goto_target = true;
 }
 
 
@@ -1367,8 +1368,8 @@ int main(int argc, char** argv)
 	sensors_sub = nh.subscribe("/sensors/ADC",100,receive_sensors);
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
-    object_sub = nh.subscribe("/recognition/object_pos_relative",1,receive_object);
-    chatter_pub = nh.advertise<std_msgs::String>("robot/talk", 10);
+	object_sub = nh.subscribe("/recognition/object_pos_relative",1,receive_object);
+	chatter_pub = nh.advertise<std_msgs::String>("robot/talk", 10);
 
 
 	// Map init
@@ -1378,75 +1379,85 @@ int main(int argc, char** argv)
 
 
 	// Robot_talk
-    string say_out = string("espeak \"") + "Go" + string("\"");
-    system(say_out.c_str());
+	string say_out = string("espeak \"") + "Go" + string("\"");
+	system(say_out.c_str());
 
 
-    // Mode
-    if(mode == EXPLORE)
-    {
-    	create_node(0,0);
-    }
-
-    if(mode == GOTO_TARGETS)
-    {
-    	// Open discrete_map
-    	discrete_map.resize(500);
-    	std::ifstream is("/home/robo/explorer/discrete_map.txt",std::ios::binary);
-    	is.read(reinterpret_cast<char*>(&discrete_map),discrete_map.size());
-    	is.close();
-
-    	for(int i = 1; i < discrete_map.size(); i++)
-    	{
-    		if((discrete_map.at(i).x == 0) & (discrete_map.at(i).y == 0))
-    		{
-    			discrete_map.resize(i);
-    			break;
-    		}
-    	}
+	// Mode
+	if(mode == EXPLORE)
+	{
+		create_node(0,0);
+	}
 
 
-    	// Open objects
-    	objects.resize(500);
-    	std::ifstream is2("/home/robo/explorer/objects.txt",std::ios::binary);
-    	is2.read(reinterpret_cast<char*>(&objects),objects.size());
-    	is2.close();
+	if(mode == GOTO_TARGETS)
+	{
+		// Open discrete_map
+		discrete_map.resize(500);
+		std::ifstream is("/home/robo/explorer/discrete_map.dat",std::ios::binary);
+		is.read(reinterpret_cast<char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
+		is.close();
 
-    	for(int i = 0; i < objects.size(); i++)
-    	{
-    		if((objects.at(i).x == 0) & (objects.at(i).y == 0))
-    		{
-    			objects.resize(i);
-    			break;
-    		}
-    	}
-
-
-    	// Open near_objects
-    	near_objects.resize(500);
-    	std::ifstream is3("/home/robo/explorer/near_objects.txt",std::ios::binary);
-    	is3.read(reinterpret_cast<char*>(&near_objects),near_objects.size());
-    	is3.close();
-
-    	for(int i = 0; i < near_objects.size(); i++)
-    	{
-    		if((near_objects.at(i).x == 0) & (near_objects.at(i).y == 0))
-    		{
-    			near_objects.resize(i);
-    			break;
-    		}
-    	}
+		for(int i = 1; i < discrete_map.size(); i++)
+		{
+			if((discrete_map.at(i).x == 0) & (discrete_map.at(i).y == 0))
+			{
+				printf("test\n");
+				discrete_map.resize(i);
+				break;
+			}
+		}
 
 
-    	// Open maps
-    	robot_map = imread("/home/robo/explorer/robot_map.png",1);
+		// Open objects
+		objects.resize(500);
+		std::ifstream is2("/home/robo/explorer/objects.dat",std::ios::binary);
+		is2.read(reinterpret_cast<char*>(&(objects[0])),objects.size()*sizeof(Node));
+		is2.close();
+
+		for(int i = 0; i < objects.size(); i++)
+		{
+			if((objects.at(i).x == 0) & (objects.at(i).y == 0))
+			{
+				objects.resize(i);
+				break;
+			}
+		}
 
 
-    	// Goto one object
-    	target.x = near_objects.at(0).x;
-    	target.y = near_objects.at(0).y;
-    	goto_target = true;
-    }
+		// Open near_objects
+		near_objects.resize(500);
+		std::ifstream is3("/home/robo/explorer/near_objects.dat",std::ios::binary);
+		is3.read(reinterpret_cast<char*>(&(near_objects[0])),near_objects.size()*sizeof(Node));
+		is3.close();
+
+		for(int i = 0; i < near_objects.size(); i++)
+		{
+			if((near_objects.at(i).x == 0) & (near_objects.at(i).y == 0))
+			{
+				near_objects.resize(i);
+				break;
+			}
+		}
+
+
+		// Open maps
+		robot_map = imread("/home/robo/explorer/robot_map.png",1);
+
+
+		// Goto one object
+		if(!near_objects.empty())
+		{
+			target.x = near_objects.at(0).x;
+			target.y = near_objects.at(0).y;
+			goto_target = true;
+		}
+
+
+		// Debug
+		Node test = discrete_map.at(0);
+		printf("Node test: x = %f, y = %f\n",test.x,test.y);
+	}
 
 
 
@@ -1459,34 +1470,34 @@ int main(int argc, char** argv)
 	}
 
 
-    if(mode == EXPLORE)
-    {
-    	// Save discrete map
+	if(mode == EXPLORE)
+	{
+		// Save discrete map
     	discrete_map.resize(500);
-    	std::ofstream os("/home/robo/explorer/discrete_map.txt",std::ios::binary);
-    	os.write(reinterpret_cast<const char*>(&discrete_map),discrete_map.size());
+    	std::ofstream os("/home/robo/explorer/discrete_map.dat",std::ios::binary);
+    	os.write(reinterpret_cast<const char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
     	os.close();
 
-    	// Save objects
-    	objects.resize(500);
-    	std::ofstream os2("/home/robo/explorer/objects.txt",std::ios::binary);
-    	os2.write(reinterpret_cast<const char*>(&objects),objects.size());
-    	os2.close();
+		// Save objects
+		objects.resize(500);
+		std::ofstream os2("/home/robo/explorer/objects.dat",std::ios::binary);
+		os2.write(reinterpret_cast<const char*>(&(objects[0])),objects.size()*sizeof(Node));
+		os2.close();
 
-    	// Save near_objects
-    	near_objects.resize(500);
-    	std::ofstream os3("/home/robo/explorer/near_objects.txt",std::ios::binary);
-    	os3.write(reinterpret_cast<const char*>(&near_objects),near_objects.size());
-    	os3.close();
+		// Save near_objects
+		near_objects.resize(500);
+		std::ofstream os3("/home/robo/explorer/near_objects.dat",std::ios::binary);
+		os3.write(reinterpret_cast<const char*>(&(near_objects[0])),near_objects.size()*sizeof(Node));
+		os3.close();
 
-    	// Save maps
-    	vector<int> compression_params;
-    	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-    	compression_params.push_back(0);
+		// Save maps
+		vector<int> compression_params;
+		compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+		compression_params.push_back(0);
 
-    	imwrite("/home/robo/explorer/robot_map.png",robot_map,compression_params);
-    	imwrite("/home/robo/explorer/wall_map.png",wall_map,compression_params);
-    }
+		imwrite("/home/robo/explorer/robot_map.png",robot_map,compression_params);
+		imwrite("/home/robo/explorer/wall_map.png",wall_map,compression_params);
+	}
 
 
 	return 0;
