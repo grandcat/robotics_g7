@@ -1,0 +1,16 @@
+<!-- 	Plays back raw depth image and RGB image recorded using the associated record.launch from OpenNI device (kinect).
+	The post-processing is then done to get a point-cloud.
+	-->
+
+<launch>
+  
+  <!-- Use simulated time: See http://mirror.umd.edu/roswiki/Clock.html for why -->
+  <param name="/use_sim_time" value="true"/>
+
+  <!-- Run all the normal processing stuff but tell openni.launch not to actually get any data from a real kinect (that will be supplied by the bag -->
+
+  <include file="$(find openni_launch)/launch/openni.launch" >
+    <arg name="load_driver" value="false" />
+  </include>
+
+</launch>

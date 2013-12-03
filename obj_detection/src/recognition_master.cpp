@@ -16,8 +16,10 @@ namespace objRecognition
  */
 void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg)
 {
+  ros::Duration(0.1).sleep();
   // TODO: disable recognition when turning 90 degree
   objRecog_Colorfilter.color_filter(msg);
+  lastObjectPositions = objRecog_Colorfilter.getDetectedObjects();
 }
 
 void RecognitionMaster::rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg)

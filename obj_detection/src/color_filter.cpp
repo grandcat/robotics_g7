@@ -91,8 +91,6 @@ void Color_Filter::showConfigurationPanel()
  */
 void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg)
 {
-  //ros::Duration(0.5).sleep();
-
   cv_bridge::CvImagePtr cv_ptr;
   try
     {
@@ -129,7 +127,7 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg)
   cvtColor(remove_background, remove_background, CV_GRAY2BGR); //change image to a BGR image
   bitwise_and(src_image, remove_background, filter_image); //Remove the background
 
-  //Publish filtered image
+  // Publish filtered image (TODO: send only special frames)
   cv_bridge::CvImagePtr img_ptr = cv_ptr;
   filter_image.copyTo(img_ptr->image);
   img_pub_.publish(img_ptr->toImageMsg());

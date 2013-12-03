@@ -51,13 +51,14 @@ public:
 
   void runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg);
 
+  void rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg);
+
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
 
   explorer::Object translateCvToMap(int y, int x);
 
   // Deprecated functions
   void rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg);
-  void rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg);
   // END Deprecated functions
 
 
@@ -70,6 +71,7 @@ private:
 
   // Recognition slaves: color_filter, feature_recognition
   Color_Filter objRecog_Colorfilter;
+  std::vector<DetectedObject> lastObjectPositions;
 
   // Depth image (for distance)
   image_transport::ImageTransport it_;
