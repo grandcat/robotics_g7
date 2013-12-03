@@ -97,7 +97,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		{
 			if(!priority.empty())
 			{
-				actions.clear();
 				current_action = priority.front();
 				busy = BUSY_PRIORITY;
 			}
@@ -145,7 +144,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				if(dist*dist < x_error*x_error)
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
-					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
 
@@ -178,7 +177,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					create_node(x_true,y_true);
 
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
-					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
 
@@ -245,7 +244,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(dist*dist < x_error*x_error)
 					{
 						if(busy == BUSY_ACTIONS) {actions.pop_front();}
-						if(busy == BUSY_PRIORITY) {priority.pop_front();}
+						if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 						busy = NOT_BUSY;
 
@@ -307,7 +306,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					create_node(x_true,y_true);
 
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
-					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
 
@@ -383,7 +382,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				if(dist < dist_error)
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
-					if(busy == BUSY_PRIORITY) {priority.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
 
@@ -422,7 +421,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
-	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION))
+	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
 	//if(actions.empty())
 	{
 		// Wall in front of the robot

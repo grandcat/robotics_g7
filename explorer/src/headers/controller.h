@@ -130,7 +130,7 @@ Node target;
 
 
 // IR sensor mean
-const int obstacle = 2;
+const int obstacle = 3; // 2
 int cmpt;
 
 
