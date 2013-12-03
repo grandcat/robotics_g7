@@ -1393,7 +1393,7 @@ int main(int argc, char** argv)
     {
     	// Open discrete_map
     	discrete_map.resize(500);
-    	std::ifstream is("/home/robo/discrete_map.txt",std::ios::binary);
+    	std::ifstream is("/home/robo/explorer/discrete_map.txt",std::ios::binary);
     	is.read(reinterpret_cast<char*>(&discrete_map),discrete_map.size());
     	is.close();
 
@@ -1409,7 +1409,7 @@ int main(int argc, char** argv)
 
     	// Open objects
     	objects.resize(500);
-    	std::ifstream is2("/home/robo/objects.txt",std::ios::binary);
+    	std::ifstream is2("/home/robo/explorer/objects.txt",std::ios::binary);
     	is2.read(reinterpret_cast<char*>(&objects),objects.size());
     	is2.close();
 
@@ -1425,7 +1425,7 @@ int main(int argc, char** argv)
 
     	// Open near_objects
     	near_objects.resize(500);
-    	std::ifstream is3("/home/robo/near_objects.txt",std::ios::binary);
+    	std::ifstream is3("/home/robo/explorer/near_objects.txt",std::ios::binary);
     	is3.read(reinterpret_cast<char*>(&near_objects),near_objects.size());
     	is3.close();
 
@@ -1440,7 +1440,7 @@ int main(int argc, char** argv)
 
 
     	// Open maps
-    	robot_map = imread("/home/robo/robot_map.png",1);
+    	robot_map = imread("/home/robo/explorer/robot_map.png",1);
 
 
     	// Goto one object
@@ -1464,19 +1464,19 @@ int main(int argc, char** argv)
     {
     	// Save discrete map
     	discrete_map.resize(500);
-    	std::ofstream os("/home/robo/discrete_map.txt",std::ios::binary);
+    	std::ofstream os("/home/robo/explorer/discrete_map.txt",std::ios::binary);
     	os.write(reinterpret_cast<const char*>(&discrete_map),discrete_map.size());
     	os.close();
 
     	// Save objects
     	objects.resize(500);
-    	std::ofstream os2("/home/robo/objects.txt",std::ios::binary);
+    	std::ofstream os2("/home/robo/explorer/objects.txt",std::ios::binary);
     	os2.write(reinterpret_cast<const char*>(&objects),objects.size());
     	os2.close();
 
     	// Save near_objects
     	near_objects.resize(500);
-    	std::ofstream os3("/home/robo/near_objects.txt",std::ios::binary);
+    	std::ofstream os3("/home/robo/explorer/near_objects.txt",std::ios::binary);
     	os3.write(reinterpret_cast<const char*>(&near_objects),near_objects.size());
     	os3.close();
 
@@ -1485,8 +1485,8 @@ int main(int argc, char** argv)
     	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
     	compression_params.push_back(0);
 
-    	imwrite("/home/robo/robot_map.png",robot_map,compression_params);
-    	imwrite("/home/robo/wall_map.png",wall_map,compression_params);
+    	imwrite("/home/robo/explorer/robot_map.png",robot_map,compression_params);
+    	imwrite("/home/robo/explorer/wall_map.png",wall_map,compression_params);
     }
 
 
