@@ -598,7 +598,7 @@ void update_map(double s1, double s2)
 
 
 	// Goto target
-	if(goto_target & actions.empty())
+	if(goto_target & actions.empty() & priority.empty())
 	{
 		Node n;
 		n.x = x_true;
