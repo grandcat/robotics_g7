@@ -598,7 +598,7 @@ void update_map(double s1, double s2)
 
 
 	// Goto target
-	if(goto_target)
+	if(goto_target & actions.empty() & priority.empty())
 	{
 		Node n;
 		n.x = x_true;
@@ -608,6 +608,7 @@ void update_map(double s1, double s2)
 
 		if(p.size() != 0)
 		{
+			printf("Goto node: x = %f, y = %f\n",p.at(0).x,p.at(0).y);
 			goto_node(p.at(0));
 		}
 	}
@@ -1282,6 +1283,8 @@ void receive_object(const Object::ConstPtr &msg)
 	ss << "I see something";
 	talk.data = ss.str();
 	chatter_pub.publish(talk);
+	ss.clear();
+
 
 	switch(msg->id)
 	{
@@ -1309,6 +1312,7 @@ void receive_object(const Object::ConstPtr &msg)
 	default : break;
 	}
 
+	ss << std::endl;
 	talk.data = ss.str();
 	chatter_pub.publish(talk);
 
@@ -1390,7 +1394,7 @@ int main(int argc, char** argv)
 	servo_pub = nh.advertise<Servomotors>("/actuator/Servo",100);
 	odometry_sub = nh.subscribe("/motion/Odometry",1000,receive_odometry);
 	object_sub = nh.subscribe("/recognition/object_pos_relative",1,receive_object);
-	chatter_pub = nh.advertise<std_msgs::String>("robot/talk", 10);
+	chatter_pub = nh.advertise<std_msgs::String>("/robot/talk", 10);
 
 
 	// Map init

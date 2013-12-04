@@ -129,6 +129,8 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
 
 
 
+
+
   //Does some erosion and dilation to remove some of the pixels
   cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
   cv::erode(filter_image, filter_image, cv::Mat());
@@ -238,6 +240,25 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
         }
     }
 
+  //Create ros-message
+//  if (publishFilteredImg)
+//    {
+//      color_filter::Objects obj_msg;
+//      obj_msg.ROI.reserve( contours_poly.size() );
+//      for (unsigned int i=0; i < boundRect.size(); i++)
+//        {
+//          cv::Rect rect = boundRect[i];
+//          color_filter::Rect2D_ rect2D_msg;
+//          rect2D_msg.x = rect.x;
+//          rect2D_msg.y = rect.y;
+//          rect2D_msg.height = rect.height;
+//          rect2D_msg.width = rect.width;
+//          obj_msg.ROI.push_back(rect2D_msg);
+//          obj_msg.ROI_id = ROI_id_counter;
+//        }
+//      obj_pub_.publish(obj_msg);
+//    }
+
   /*
                 else
                 {
@@ -333,24 +354,6 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
   //
   //
   //
-  //		//Create ros-message
-  //		if (flag_send_msg)
-  //		{
-  //			color_filter::Objects obj_msg;
-  //			obj_msg.ROI.reserve( contours_poly.size() );
-  //			for (unsigned int i=0; i < boundRect.size(); i++)
-  //			{
-  //				cv::Rect rect = boundRect[i];
-  //				color_filter::Rect2D_ rect2D_msg;
-  //				rect2D_msg.x = rect.x;
-  //				rect2D_msg.y = rect.y;
-  //				rect2D_msg.height = rect.height;
-  //				rect2D_msg.width = rect.width;
-  //				obj_msg.ROI.push_back(rect2D_msg);
-  //				obj_msg.ROI_id = ROI_id_counter;
-  //			}
-  //			obj_pub_.publish(obj_msg);
-  //		}
 
   if (FLAG_SHOW_IMAGE)
     {

@@ -97,7 +97,7 @@ const double y_cmd_traj = 0.18;
 double y_cmd_change = 0.0;
 const double x_backward_dist = 0.10;
 const double x_forward_dist = 0.18;
-const double dist_front_wall = 0.19;
+const double dist_front_wall = 0.19; // 0.18
 const double x_catch_wall = 0.17;
 
 
@@ -114,7 +114,7 @@ double x_true,y_true,theta_true;
 
 // Errors
 const double x_error = 0.01;
-const double theta_error = 5; // 3
+const double theta_error = 3;
 const double dist_error = 0.02;
 
 

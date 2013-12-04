@@ -20,7 +20,9 @@ class RecognitionMaster
 {
 public:
   RecognitionMaster(ros::NodeHandle &nh)
-    : nh_(nh), it_(nh), cRejectedFrames(0), lastRecognizedId(OBJTYPE_NO_OBJECT)
+    : nh_(nh), it_(nh), cRejectedFrames(0),
+      lastRecognizedId(OBJTYPE_NO_OBJECT), lastRememberedObjId(OBJTYPE_NO_OBJECT),
+      lastSendObjId(OBJTYPE_NO_OBJECT), count_LastObjType(0)
   {
     // Subscribe to RGB & depth image: Processing by slaves and estimation of objects position
     sub_rgb_img = it_.subscribe("/camera/rgb/image_rect_color", 1,
@@ -77,7 +79,8 @@ private:
   cv::Mat curDepthImg;
   int cRejectedFrames;                        //< counts not used depth frames since last position estimation
   // Object type
-  enum EObjectTypes lastRecognizedId;
+  enum EObjectTypes lastRecognizedId, lastRememberedObjId, lastSendObjId;
+  int count_LastObjType;
 };
 
 }
