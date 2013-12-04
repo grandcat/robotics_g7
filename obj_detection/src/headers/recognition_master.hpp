@@ -27,14 +27,11 @@ public:
                                 &objRecognition::RecognitionMaster::runRecognitionPipeline, this);
     // TODO: Initialize recognition slave: color_filter
 
-    // Subscribe to Recognition slaves & publish results
-    sub_obj_detection = nh_.subscribe("/recognition/detect", 1,
-                                          &objRecognition::RecognitionMaster::rcvSlaveRecognition, this);
     sub_obj_recogn_type = nh_.subscribe("/recognition/recognized", 1,
                                         &objRecognition::RecognitionMaster::rcvObjType, this);
     subscribeDepthImg();  // TODO: remove with optimization
     pub_recognition_result = nh_.advertise<explorer::Object>("/recognition/object_pos_relative", 5);
-    ROS_INFO("Object recognition master: Subscribed to recognition slaves, advertising to explorer.");
+    ROS_INFO("[Recognition master] Subscribed to recognition slaves, advertising to explorer.");
 
   }
 
@@ -55,10 +52,11 @@ public:
 
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
 
+private:
   explorer::Object translateCvToMap(int y, int x);
 
   // Deprecated functions
-  void rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg);
+//  void rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg);
   // END Deprecated functions
 
 
@@ -71,7 +69,7 @@ private:
 
   // Recognition slaves: color_filter, feature_recognition
   Color_Filter objRecog_Colorfilter;
-  std::vector<DetectedObject> lastObjectPositions;
+  std::vector<DetectedObject> lastObjPositions;
 
   // Depth image (for distance)
   image_transport::ImageTransport it_;
@@ -81,8 +79,6 @@ private:
   // Object type
   enum EObjectTypes lastRecognizedId;
 };
-
-
 
 }
 

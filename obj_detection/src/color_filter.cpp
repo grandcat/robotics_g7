@@ -14,32 +14,32 @@
 
 namespace objRecognition
 {
-// Fine tuning settings
-Cf_Params params_walls, params_floor;
+// Fine-tuning settings
+struct Cf_Params params_walls, params_floor;
 // Debug setting
 Filter_mode mode;
 
-/**
- * @brief Color_Filter::ChangeThreshold
- * @param msg
- */
-void Color_Filter::ChangeThreshold(const std_msgs::String::ConstPtr &msg)
-{
-  if ( tolower(msg->data.c_str()[1]) == 'z' )
-    {
-      if (image_sub_ == 0) //not subscribing
-        {
-          image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
-          puts("RESUMED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
-        }
-      else //don't subscribe to the camera and just be idle
-        {
-          image_sub_.shutdown();
-          puts("STOPPED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
-        }
-      return;
-    }
-}
+///**
+// * @brief Color_Filter::ChangeThreshold
+// * @param msg
+// */
+//void Color_Filter::ChangeThreshold(const std_msgs::String::ConstPtr &msg)
+//{
+//  if ( tolower(msg->data.c_str()[1]) == 'z' )
+//    {
+//      if (image_sub_ == 0) //not subscribing
+//        {
+//          image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
+//          puts("RESUMED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
+//        }
+//      else //don't subscribe to the camera and just be idle
+//        {
+//          image_sub_.shutdown();
+//          puts("STOPPED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
+//        }
+//      return;
+//    }
+//}
 
 /**
  * @brief on_trackbar
@@ -54,10 +54,10 @@ void Color_Filter::showConfigurationPanel()
   //FLAG_SHOW_IMAGE = true;
   FLAG_CHANGE_THRESHOLD = true;
   cv::namedWindow("Trackbar walls", 1);
-    cv::namedWindow("Trackbar floor", 1);
-    cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &params_walls.H_MIN, 180, on_trackbar);
-    cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &params_walls.H_MAX, 180, on_trackbar);
-    cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &params_walls.S_MIN, 255, on_trackbar);
+  cv::namedWindow("Trackbar floor", 1);
+  cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &params_walls.H_MIN, 180, on_trackbar);
+  cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &params_walls.H_MAX, 180, on_trackbar);
+  cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &params_walls.S_MIN, 255, on_trackbar);
   cv::createTrackbar( "Walls SAT MAX:", "Trackbar walls", &params_walls.S_MAX, 255, on_trackbar);
   cv::createTrackbar( "Walls VAL MIN:", "Trackbar walls", &params_walls.V_MIN, 255, on_trackbar);
   cv::createTrackbar( "Walls VAL MAX:", "Trackbar walls", &params_walls.V_MAX, 255, on_trackbar);
@@ -89,7 +89,7 @@ void Color_Filter::showConfigurationPanel()
  * @brief Color_Filter::color_filter
  * @param msg
  */
-void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg)
+void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publishFilteredImg)
 {
   cv_bridge::CvImagePtr cv_ptr;
   try
@@ -127,10 +127,12 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg)
   cvtColor(remove_background, remove_background, CV_GRAY2BGR); //change image to a BGR image
   bitwise_and(src_image, remove_background, filter_image); //Remove the background
 
-  // Publish filtered image (TODO: send only special frames)
-  cv_bridge::CvImagePtr img_ptr = cv_ptr;
-  filter_image.copyTo(img_ptr->image);
-  img_pub_.publish(img_ptr->toImageMsg());
+  // Publish filtered image (if advised to do)
+  if (publishFilteredImg) {
+    cv_bridge::CvImagePtr img_ptr = cv_ptr;
+    filter_image.copyTo(img_ptr->image);
+    img_pub_.publish(img_ptr->toImageMsg());
+  }
 
   //Does some erosion and dilation to remove some of the pixels
   cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
@@ -326,7 +328,6 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg)
   //			}
   //			obj_pub_.publish(obj_msg);
   //		}
-
 
   if (FLAG_SHOW_IMAGE)
     {
