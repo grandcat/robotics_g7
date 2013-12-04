@@ -22,7 +22,7 @@ public:
   RecognitionMaster(ros::NodeHandle &nh)
     : nh_(nh), it_(nh), cRejectedFrames(0),
       lastRecognizedId(OBJTYPE_NO_OBJECT), lastRememberedObjId(OBJTYPE_NO_OBJECT),
-      lastSendObjId(OBJTYPE_NO_OBJECT), count_LastObjType(0)
+      lastSendObjId(OBJTYPE_NO_OBJECT), count_LastObjType(0), debugWindows(false)
   {
     // Subscribe to RGB & depth image: Processing by slaves and estimation of objects position
     sub_rgb_img = it_.subscribe("/camera/rgb/image_rect_color", 1,
@@ -54,6 +54,12 @@ public:
 
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
 
+  inline void setDebugView(bool pColorFilter = true, bool pDepthImg = true)
+  {
+    objRecog_Colorfilter.showDebugOutput(pColorFilter);
+    debugWindows = pDepthImg;
+  }
+
 private:
   explorer::Object translateCvToMap(int y, int x);
 
@@ -81,6 +87,9 @@ private:
   // Object type
   enum EObjectTypes lastRecognizedId, lastRememberedObjId, lastSendObjId;
   int count_LastObjType;
+
+  // Debug
+  bool debugWindows;
 };
 
 }

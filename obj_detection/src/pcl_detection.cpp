@@ -96,15 +96,18 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 //  pcl::toROSMsg(*pclFiltered, output);
 //  pub_pcl_filtered.publish(output);
 
-//  //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoiseFree(new pcl::PointCloud<pcl::PointXYZ>);
-//  //  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
-//  //  pclOutlierFilter.setInputCloud(cloud_filtered);
-//  //  pclOutlierFilter.setMeanK(50);
-//  //  pclOutlierFilter.setStddevMulThresh(1.0);
-//  //  pclOutlierFilter.filter(*cloudNoiseFree);
+  //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoiseFree(new pcl::PointCloud<pcl::PointXYZ>);
+  //  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
+  //  pclOutlierFilter.setInputCloud(cloud_filtered);
+  //  pclOutlierFilter.setMeanK(50);
+  //  pclOutlierFilter.setStddevMulThresh(1.0);
+  //  pclOutlierFilter.filter(*cloudNoiseFree);
 
-  // Determine plane surfaces
+  /*
+   * Determine plane surfaces and remove
+   */
   Eigen::Vector3f axisBottomPlane = Eigen::Vector3f(0.0, 1.0, 0.0); // bottom plane
+  Eigen::Vector3f axisBackPlane = Eigen::Vector3f(0.0, 0.0, 1.0);   // back plane
 
   pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inlierIndices(new pcl::PointIndices);
@@ -118,7 +121,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclSegmentation.setDistanceThreshold(0.01); // how close point must be to object to be inlier
   pclSegmentation.setMaxIterations(1000);
   pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
-  // Remove points of possible walls
+  // Remove points of walls
   pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
   pclObstacle.setInputCloud(pclFiltered);
   pclObstacle.setIndices(inlierIndices);
@@ -126,13 +129,14 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclObstacle.filter(*pclProcessed);
   // Determine and remove back plane
   pclSegmentation.setInputCloud(pclProcessed);
-  pclSegmentation.setAxis(Eigen::Vector3f(0.0, 0.0, 1.0));  // back plane
+  pclSegmentation.setAxis(axisBackPlane);  // back plane
   pclSegmentation.setDistanceThreshold(0.02);
   pclSegmentation.segment(*inlierIndices, *coefficients);
+  // Remove points of walls: back plane
   pclObstacle.setInputCloud(pclProcessed);
   pclObstacle.setIndices(inlierIndices);
   pclObstacle.filter(*pclProcessed);
-  ros::message_operations::Printer< ::pcl::ModelCoefficients> mC();
+//  ros::message_operations::Printer< ::pcl::ModelCoefficients> mC();
 
   // TESTING PCL Object recognition
 //  static FeatureCloud objModel;
