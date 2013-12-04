@@ -401,7 +401,7 @@ void train()
 	//myfile.open(datafile.c_str());
 
   // Calculate color histogram and feature detection on train images
-	for(unsigned int i=0; i < 2 /*imgDir.size()*/; ++i) {
+	for(unsigned int i=0; i < imgDir.size(); ++i) {
 		
 		// Get train images for each object
 		const std::string imgPath = dirName + "/" + imgDir[i];
