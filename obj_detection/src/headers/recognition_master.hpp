@@ -23,7 +23,7 @@ public:
     : nh_(nh), it_(nh), cRejectedFrames(0), lastRecognizedId(OBJTYPE_NO_OBJECT)
   {
     // Subscribe to RGB & depth image: Processing by slaves and estimation of objects position
-    sub_rgb_img = it_.subscribe("/camera/rgb/image_color", 1,
+    sub_rgb_img = it_.subscribe("/camera/rgb/image_rect_color", 1,
                                 &objRecognition::RecognitionMaster::runRecognitionPipeline, this);
     // TODO: Initialize recognition slave: color_filter
 

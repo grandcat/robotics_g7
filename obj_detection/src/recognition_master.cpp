@@ -5,6 +5,8 @@
 #include <opencv2/highgui/highgui.hpp>      // CV GUI
 #include <sensor_msgs/image_encodings.h>
 
+#define RGB_DEPTH_IMG_ALIGNMENT 15          // Alignment correction of depth image to RGB image (in pixel)
+
 namespace objRecognition
 {
 
@@ -32,9 +34,8 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     return;
   }
 
-  if (cDetectedObjs > 0)
-    ROS_INFO("1. Obj:\n id:%i, cm y:%i x:%i", lastObjPositions[0].ROI_id,
-        lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
+  ROS_INFO("1. Obj:\n id:%i, cm y:%i x:%i", lastObjPositions[0].ROI_id,
+      lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   explorer::Object relMazePos = translateCvToMap(lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
   // If position couldn't determined, reject frame
@@ -45,7 +46,8 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   if (lastRecognizedId == OBJTYPE_NO_OBJECT)
     {
       ROS_INFO("Rejected basic obj detection: feature detection didn't work!");
-      return;
+      lastRecognizedId = OBJTYPE_UNKNOWN_OBJECT_DETECTED;
+//      return;
     }
 
   relMazePos.id = (int)lastRecognizedId;
@@ -55,67 +57,6 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
 //  ros::Duration(5).sleep();
 }
 
-//void RecognitionMaster::rcvSlaveRecognition(const color_filter::Objects::ConstPtr &msg)
-//{
-//  std::vector<color_filter::Rect2D_> detectedObjects = msg->ROI;
-//  int cDetectedObjs = (int)detectedObjects.size();
-//  ROS_INFO("Recognition master: received %i objects", cDetectedObjs);
-
-//  // Reject if no object was detected
-//  if (cDetectedObjs == 0)
-//    return;
-
-//  // Received obejct (probably): Activate depth image for getting distance
-//  subscribeDepthImg();
-//  // Take biggest object (based on rectangle), estimate position based on center point
-//  int bestRatio = 0, biggestObj = -1;
-
-//  for (int objId = 0; objId < cDetectedObjs; ++objId)
-//    {
-//      int objRatio = detectedObjects[objId].width * detectedObjects[objId].height;
-
-//      if (objRatio > bestRatio)
-//        {
-//          biggestObj = objId;
-//          bestRatio = objRatio;
-//        }
-//    }
-
-//  explorer::Object relMazePos = translateCvToMap(detectedObjects[biggestObj].y + detectedObjects[biggestObj].height / 2,
-//                                detectedObjects[biggestObj].x + detectedObjects[biggestObj].width / 2);
-
-//  // If position couldn't determined, reject frame
-//  if (relMazePos.x == -1)
-//    return;
-
-//  ROS_INFO("Depth used positon, y: %i, x: %i", detectedObjects[biggestObj].y + detectedObjects[biggestObj].height / 2,
-//           detectedObjects[biggestObj].x + detectedObjects[biggestObj].width / 2);
-
-//  // DEBUG print
-//  for (int yPos = -10; yPos <= 10; ++yPos)
-//    {
-//      for (int xPos = -10; xPos <= 10; ++xPos)
-//        {
-//          curDepthImg.at<float>(detectedObjects[biggestObj].y + detectedObjects[biggestObj].height / 2 + yPos,
-//                                detectedObjects[biggestObj].x + detectedObjects[biggestObj].width / 2 + xPos) = 255;
-//        }
-//    }
-
-//  cv::imshow("Depth image with marked point", curDepthImg);
-//  cvWaitKey(10);
-//  // Check whether obj id was also detected, otherwise reject information
-//  if (lastRecognizedId == OBJTYPE_NO_OBJECT || cDetectedObjs > 1)
-//    {
-//      ROS_INFO("Rejected basic obj detection, more than 2 objects or feature detection didn't work");
-//      return;
-//    }
-
-//  relMazePos.id = (int)lastRecognizedId;
-//  ROS_INFO("Detected object: %s", TEXT_OBJECTS[lastRecognizedId].c_str());
-//  pub_recognition_result.publish(relMazePos);
-//  // TESTING (sleeping after each processing is good for system performance)
-//  ros::Duration(5).sleep();
-//}
 
 /**
  * @brief RecognitionMaster::rcvObjType Store obj type information for processing later in rcvSlaveRecognition
@@ -131,7 +72,7 @@ void RecognitionMaster::rcvDepthImg(const sensor_msgs::ImageConstPtr& msg)
 {
   ++cRejectedFrames;
   // TODO: deactivate subscription if no depth pos was requested for 10 frames
-  ros::Duration(0.5).sleep();
+//  ros::Duration(4).sleep(); // <-- same thread as rgb image, therefore same rate
   ROS_INFO("[recognition master] received depth image %f", ros::Time::now().toSec());
   // Convert depth image to OpenCV Mat format
   cv_bridge::CvImagePtr cv_ptr;
@@ -150,6 +91,10 @@ void RecognitionMaster::rcvDepthImg(const sensor_msgs::ImageConstPtr& msg)
 
 explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
 {
+  // Correct alignment of depth image to RGB image
+  x += RGB_DEPTH_IMG_ALIGNMENT;
+//  y += RGB_DEPTH_IMG_ALIGNMENT;
+
   explorer::Object relMazePos;
   relMazePos.x = -1;
 
@@ -170,6 +115,8 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
               && (((y + j - 5) >= 0) & ((x + i - 5) >= 0)))
             {
               float curDepth = curDepthImg.at<float>(y + j - 5, x + i - 5);
+              // DEBUG: mark point for visualization
+              curDepthImg.at<float>(y + j - 5, x + i - 5) = 255;
 
 //                                ROS_INFO("Raw value: %f", curDepth);
               if (!isnan(curDepth))
@@ -186,6 +133,10 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
       relMazePos.x = sumDistance / nAvg;// * 1000;
       // calculate y approximation
       relMazePos.y = (320 - x) * (relMazePos.x / 530);
+
+      // DEBUG: show visualization
+      cv::imshow("Depth image with marked point", curDepthImg);
+      cvWaitKey(10);
     }
   else
     {
