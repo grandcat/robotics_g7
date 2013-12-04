@@ -127,13 +127,9 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
   cvtColor(remove_background, remove_background, CV_GRAY2BGR); //change image to a BGR image
   bitwise_and(src_image, remove_background, filter_image); //Remove the background
 
-  // Publish filtered image (if advised to do)
-  if (publishFilteredImg)
-    {
-      cv_bridge::CvImagePtr img_ptr = cv_ptr;
-      filter_image.copyTo(img_ptr->image);
-      img_pub_.publish(img_ptr->toImageMsg());
-    }
+
+
+
 
   //Does some erosion and dilation to remove some of the pixels
   cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
@@ -199,22 +195,50 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
 
     }
 
+  //crop out the objects from the image
+
+
+  cv::Mat crop_img = cv::Mat::zeros( src_image.size(), src_image.type());
+  cv::Mat mask = cv::Mat::zeros( src_image.size(), src_image.type());
+  cv::Scalar color_white = cv::Scalar( 255, 255, 255);
+  for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+  {
+	  cv::Rect ROI(it->boundRect.x, it->boundRect.y, it->boundRect.width , it->boundRect.height);
+	  rectangle(mask, ROI.tl(), ROI.br(), color_white, CV_FILLED); //mask
+
+	  // Cut out ROI and store it in crop_img
+	  src_image.copyTo(crop_img, mask);
+  }
+  //for some reason the source image get overwritten. Retrieve it back!
+  cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+  src_image = cv_ptr->image.clone();
+
+
+
+  // Publish filtered image (if advised to do)
+  if (publishFilteredImg) {
+    cv_bridge::CvImagePtr img_ptr = cv_ptr;
+    //filter_image.copyTo(img_ptr->image);
+    crop_img.copyTo(img_ptr->image);
+    img_pub_.publish(img_ptr->toImageMsg());
+  }
+
   //track objects
 
   //if there where no previous rectangles, add some!
-  unsigned int prev_rects_size = prev_rects.size();
-  if (prev_rects_size == 0)
-    {
-      for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
-        {
-          ObjectRectangle newRect;
-          it->ROI_id = ROI_id_counter;
-          newRect.ROI_id = ROI_id_counter;
-          newRect.boundRect = it->boundRect;
-          ++ROI_id_counter;
-          prev_rects.push_back(newRect);
-        }
-    }
+//  unsigned int prev_rects_size = prev_rects.size();
+//  if (prev_rects_size == 0)
+//    {
+//      for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
+//        {
+//          ObjectRectangle newRect;
+//          it->ROI_id = ROI_id_counter;
+//          newRect.ROI_id = ROI_id_counter;
+//          newRect.boundRect = it->boundRect;
+//          ++ROI_id_counter;
+//          prev_rects.push_back(newRect);
+//        }
+//    }
 
   //Create ros-message
 //  if (publishFilteredImg)
@@ -334,6 +358,7 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
   if (FLAG_SHOW_IMAGE)
     {
       cv::imshow("Original", src_image);
+
 
       cv::Mat drawing = cv::Mat::zeros( filter_image_bin.size(), CV_8UC3 );
       cv::Scalar color_red = cv::Scalar( 0, 0, 255 );
