@@ -226,19 +226,19 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
   //track objects
 
   //if there where no previous rectangles, add some!
-  unsigned int prev_rects_size = prev_rects.size();
-  if (prev_rects_size == 0)
-    {
-      for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
-        {
-          ObjectRectangle newRect;
-          it->ROI_id = ROI_id_counter;
-          newRect.ROI_id = ROI_id_counter;
-          newRect.boundRect = it->boundRect;
-          ++ROI_id_counter;
-          prev_rects.push_back(newRect);
-        }
-    }
+//  unsigned int prev_rects_size = prev_rects.size();
+//  if (prev_rects_size == 0)
+//    {
+//      for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
+//        {
+//          ObjectRectangle newRect;
+//          it->ROI_id = ROI_id_counter;
+//          newRect.ROI_id = ROI_id_counter;
+//          newRect.boundRect = it->boundRect;
+//          ++ROI_id_counter;
+//          prev_rects.push_back(newRect);
+//        }
+//    }
 
   //Create ros-message
 //  if (publishFilteredImg)
