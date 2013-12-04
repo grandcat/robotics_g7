@@ -598,7 +598,7 @@ void update_map(double s1, double s2)
 
 
 	// Goto target
-	if(goto_target)
+	if(goto_target & actions.empty())
 	{
 		Node n;
 		n.x = x_true;
@@ -608,6 +608,7 @@ void update_map(double s1, double s2)
 
 		if(p.size() != 0)
 		{
+			printf("Goto node: x = %f, y = %f\n",p.at(0).x,p.at(0).y);
 			goto_node(p.at(0));
 		}
 	}
@@ -1310,8 +1311,6 @@ void receive_object(const Object::ConstPtr &msg)
 	case objRecognition::OBJTYPE_RED_PLATE : {ss << "It is a red plate"; break;}
 	default : break;
 	}
-
-	//std::cout << std::endl << "Controller: received object " << ss.str() << std::endl << std::endl;
 
 	ss << std::endl;
 	talk.data = ss.str();
