@@ -344,6 +344,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 			// Forward with correction
+
 			if(current_action.n == ACTION_GOTO_FORWARD)
 			{
 				static double x_cmd;
@@ -355,7 +356,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					x_cmd = current_action.parameter1;
 					y_cmd = current_action.parameter2;
 
-					diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
+					diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true));
 					if((x_cmd-x_true) < 0)
 					{
 						if((y_cmd-y_true) > 0)
@@ -370,12 +371,13 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					diff_ang = angle(diff_ang);
 					double rotation = nPi2(diff_ang)*(M_PI/2);
 
-					y_cmd = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true))*sin(diff_ang-rotation);
-					x_cmd = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true))*cos(diff_ang-rotation);
+					double distance = sqrt((x_cmd-x_true)*(x_cmd-x_true)+(y_cmd-y_true)*(y_cmd-y_true));
+					y_cmd = distance*sin(diff_ang-rotation);
+					x_cmd = distance*cos(diff_ang-rotation);
 
 					flag = true;
 
-					printf("Goto forward: x_cmd = %f\n",x_cmd);
+					printf("Goto forward: x_cmd = %f, y_cmd = %f\n",x_cmd,y_cmd);
 				}
 
 
@@ -409,6 +411,51 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					printf("Done !\n");
 				}
 			}
+
+			/*
+			if(current_action.n == ACTION_GOTO_FORWARD)
+			{
+				static double x_cmd;
+
+				// Init
+				if(!flag)
+				{
+					x_cmd = x + current_action.parameter1;
+					flag = true;
+				}
+
+
+				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
+				diff_ang = angle(diff_ang);
+
+				dist = x_cmd-x;
+
+				// Saturations
+				if(dist > x_cmd_traj)
+				{
+					dist = x_cmd_traj;
+				}
+
+				if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
+				if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
+
+
+				speed.V = rho*dist*r;
+				speed.W = -2*r/l*alpha*diff_ang;
+
+
+				if(dist < dist_error)
+				{
+					if(busy == BUSY_ACTIONS) {actions.pop_front();}
+					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
+
+					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
+
+					printf("Done !\n");
+				}
+			}
+			*/
 		}
 	}
 
