@@ -5,6 +5,7 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.6</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
+<path>/home/robo/DD2425_2013/robotics_g7/object_recognition/src</path>
 <path>/opt/ros/fuerte/stacks/nodelet_core/nodelet_topic_tools/src</path>
 <path>/opt/ros/fuerte/stacks/nodelet_core/nodelet_topic_tools/lib</path>
 <path>/opt/ros/fuerte/stacks/perception_pcl/pcl_ros/src</path>
@@ -14,6 +15,7 @@
 <path>/opt/ros/fuerte/stacks/geometry/tf/lib</path>
 <path>/opt/ros/fuerte/stacks/nodelet_core/nodelet/src</path>
 <path>/opt/ros/fuerte/stacks/nodelet_core/nodelet/lib</path>
+<path>/home/robo/DD2425_2013/robotics_g7/explorer/src</path>
 <path>/opt/ros/fuerte/stacks/image_common/image_transport/src</path>
 <path>/opt/ros/fuerte/stacks/image_common/image_transport/lib</path>
 <path>/opt/ros/fuerte/stacks/geometry/angles/lib</path>
@@ -21,12 +23,14 @@
 <path>/opt/ros/fuerte/stacks/vision_opencv/cv_bridge/lib</path>
 <path>/opt/ros/fuerte/stacks/dynamic_reconfigure/src</path>
 <path>/opt/ros/fuerte/stacks/dynamic_reconfigure/lib</path>
+<path>/home/robo/DD2425_2013/robotics_g7/color_filter/src</path>
 <path>/opt/ros/fuerte/stacks/bond_core/bondcpp/src</path>
 <path>/opt/ros/fuerte/stacks/bond_core/bondcpp/lib</path>
 <path>/opt/ros/fuerte/stacks/bullet/src</path>
 <path>/opt/ros/fuerte/stacks/bullet/lib</path>
 <path>/opt/ros/fuerte/stacks/pluginlib/src</path>
 <path>/opt/ros/fuerte/stacks/pluginlib/lib</path>
+<path>/home/robo/DD2425_2013/robotics_g7/robot/src</path>
 <path>/home/robo/DD2425_2013/differential_drive/src</path>
 <path>/opt/ros/fuerte/stacks/bond_core/bond/src</path>
 <path>/home/robo/DD2425_2013/robotics_g7/obj_detection/src</path>

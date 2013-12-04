@@ -19,6 +19,9 @@
 #include "recognition_constants.hpp"
 #include <object_recognition/Recognized_objects.h> //msg for recognized object
 
+#include <color_filter/Objects.h>
+#include <color_filter/Rect2D_.h>
+
 using namespace cv;
 namespace enc = sensor_msgs::image_encodings;
 
@@ -274,7 +277,8 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
 
 		/////////////////////////////////////////////////////////
 		matched_objects[i].obj = trainImg[i].obj;
-		matched_objects[i].name = objects[trainImg[i].obj-1];
+		//matched_objects[i].name = objects[trainImg[i].obj-1];
+		matched_objects[i].name = trainImg[i].name;
 		matched_objects[i].score_hist = resB*resB + resG*resG + resR*resR + resH*resH;
 
 		// Not a match if negative correlation
@@ -447,29 +451,36 @@ void train()
 
 class ImageConverter
 {
-  ros::NodeHandle nh_;
-  image_transport::ImageTransport it_;
-  image_transport::Subscriber image_sub_;
-  image_transport::Publisher image_pub_;
+
+private:
+	ros::NodeHandle nh_;
+	image_transport::ImageTransport it_;
+	image_transport::Subscriber image_sub_;
+	image_transport::Publisher image_pub_;
 	image_transport::Subscriber filter_sub_;
 	//ros::Subscriber filter_sub_2_;
 	ros::Publisher obj_pub_;
 
+	ros::Subscriber roi_sub_;
+	cv::Rect ROI;
+
 
 public:
-  IplImage* img;
+	IplImage* img;
 	IplImage* img_depth;
 	IplImage* hsv_image;
 	IplImage* hsv_mask;
 
   ImageConverter()
-    : it_(nh_)
+    : it_(nh_), ROI(0,0,0,0)
   {
 
-		//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
-		filter_sub_ = it_.subscribe("/color_filter/filtered_image", 1, &ImageConverter::imageCb, this);
-		//filter_sub_2_ = it_.subscribe(" /recognition/detect", 1, &ImageConverter::imageCb, this);
-		obj_pub_ = nh_.advertise<object_recognition::Recognized_objects>("/recognition/recognized", 1);
+	//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &ImageConverter::imageCb, this);
+	filter_sub_ = it_.subscribe("/color_filter/filtered_image", 1, &ImageConverter::imageCb, this);
+	//filter_sub_2_ = it_.subscribe(" /recognition/detect", 1, &ImageConverter::imageCb, this);
+	obj_pub_ = nh_.advertise<object_recognition::Recognized_objects>("/recognition/recognized", 1);
+
+	roi_sub_ = nh_.subscribe("/recognition/detect", 1, &ImageConverter::getROI, this);
 
     //cv::namedWindow(WINDOW);
   }
@@ -477,6 +488,16 @@ public:
   ~ImageConverter()
   {
 	  cv::destroyAllWindows();
+  }
+
+  void getROI(const color_filter::Objects::ConstPtr& msg)
+  {
+	  if (msg->ROI.size() > 0)
+		  ROI = cv::Rect(msg->ROI[0].x ,msg->ROI[0].y , msg->ROI[0].x + msg->ROI[0].width , msg->ROI[0].y + msg->ROI[0].height);
+
+	  else
+		  ROI = cv::Rect(0,0,0,0);
+
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -493,11 +514,19 @@ public:
     }
 
     //cv_ptr has image now, identify object
-		img = new IplImage(cv_ptr->image);
 
-		Rect crop((img->width)/5, (img->height)/4, (img->width)*3/5, (img->height)*3/4);
+
+//		img = new IplImage(cv_ptr->image);
+//
+//		Rect crop((img->width)/5, (img->height)/4, (img->width)*3/5, (img->height)*3/4);
+//		Mat src;
+//		Mat(img, crop).copyTo(src);
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+    	img = new IplImage(cv_ptr->image);
 		Mat src;
-		Mat(img, crop).copyTo(src);
+		Mat(img, ROI).copyTo(src);
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 		// Detect objects through feature detection
 		int featSize = featureDetector(src).keypoints.size();
