@@ -32,6 +32,7 @@ enum EACTIONS {
 	ACTION_GOTO,
 	ACTION_GOTO_FORWARD,
 	ACTION_GOTO_ROTATION,
+	ACTION_NO,
 };
 
 enum BUSY {
@@ -96,7 +97,7 @@ const double y_cmd_traj = 0.18; //0.20
 double y_cmd_change = 0.0;
 const double x_backward_dist = 0.09;
 const double x_forward_dist = 0.18;
-const double dist_front_wall = 0.22; // 0.24
+const double dist_front_wall = 0.18; // 0.24
 const double x_catch_wall = 0.17;
 
 
@@ -130,7 +131,7 @@ Node target;
 
 
 // IR sensor mean
-const int obstacle = 3; // 2
+const int obstacle = 2; // 2
 int cmpt;
 
 

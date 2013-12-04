@@ -85,6 +85,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 		if((busy == BUSY_ACTIONS) & !priority.empty())
 		{
 			busy = NOT_BUSY;
+			current_action.n = ACTION_NO;
 
 			// Relaunch EKF
 			Stop_EKF s;
@@ -148,6 +149,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -181,6 +183,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -248,6 +251,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 						if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 						busy = NOT_BUSY;
+						current_action.n = ACTION_NO;
 
 						// Relaunch EKF
 						Stop_EKF s;
@@ -310,6 +314,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					// Relaunch EKF
 					Stop_EKF s;
@@ -386,6 +391,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
 
 					busy = NOT_BUSY;
+					current_action.n = ACTION_NO;
 
 					printf("Done !\n");
 				}
