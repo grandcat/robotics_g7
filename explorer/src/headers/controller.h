@@ -114,7 +114,7 @@ double x_true,y_true,theta_true;
 
 // Errors
 const double x_error = 0.01;
-const double theta_error = 5; // 3
+const double theta_error = 3;
 const double dist_error = 0.02;
 
 
