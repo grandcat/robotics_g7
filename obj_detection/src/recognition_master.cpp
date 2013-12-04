@@ -21,7 +21,6 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   ros::Duration(0.2).sleep();
   // TODO: disable recognition when turning 90 degree
   // Get object positions (if any)
-  objRecog_Colorfilter.showDebugOutput();
   objRecog_Colorfilter.color_filter(msg);
   lastObjPositions = objRecog_Colorfilter.getDetectedObjects();
   unsigned int cDetectedObjs = lastObjPositions.size();
@@ -156,9 +155,12 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
       // calculate y approximation
       relMazePos.y = (320 - x) * (relMazePos.x / 530);
 
-      // DEBUG: show visualization
-      cv::imshow("Depth image with marked point", curDepthImg);
-      cvWaitKey(10);
+      if (debugWindows)
+      {
+        // DEBUG: show visualization
+        cv::imshow("Depth image with marked point", curDepthImg);
+        cvWaitKey(10);
+      }
     }
   else
     {
@@ -176,7 +178,15 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "pcl_processing");
   ros::NodeHandle nh;
   ROS_INFO("[Recognition master] Starting up...");
+
   objRecognition::RecognitionMaster recognMaster(nh);
+
+  // Parameters
+  if (argc != 1 && atoi(argv[1]) == 1)
+  {
+    recognMaster.setDebugView();
+  }
+
 
   ros::spin();
   return 0;
