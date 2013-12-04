@@ -274,7 +274,8 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
 
 		/////////////////////////////////////////////////////////
 		matched_objects[i].obj = trainImg[i].obj;
-		matched_objects[i].name = objects[trainImg[i].obj-1];
+//		matched_objects[i].name = objects[trainImg[i].obj-1];
+                matched_objects[i].name = trainImg[i].name;
 		matched_objects[i].score_hist = resB*resB + resG*resG + resR*resR + resH*resH;
 
 		// Not a match if negative correlation
@@ -427,6 +428,8 @@ void train()
 				dummy.name = imgDir[i];
 				dummy.colorHist = colorDetectionRGB(img);
 				dummy.feat = featureDetector(img);
+				std::cout<<"obj: "<<dummy.obj<<std::endl;
+				std::cout<<"name: "<<dummy.name<<std::endl;
 				trainImg.push_back(dummy);
 
 				// write train data to text file

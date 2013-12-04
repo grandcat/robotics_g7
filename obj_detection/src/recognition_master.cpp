@@ -18,7 +18,7 @@ namespace objRecognition
  */
 void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg)
 {
-  ros::Duration(0.1).sleep();
+  ros::Duration(0.2).sleep();
   // TODO: disable recognition when turning 90 degree
   // Get object positions (if any)
   objRecog_Colorfilter.showDebugOutput();
@@ -49,6 +49,28 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
       lastRecognizedId = OBJTYPE_UNKNOWN_OBJECT_DETECTED;
 //      return;
     }
+
+  // Don't send last object id again
+  if (lastRememberedObjId == lastRecognizedId) {
+    ++count_LastObjType;
+    ROS_INFO("Received same object %i times", count_LastObjType);
+  }
+  else
+  {
+    // Detected obj changed, reset counter
+    count_LastObjType = 0;
+  }
+  lastRememberedObjId = lastRecognizedId;
+
+  // Check whether it detected several times the same object
+  if (count_LastObjType < 5)
+    return;
+
+  // Dont't send same obj
+  if (lastSendObjId == lastRecognizedId) {
+    return;
+  }
+  lastSendObjId = lastRecognizedId;
 
   relMazePos.id = (int)lastRecognizedId;
   ROS_INFO("Detected object: %s", TEXT_OBJECTS[lastRecognizedId].c_str());

@@ -7,8 +7,6 @@
   	<param name="mode" value="0"/>
   </node>	
   
-  <node pkg="color_filter" name="color_filter" type="color_filter" output="screen"/>
-  <node pkg="object_recognition" name="recognition" type="object_recognition" output="screen"/>
   <node pkg="obj_detection" name="recogntion_master" type="recognition_master" output="screen"/>
   
   <node pkg="robot_talk" name="robot_talk" type="robot_talk"/>
