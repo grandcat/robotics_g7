@@ -37,7 +37,7 @@ struct Cf_Params
   int V_MIN, V_MAX;
 
   Cf_Params() :
-    H_MIN(0), H_MAX(MAX), S_MIN(0), S_MAX(MAX), V_MIN(0), V_MAX(MAX) {}
+    H_MIN(0), H_MAX(MAX), S_MIN(0), S_MAX(106), V_MIN(0), V_MAX(MAX) {}
 };
 
 
@@ -63,7 +63,7 @@ struct ObjectRectangle
   cv::Rect boundRect;
 };
 
-struct DetectedObject:ObjectRectangle
+struct DetectedObject : ObjectRectangle
 {
   std::vector<cv::Point> contours_poly;
   cv::RotatedRect rotatedRect;
@@ -89,22 +89,22 @@ private:
   ros::Publisher obj_pub_;
   image_transport::Publisher img_pub_;
 
-  // Debug settings
-  bool FLAG_SHOW_IMAGE;
-  bool FLAG_CHANGE_THRESHOLD;
-
   // previous ROI
   std::vector<ObjectRectangle> prev_rects;
   int ROI_id_counter;
   // stored information about the objects detected in the image
   std::vector<DetectedObject> objects;
 
+  // Debug settings
+  bool FLAG_SHOW_IMAGE;
+  bool FLAG_CHANGE_THRESHOLD;
+
 public:
   Color_Filter() : it_(nh_), ROI_id_counter(0),
     FLAG_SHOW_IMAGE(false), FLAG_CHANGE_THRESHOLD(false)
   {
 //    image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
-    keyboard_sub = nh_.subscribe("/keyboard/input", 1, &Color_Filter::ChangeThreshold, this);
+//    keyboard_sub = nh_.subscribe("/keyboard/input", 1, &Color_Filter::ChangeThreshold, this);
     img_pub_ = it_.advertise("/color_filter/filtered_image", 1);
     obj_pub_ = nh_.advertise<color_filter::Objects>("/recognition/detect", 1);
 
@@ -118,11 +118,11 @@ public:
     cv::destroyAllWindows();
   }
 
-  /**
-   * @brief ChangeThreshold
-   * @param msg
-   */
-  void ChangeThreshold(const std_msgs::String::ConstPtr& msg);
+//  /**
+//   * @brief ChangeThreshold
+//   * @param msg
+//   */
+//  void ChangeThreshold(const std_msgs::String::ConstPtr& msg);
 
   /**
    * @brief showConfigurationPanel
@@ -145,7 +145,7 @@ public:
    * @brief color_filter
    * @param msg
    */
-  void color_filter(const sensor_msgs::ImageConstPtr& msg);
+  void color_filter(const sensor_msgs::ImageConstPtr& msg, bool publishFilteredImg = true);
 
   inline std::vector<DetectedObject> getDetectedObjects()
   {
