@@ -63,6 +63,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	y_wall = msg->y_wall;
 
 
+	//printf("x = %f, y = %f\n",x_true,y_true);
+
+
 	// Wall follower
 	if(actions.empty() & priority.empty())
 	{
@@ -84,6 +87,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 	// Do a special movement
 	else
 	{
+		static bool flag;
+
+
 		if((busy == BUSY_ACTIONS) & !priority.empty())
 		{
 			busy = NOT_BUSY;
@@ -119,6 +125,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				s.rotation_angle = current_action.parameter1;
 				stop_EKF_pub.publish(s);
 			}
+
+
+			flag = false;
 		}
 
 
@@ -130,10 +139,11 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				double x_cmd = x - x_cmd_traj;
 
 				static double y_cmd;
-				static bool flag;
+
 				if(!flag)
 				{
 					y_cmd = y;
+					x_collision = x;
 					flag = true;
 				}
 
@@ -143,6 +153,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 				speed.V = rho*dist*r;
 				speed.W = -2*r/l*alpha*diff_ang;
+
+				//printf("Backward\n");
 
 				// Done
 				if(dist*dist < x_error*x_error)
@@ -273,7 +285,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 				// Init
 				static double rotation;
-				static bool flag;
+
 				if(!flag)
 				{
 					diff_ang = atan((y_cmd-y_true)/(x_cmd-x_true))-theta_true;
@@ -292,6 +304,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 					rotation = nPi2(diff_ang)*(M_PI/2);
 					flag = true;
+
+					printf("diff_ang = %f ,rotation = %f\n",diff_ang,rotation);
 				}
 
 
@@ -324,8 +338,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					s.rotation_angle = rotation;
 					stop_EKF_pub.publish(s);
 
-					flag = false;
-
 					//printf("rotation = %f\n",rotation);
 				}
 			}
@@ -338,7 +350,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				static double y_cmd;
 
 				// Init
-				static bool flag;
 				if(!flag)
 				{
 					x_cmd = current_action.parameter1;
@@ -364,7 +375,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 					flag = true;
 
-					printf("Goto forward\n");
+					printf("Goto forward: x_cmd = %f\n",x_cmd);
 				}
 
 
@@ -430,8 +441,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
-	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
-		//if(actions.empty())
+	if(actions.empty() & priority.empty())
 	{
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
@@ -457,13 +467,15 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		{
 			cmpt = 0;
 		}
+	}
 
 
+	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
+	{
 		// Bumpers
 		if(s8)
 		{
 			Action action;
-			x_collision = x;
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
@@ -482,15 +494,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		if(s6)
 		{
 			Action action;
-			x_collision = x;
 
 			action.n = ACTION_BACKWARD;
 			action.parameter1 = x_backward_dist;
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.08*cos(theta_true) - 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.08*sin(theta_true) + 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.06*cos(theta_true) - 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.06*sin(theta_true) + 0.04*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -604,12 +615,22 @@ void update_map(double s1, double s2)
 		n.x = x_true;
 		n.y = y_true;
 
+		/*
 		Path p = path(n,target);
 
 		if(p.size() != 0)
 		{
 			printf("Goto node: x = %f, y = %f\n",p.at(0).x,p.at(0).y);
 			goto_node(p.at(0));
+		}
+		*/
+		path_finding(target);
+
+		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < dist_error)
+		{
+			Action action;
+			action.n = ACTION_STOP;
+			priority.push_back(action);
 		}
 	}
 
@@ -621,6 +642,13 @@ void update_map(double s1, double s2)
 		//printf("Already visited !\n");
 		path_finding(find_closest_node(toDiscover));
 	}
+
+
+	Node n;
+	n.x = x_true;
+	n.y = y_true;
+	Pixel p = nodeToPixel(n);
+	proc_map.at<uchar>(p.i,p.j) = 250;
 
 
 	namedWindow("Map",CV_WINDOW_NORMAL);
@@ -1262,8 +1290,11 @@ Node find_closest_node(std::vector<Node> vector)
 
 void receive_object(const Object::ConstPtr &msg)
 {
-	double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
-	double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
+	//double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
+	//double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
+
+	double x_object = x_true + (0.2+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
+	double y_object = y_true + (0.2+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
 
 	Node node;
 
@@ -1280,11 +1311,7 @@ void receive_object(const Object::ConstPtr &msg)
 	// Talk
 	std_msgs::String talk;
 	std::stringstream ss;
-	ss << "I see something";
-	talk.data = ss.str();
-	chatter_pub.publish(talk);
-	ss.clear();
-
+	ss << "I see something. ";
 
 	switch(msg->id)
 	{
@@ -1312,9 +1339,10 @@ void receive_object(const Object::ConstPtr &msg)
 	default : break;
 	}
 
-	ss << std::endl;
 	talk.data = ss.str();
 	chatter_pub.publish(talk);
+
+	std::cout << ss.str() << std::endl;
 
 
 	// Goto start
@@ -1404,8 +1432,10 @@ int main(int argc, char** argv)
 
 
 	// Robot_talk
+	/*
 	string say_out = string("espeak \"") + "Go" + string("\"");
 	system(say_out.c_str());
+	*/
 
 
 	// Mode
