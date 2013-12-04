@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include "std_msgs/String.h"
+#include <fstream>
+#include <boost/algorithm/string.hpp>
 
 #include "recognition_constants.hpp"
 #include <object_recognition/Recognized_objects.h> //msg for recognized object
@@ -63,7 +65,8 @@ struct IdImg
 };
 
 
-
+static const std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages";
+const std::string datafile = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/traindata.txt";
 
 static const std::string objects[] = {"pepper", "lemon", "pear", "carrot", "giraff", "tiger", "hippo"};
 //static const std::string objects[] = {"AVOCADO","BANANA","BROCCOLI","CARROT","CHILI","CORN","ELEPHANT","GIRAFFE","GREEN_PUMPKIN","HIPPO","LEMON","LION","ONION","PEACH","PEAR","POTATO","TIGER","TOMATO","WATERMELON","ZEBRA","RED_PLATE"};
@@ -72,8 +75,11 @@ vector<IdImg> trainImg;
 int keypThreshold = 30;
 vector<int> identified;
 vector<double> obj_scores;
+
+
 /*
- * Subtract background based on RGB color
+ * OLD, NOT USED ANYMORE!
+ * Subtract background based on RGB color. 
  */
 Mat subtractBackground(Mat img)
 {
@@ -376,50 +382,66 @@ std::vector<IdImg> identifyObject(ImgHist hist, Features feat)
  */
 void train()
 {
-	// Get all trainimages
-	vector<std::string> files;
+	// Get all folders for train images
+	vector<std::string> imgDir;
   class dirent *ent;
-  //std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages";
-  std::string dirName = "/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/src/trainimages/test_4_objects";
   DIR *dir = opendir(dirName.c_str());
   while ((ent = readdir(dir)) != NULL) {
-    const std::string fileName = ent->d_name;
-
-    // get only image files (.jpg)
-  	std::size_t isImg = fileName.find(".jpg");
-    if (isImg != std::string::npos) {
-      files.push_back(fileName);
+    const std::string imgDirName = ent->d_name;
+    std::size_t isTest = imgDirName.find("test");
+    //get image directories
+    if (imgDirName[0] != '.' && isTest == std::string::npos) {
+      std::cout << imgDirName << std::endl;
+      imgDir.push_back(imgDirName);
   	}
   }
   closedir(dir);
 
+	//std::ofstream myfile;
+	//myfile.open(datafile.c_str());
+
   // Calculate color histogram and feature detection on train images
-	for(unsigned int i=0; i < files.size(); ++i) {
-		const std::string fullFileName = dirName + "/" + files[i];
-		std::cout<<"fullFileName: "<<fullFileName<<std::endl;
-		Mat img = imread(fullFileName);
+	for(unsigned int i=0; i < 2 /*imgDir.size()*/; ++i) {
+		
+		// Get train images for each object
+		const std::string imgPath = dirName + "/" + imgDir[i];
+		dir = opendir(imgPath.c_str());
 
-		IdImg dummy;
+		while ((ent = readdir(dir)) != NULL) {
+		  const std::string filename = ent->d_name;
 
-		// Get object id from file name
-		std::stringstream ss;
-		ss << files[i][0] << files[i][1]; //ss will contain the first part of the filename
+		  // get only image files (.jpg)
+			std::size_t isImg = filename.find(".jpg");
+		  if (isImg != std::string::npos) {
+		  	const std::string fullFileName = imgPath + "/" + filename;
+		    //std::cout << "fullFileName: "<< fullFileName << std::endl;
+		    Mat img = imread(fullFileName);
+		    IdImg dummy;
 
-		std::cout<<"ss: "<<ss.str()<<std::endl;
+		  	std::stringstream ss;
+				ss << filename[0] << filename[1]; //ss will contain the first part of the filename
+				int n;
+				std::istringstream(ss.str()) >> n;
 
-		//string name;
+				dummy.obj = n;
+				dummy.name = imgDir[i];
+				dummy.colorHist = colorDetectionRGB(img);
+				dummy.feat = featureDetector(img);
+				trainImg.push_back(dummy);
 
-
-		int n;
-		std::istringstream(ss.str()) >> n;
-		//std::istringstream(ss.str()) >> name;
-		dummy.obj = n;
-		dummy.colorHist = colorDetectionRGB(img);
-		dummy.feat = featureDetector(img);
-		trainImg.push_back(dummy);
-
-
+				// write train data to text file
+				/*if(myfile.is_open())
+			  {
+			    //myfile << n << " " << imgDir[i] << " " << dummy.colorHist.rHist << "\n";
+			    std::cout << dummy.colorHist.rHist << "\n";
+			    myfile << dummy.colorHist.rHist << "\n";
+			  }
+			  else std::cout << "Unable to open file" << std::endl;*/
+			}
+		}
+  	closedir(dir);
 	}
+	//myfile.close();
 }
 
 
@@ -555,25 +577,61 @@ int main(int argc, char** argv)
 	initModule_nonfree();	// For using SURF
 
 	// Train on test images
-        ROS_INFO("[Object features] Start training.");
+  ROS_INFO("[Object features] Start training.");
+  train();
 
-        train();
-
-
-	// Testing on image
+	// Train mode
 	if(argc > 1) {
+		/*train();
 		Mat src = imread( argv[1] );
-		/*Mat bgMask = subtractBackground(src);
-		Mat maskedImg;
-		src.copyTo(maskedImg, bgMask);
-		src = maskedImg;*/
 		ImgHist hist = colorDetectionRGB(src);
 		drawHistograms(hist);
 		Features feat = featureDetector(src);
 		showKeypoints(src, feat);
 		//std::vector<IdImg> obj = identifyObject(hist, feat);
-		waitKey(0);
+		waitKey(0);*/
 	} else {
+		// Get train data
+		/*std::string line;
+	  std::ifstream myfile(datafile.c_str());
+	  if (myfile.is_open())
+	  {
+	    while( getline(myfile,line)) {
+	    	//std::cout << line << std::endl;
+	    	std::vector<double> v;
+	    	std::vector<string> strs;
+				boost::split(strs, line, boost::is_any_of("[;"));
+				
+				vector<string>::iterator i ;
+     		for(i = strs.begin() ; i != strs.end(); i++) {
+     			std::string s = *i;
+        	std::cout << s;
+        	double lol = atof(s.c_str());
+        	v.push_back(lol);
+     		}
+	      //Mat hist(v.size(), 1, DataType<float>::type);
+       	Mat hist( v, true );
+			  std::cout << hist << " " << v.size() << std::endl;*/
+
+	    	/*std::string buf;
+			  std::stringstream ss(line.c_str());
+			  std::vector<string> tokens;
+			  while (ss >> buf) {
+			  	tokens.push_back(buf);
+			  }
+		  	std::cout << tokens[0] << " " << tokens[1] << std::endl;*/
+
+	    	/*IdImg dummy;
+	      dummy.obj = n;
+				dummy.name = imgDir[i];
+				dummy.colorHist = colorDetectionRGB(img);
+				dummy.feat = featureDetector(img);
+				trainImg.push_back(dummy);*/
+	    /*}
+	    myfile.close();
+	  }
+	  else std::cout << "Unable to open file"; */
+
 	  ImageConverter ic;
           ROS_INFO("object recognition is up and running!");
           ROS_INFO("Messages are being sent to /recognition/recognized");
