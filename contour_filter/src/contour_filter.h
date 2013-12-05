@@ -45,10 +45,10 @@ enum Filter_mode
 Filter_mode mode;
 
 //object contour parameters
-//double minArea = 1000.0;
-double minArea = 10.0;
+double minArea = 1000.0;
+//double minArea = 10.0;
 //double maxArea = 100000.0;
-double maxArea = 1000.0;
+double maxArea = 15000.0;
 
 //previous ROI
 cv::Rect prev_rect;
