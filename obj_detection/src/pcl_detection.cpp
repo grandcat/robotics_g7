@@ -127,12 +127,23 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
                                         << coefficients->values[1] << " "
                                         << coefficients->values[2] << " "
                                         << coefficients->values[3] << std::endl;
+  std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
+  for (size_t i = 0; i < 30; ++i)
+  {
+    float pCoeff = pclFiltered->points[inlierIndices->indices[i]].x * coefficients->values[0] +
+        pclFiltered->points[inlierIndices->indices[i]].y * coefficients->values[1] +
+        pclFiltered->points[inlierIndices->indices[i]].z * coefficients->values[2];
+    std::cerr << "Compare: calculated:" << pCoeff << " orig:" << coefficients->values[3] << std::endl;
+  }
+
   // Remove points of walls
   pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
   pclObstacle.setInputCloud(pclFiltered);
   pclObstacle.setIndices(inlierIndices);
   pclObstacle.setNegative(true);    // inverse: remove walls
-  pclObstacle.filter(*pclProcessed);
+//  pclObstacle.filter(*pclProcessed);
+  pclProcessed = pclFiltered;
+
   // Determine and remove back plane
   pclSegmentation.setInputCloud(pclProcessed);
   pclSegmentation.setAxis(axisBackPlane);  // back plane
@@ -167,7 +178,7 @@ void PclRecognition::compareModelWithScene(FeatureCloud& model)
   sacIA.setInputTarget(featureTarget.getObjModel());
   sacIA.setTargetFeatures(featureTarget.getObjFeatures());
 
-  // TESTING (TODO: remove static, several obstacle pcls have to be compared to target pcl)
+  //g TESTING (TODO: remove static, several obstacle pcls have to be compared to target pcl)
   static FeatureCloud featureObstacle;
   featureObstacle.loadPcdFile("pcl_objects_cut/pcd_objects/tiger/0.pcd");
   sacIA.setInputCloud(featureObstacle.getObjModel());

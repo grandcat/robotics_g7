@@ -88,7 +88,7 @@ class PclRecognition
    * Configuration
    */
   // Manual camera pose calibration
-  static const float camera_translation_z = -0.47;
+  static const float camera_translation_z = -0.27; // second: translation -0.47
   static const float camera_pose_rotation = -33.0 / 180.0 * M_PI;
 
   /*
@@ -98,8 +98,10 @@ public:
   PclRecognition(ros::NodeHandle& nh) : nh_(nh), processingActive(false), cWaitFrames(0)
   {
     // Initialize camera pose transformation
-    cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
-        Eigen::Translation3f(Eigen::Vector3f(0, 0, camera_translation_z));
+//    cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
+//        Eigen::Translation3f(Eigen::Vector3f(0, 0, camera_translation_z));
+    cameraPoseTransform = Eigen::Translation3f(Eigen::Vector3f(0, camera_translation_z, 0)) *
+        Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX());
 
     // Subscribe to Primesense camera and publish debugging data
     sub_pcl_primesense = nh_.subscribe("/camera/depth_registered/points", 1,
