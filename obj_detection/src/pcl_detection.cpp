@@ -14,6 +14,8 @@
 #include <Eigen/Geometry>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
+#include <pcl/filters/crop_box.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 // PCL: normals & feature
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/fpfh.h>
@@ -81,28 +83,20 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclVoxelFilter.setLeafSize(VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE);
   pclVoxelFilter.filter(cloudVoxel);
 
-//  // Convert to PCL data representation for more advanced treatment of Pointclouds
+  // Convert to PCL data representation for more advanced treatment of Pointclouds
   pclFiltered = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pclProcessed(new pcl::PointCloud<pcl::PointXYZ>);
+//  pcl::PointCloud<pcl::PointXYZ>::Ptr pclProcessed(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(cloudVoxel, *pclFiltered);
   ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
 
   // Rotate whole point cloud to correct sensor orientation (pose)
-//  cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
-//      Eigen::Translation3f(Eigen::Vector3f(0, 0, camera_translation_z));
   pcl::transformPointCloud(*pclFiltered, *pclFiltered, cameraPoseTransform);
 
-  // TEST
-//  sensor_msgs::PointCloud2 output;
-//  pcl::toROSMsg(*pclFiltered, output);
-//  pub_pcl_filtered.publish(output);
-
-  //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoiseFree(new pcl::PointCloud<pcl::PointXYZ>);
-  //  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
-  //  pclOutlierFilter.setInputCloud(cloud_filtered);
-  //  pclOutlierFilter.setMeanK(50);
-  //  pclOutlierFilter.setStddevMulThresh(1.0);
-  //  pclOutlierFilter.filter(*cloudNoiseFree);
+//    pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
+//    pclOutlierFilter.setInputCloud(pclFiltered);
+//    pclOutlierFilter.setMeanK(50);
+//    pclOutlierFilter.setStddevMulThresh(1.0);
+//    pclOutlierFilter.filter(*pclFiltered);
 
   /*
    * Determine plane surfaces and remove
@@ -110,53 +104,114 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   Eigen::Vector3f axisBottomPlane = Eigen::Vector3f(0.0, 1.0, 0.0); // bottom plane
   Eigen::Vector3f axisBackPlane = Eigen::Vector3f(0.0, 0.0, 1.0);   // back plane
 
+  double segmentThreshold;
+  ros::param::param<double>("sac_tre", segmentThreshold, 0.02);
+
   pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inlierIndices(new pcl::PointIndices);
   pcl::SACSegmentation<pcl::PointXYZ> pclSegmentation;
   pclSegmentation.setInputCloud(pclFiltered);
   pclSegmentation.setOptimizeCoefficients(true);
-  pclSegmentation.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+  pclSegmentation.setModelType(pcl::SACMODEL_PLANE); // pcl::SACMODEL_PERPENDICULAR_PLANE
   pclSegmentation.setMethodType(pcl::SAC_RANSAC);
   pclSegmentation.setAxis(axisBottomPlane);
-  pclSegmentation.setEpsAngle(30.0f * (M_PI/180.0f));
-  pclSegmentation.setDistanceThreshold(0.01); // how close point must be to object to be inlier
+  pclSegmentation.setEpsAngle(25.0f * (M_PI/180.0f));
+  pclSegmentation.setDistanceThreshold(segmentThreshold); // how close point must be to object to be inlier
   pclSegmentation.setMaxIterations(1000);
   pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
 
+  // Check bottom plane and remove outliers
+//  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
+//  pclOutlierFilter.setInputCloud(pclFiltered);
+//  pclOutlierFilter.setIndices(inlierIndices);
+//  pclOutlierFilter.setMeanK(50);
+//  pclOutlierFilter.setStddevMulThresh(1.0);
+////  pclOutlierFilter.filter(*inlierIndices);
+
+  if (!coefficients)
+  {
+    ROS_WARN("[PCL processing] Couldn't calculate bottom plane coefficient"
+             "(due to missing point), aborting PCL recognition for this frame");
+    return;
+  }
   std::cerr << "Bottom plane: Model coefficients: " << coefficients->values[0] << " "
                                         << coefficients->values[1] << " "
                                         << coefficients->values[2] << " "
                                         << coefficients->values[3] << std::endl;
   std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
-  for (size_t i = 0; i < 30; ++i)
+
+  float point_mostLeft = 0, point_mostRight = 0, point_closeRobot = 10;
+  for (size_t i = 0; i < inlierIndices->indices.size(); ++i)
   {
-    float pCoeff = pclFiltered->points[inlierIndices->indices[i]].x * coefficients->values[0] +
-        pclFiltered->points[inlierIndices->indices[i]].y * coefficients->values[1] +
-        pclFiltered->points[inlierIndices->indices[i]].z * coefficients->values[2];
-    std::cerr << "Compare: calculated:" << pCoeff << " orig:" << coefficients->values[3] << std::endl;
+    if (pclFiltered->points[inlierIndices->indices[i]].x < point_mostLeft)
+    {
+      point_mostLeft = pclFiltered->points[inlierIndices->indices[i]].x;
+      std::cerr << "Point left [" << inlierIndices->indices[i] << "]: ("
+                << pclFiltered->points[inlierIndices->indices[i]].x << " "
+                << pclFiltered->points[inlierIndices->indices[i]].y << " "
+                << pclFiltered->points[inlierIndices->indices[i]].z << ") " << std::endl;
+    }
+    else if (pclFiltered->points[inlierIndices->indices[i]].x > point_mostRight)
+      point_mostRight = pclFiltered->points[inlierIndices->indices[i]].x;
+    if (pclFiltered->points[inlierIndices->indices[i]].z < point_closeRobot)
+      point_closeRobot = pclFiltered->points[inlierIndices->indices[i]].z;
+
+//    if (i > 30)
+//      continue;
+
+//    float pCoeff = pclFiltered->points[inlierIndices->indices[i]].x * coefficients->values[0] +
+//        pclFiltered->points[inlierIndices->indices[i]].y * coefficients->values[1] +
+//        pclFiltered->points[inlierIndices->indices[i]].z * coefficients->values[2];
+//    std::cerr << "Compare [" << inlierIndices->indices[i] << "]: ("
+//              << pclFiltered->points[inlierIndices->indices[i]].x << " "
+//              << pclFiltered->points[inlierIndices->indices[i]].y << " "
+//              << pclFiltered->points[inlierIndices->indices[i]].x << ") "
+//              << "calculated:" << pCoeff << " orig:" << coefficients->values[3] << std::endl;
+  }
+  std::cout << "Most left (ground plane): " << point_mostLeft
+            << " Most right: " << point_mostRight
+            << " Close Robot:" << point_closeRobot << std::endl;
+
+  // Remove points of side walls
+  bool rmBottomPlane;
+  ros::param::param<bool>("pcl_remove_bottom", rmBottomPlane, false);
+  pcl::ExtractIndices<pcl::PointXYZ> pclExtractIdx;
+  pclExtractIdx.setNegative(true);    // inverse: remove walls
+  if (rmBottomPlane)
+  {
+    pclExtractIdx.setInputCloud(pclFiltered);
+    pclExtractIdx.setIndices(inlierIndices);
+    pclExtractIdx.filter(*pclFiltered);
+    std::cerr << "Points left after side wall removal:" << pclFiltered->points.size() << std::endl;
   }
 
-  // Remove points of walls
-  pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
-  pclObstacle.setInputCloud(pclFiltered);
-  pclObstacle.setIndices(inlierIndices);
-  pclObstacle.setNegative(true);    // inverse: remove walls
-//  pclObstacle.filter(*pclProcessed);
-  pclProcessed = pclFiltered;
+  // Create box which removes everything left and right to bottom plane description
+  pcl::CropBox<pcl::PointXYZ> pclCropUnusedArea;
+  pclCropUnusedArea.setInputCloud(pclFiltered);
+  pclCropUnusedArea.setMin(Eigen::Vector4f(point_mostLeft, -0.2, 0.0, 1));    // y: max height of object
+  pclCropUnusedArea.setMax(Eigen::Vector4f(point_mostRight, 0.03, 1.0, 1));
+  pclCropUnusedArea.filter(*pclFiltered);
+  std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
 
   // Determine and remove back plane
-  pclSegmentation.setInputCloud(pclProcessed);
+  pclSegmentation.setInputCloud(pclFiltered);
+  pclSegmentation.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
   pclSegmentation.setAxis(axisBackPlane);  // back plane
   pclSegmentation.setDistanceThreshold(0.02);
   pclSegmentation.segment(*inlierIndices, *coefficients);
+  std::cerr << "Back plane: Model coefficients: " << coefficients->values[0] << " "
+                                        << coefficients->values[1] << " "
+                                        << coefficients->values[2] << " "
+                                        << coefficients->values[3] << std::endl;
+  std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
   // Remove points of walls: back plane
-  pclObstacle.setInputCloud(pclProcessed);
-  pclObstacle.setIndices(inlierIndices);
-  pclObstacle.filter(*pclProcessed);
+  pclExtractIdx.setInputCloud(pclFiltered);
+  pclExtractIdx.setIndices(inlierIndices);
+  pclExtractIdx.filter(*pclFiltered);
 
   // Generate debugging output for rViz
   sensor_msgs::PointCloud2 output;
-  pcl::toROSMsg(*pclProcessed, output);
+  pcl::toROSMsg(*pclFiltered, output);
   pub_pcl_filtered.publish(output);
 
   // TESTING PCL Object recognition
