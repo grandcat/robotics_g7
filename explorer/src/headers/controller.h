@@ -209,6 +209,8 @@ Node pixelToNode(Pixel pixel);
 
 void goto_node(Node node);
 
+void pathToActions(Path path);
+
 
 // Angle between ]-pi,pi]
 double angle(double theta);

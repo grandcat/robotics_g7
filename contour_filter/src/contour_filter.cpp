@@ -90,6 +90,48 @@ class Contour_Filter
 	}
 
 
+	//src is a depth image
+	void shadow_filter(const cv::Mat &src, cv::Mat &dst)
+	{
+		dst = src.clone();
+
+		int m_size = 7;
+		float threshold = 0.02;
+		//float threshold = 0.05;
+		for(int y_c=0; y_c<src.rows; y_c++){
+		   for(int x_c=0; x_c<src.cols; x_c++){
+			   //center is at (y_c,x_c) , and we are guaranteed to be able to move floor(m_size/2) pixel away from it
+			   //if (x_c > 0 && y_c > 0 && x_c<src.cols-1 && y_c<src.rows-1){
+			   if (x_c > (int)(m_size/2)-1 && y_c > (int)(m_size/2)-1 && x_c<src.cols-(int)(m_size/2)-1 && y_c<src.rows-(int)(m_size/2)-1){
+				   //find the max and min depth value inside the 3x3 mask
+				   float max = 0.0;
+				   float min = 4711.0; //a "lagom" big number
+				   for (int y = y_c-(int)(m_size/2); y < y_c+(int)(m_size/2); y++){
+					   for (int x = x_c-(int)(m_size/2); x < x_c+(int)(m_size/2); x++){
+						   if (src.at<float>(y,x) > max)
+							   max = src.at<float>(y,x);
+						   if (src.at<float>(y,x) < min)
+							   min = src.at<float>(y,x);
+					   }
+				   }
+				   //if we have detected a edge in the depth image, create a shadow
+				   if ( (max-min) > threshold && min > 0)
+				   {
+					   float mean = (max+min)/2;
+					   for (int y = y_c-(int)(m_size/2); y < y_c+(int)(m_size/2); y++){
+						   for (int x = x_c-(int)(m_size/2); x < x_c+(int)(m_size/2); x++){
+							   if (src.at<float>(y,x) > mean)
+								   dst.at<float>(y,x)  = 0;
+						   }
+					   }
+				   }
+			   }
+			   //done with one mask
+
+		   }
+		}
+		//done with the outher loop
+	}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//TODO
@@ -127,59 +169,118 @@ class Contour_Filter
 
 		cv::Mat src_filtered = remove_noise(src);
 
+		cv::Mat shadow_img;
+		//shadow_filter(src_filtered, shadow_img);
+		shadow_filter(src, shadow_img);
+
+
+		cv::Mat shadow_bin_raw;//(src.size(), CV_8U);
+		// threshold to make it binary
+		threshold(shadow_img, shadow_bin_raw, 0, 255, CV_THRESH_BINARY);
+		cv::Mat shadow_bin;
+		shadow_bin_raw.convertTo(shadow_bin,CV_8U);
+
+		//Does some erosion and dilation to remove some of the pixels
+		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(9, 9));
+		cv::erode(shadow_bin, shadow_bin, element);
+		cv::dilate(shadow_bin, shadow_bin, element);
+
 		//Detect edges using sobel filter
-		cv::Mat sobel_img_raw, sobel_img_thresh, sobel_img;
-		int ddepth = -1; //same depth as source
-		int dx = 1;
-		int dy = 1;
-		int ksize = 3;
-		cv::Sobel(src_filtered, sobel_img_raw, ddepth, dx, dy, ksize);
-		threshold(sobel_img_raw, sobel_img_thresh, 0.1, 255, CV_THRESH_BINARY);
-		sobel_img_thresh.convertTo(sobel_img,CV_8U);
+//		cv::Mat sobel_img_raw, sobel_img_thresh, sobel_img;
+//		int ddepth = -1; //same depth as source
+//		int dx = 1;
+//		int dy = 1;
+//		int ksize = 3;
+//		cv::Sobel(shadow_bin, sobel_img_raw, ddepth, dx, dy, ksize);
+//		threshold(sobel_img_raw, sobel_img_thresh, 0, 255, CV_THRESH_BINARY);
+//		sobel_img_thresh.convertTo(sobel_img,CV_8U);
+
 
 		/// Find contours
-		cv::Mat src_bin_raw;//(src.size(), CV_8U);
-		// threshold to make it binary
-		threshold(src_filtered, src_bin_raw, 0, 255, CV_THRESH_BINARY);
-		cv::Mat src_bin;
-		src_bin_raw.convertTo(src_bin,CV_8U);
-		//cv::Mat src_bin(src_filtered.size(), CV_8U);
-
 		///*
 		//src_bin = src > 0;
 		std::vector<std::vector<cv::Point> > contours;
 		std::vector<cv::Vec4i> hierarchy;
-		findContours( sobel_img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-		//findContours( src_bin, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-		std::vector< std::vector<cv::Point> > contours_poly;
-		std::vector<cv::Point> cur_contours_poly;
-		contours_poly.reserve(contours.size()); //reserve space
+		cv::Mat shadow_bin_temp, sobel_img_temp;
+		shadow_bin.copyTo(shadow_bin_temp);
+		//sobel_img.copyTo(sobel_img_temp);
+		//findContours( sobel_img_temp, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+
+		findContours( shadow_bin_temp, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, cv::Point(0, 0) );
+		//findContours( shadow_img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+		std::vector< std::vector<cv::Point> > contours_obj;
+		contours_obj.reserve(contours.size()); //reserve space
 		for(unsigned int i = 0; i < contours.size(); i++ )
 		{
-			approxPolyDP( cv::Mat(contours[i]), cur_contours_poly, 3, true );
-			double area = contourArea(cur_contours_poly);
+			double area = contourArea(contours[i]);
 			//std::cout<<"Area of contour nr "<<i<<": "<<area<<std::endl;
 			if (area >= minArea && area<= maxArea) //save the closed approximated contour if it's area is "lagom"
-				contours_poly.push_back(cur_contours_poly);
-			//else //debug
-				//contours_poly.push_back(cur_contours_poly);
+			{
+				contours_obj.push_back(contours[i]);
+			}
+
 		}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//		//remove objects that are to narrow to be a real object
+//		for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
+//		{
+//
+//		  it->rotatedRect = minAreaRect( cv::Mat(it->contours_poly) );
+//
+//		  double ratio = (double)std::max( it->rotatedRect.size.height , it->rotatedRect.size.width ) /
+//						 (double)std::min( it->rotatedRect.size.height , it->rotatedRect.size.width );
+//
+//		  if (ratio > minRatio) //if it's a too narrow rectangle, ignore it
+//			continue;
+//
+//		  it->boundRect = boundingRect( cv::Mat(it->contours_poly) );
+//
+//		  /// Get the mass centers using the moment of each contour
+//		  cv::Moments mu = moments( it->contours_poly, false );
+//
+//		  it->mc = cv::Point( (int)mu.m10/mu.m00 , (int)mu.m01/mu.m00 );
+//		  objects.push_back(*it); //copy the object and put it in the vector called objects
+//
+//		}
+//
+//		//crop out the objects from the image
+//
+//
+//		cv::Mat crop_img = cv::Mat::zeros( src_image.size(), src_image.type());
+//		cv::Mat mask = cv::Mat::zeros( src_image.size(), src_image.type());
+//		cv::Scalar color_white = cv::Scalar( 255, 255, 255);
+//		for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+//		{
+//		  cv::Rect ROI(it->boundRect.x, it->boundRect.y, it->boundRect.width , it->boundRect.height);
+//		  rectangle(mask, ROI.tl(), ROI.br(), color_white, CV_FILLED); //mask
+//
+//		  // Cut out ROI and store it in crop_img
+//		  src_image.copyTo(crop_img, mask);
+//		}
+//		//for some reason the source image get overwritten. Retrieve it back!
+//		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+//		src_image = cv_ptr->image.clone();
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		/// Draw polygonal contour + bonding rectangles
 		cv::Mat drawing = cv::Mat::zeros( src.size(), CV_8UC3 );
-		for(unsigned int i = 0; i< contours_poly.size(); i++ )
+		for(unsigned int i = 0; i< contours_obj.size(); i++ )
 		{
 			cv::Scalar color = cv::Scalar( 0, 0, 255 );
-			drawContours( drawing, contours_poly, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
-			//drawContours( drawing, contours, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+			drawContours( drawing, contours_obj, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
 		}
 		//*/
 
 
 
-		cv::imshow("src filtered", src_filtered);
-		cv::imshow("src bin", src_bin);
-		cv::imshow("sobel",sobel_img);
+		//cv::imshow("src filtered", src_filtered);
+		//cv::imshow("shadow filter", shadow_img);
+		cv::imshow("shadow binary", shadow_bin);
+		//cv::imshow("sobel",sobel_img);
 		cv::imshow("contours", drawing);
 		cv::waitKey(3);
 	}
@@ -239,24 +340,24 @@ class Contour_Filter
 
 		/// Find contours
 		findContours( sobel_img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-		std::vector< std::vector<cv::Point> > contours_poly;
+		std::vector< std::vector<cv::Point> > contours_obj;
 		std::vector<cv::Point> cur_contours_poly;
-		contours_poly.reserve(contours.size()); //reserve space
+		contours_obj.reserve(contours.size()); //reserve space
 		for(unsigned int i = 0; i < contours.size(); i++ )
 		{
 			approxPolyDP( cv::Mat(contours[i]), cur_contours_poly, 3, true );
 			double area = contourArea(cur_contours_poly);
 			//std::cout<<"Area of contour nr "<<i<<": "<<area<<std::endl;
 			if (area >= minArea && area<= maxArea) //save the closed approximated contour if it's area is "lagom"
-				contours_poly.push_back(cur_contours_poly);
+				contours_obj.push_back(cur_contours_poly);
 		}
 
 		/// Draw polygonal contour + bonding rectangles
 		cv::Mat drawing = cv::Mat::zeros( src.size(), CV_8UC3 );
-		for(unsigned int i = 0; i< contours_poly.size(); i++ )
+		for(unsigned int i = 0; i< contours_obj.size(); i++ )
 		{
 			cv::Scalar color = cv::Scalar( 0, 0, 255 );
-			drawContours( drawing, contours_poly, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+			drawContours( drawing, contours_obj, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
 			//drawContours( drawing, contours, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
 		}
 
