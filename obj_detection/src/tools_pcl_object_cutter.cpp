@@ -46,6 +46,13 @@ void extractCloudOfPCD(const std::string pSrcPath)
   pclPass.setFilterFieldName("x");
   pclPass.setFilterLimits(-0.5, 0.18);
   pclPass.filter(*pcRaw);
+
+  if (pcRaw->size() == 0)
+  {
+    ROS_WARN("No useful data in cropped image, skip.");
+    return;
+  }
+
   // Remove statisitical outliers
   pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> pclOutlierFilter;
   pclOutlierFilter.setInputCloud(pcRaw);
@@ -80,8 +87,17 @@ int main(int argc, char** argv)
           sprintf(path, "%s%s", dstDir.c_str(), argv[dirID]);
           // Create directory if not exists
 //          boost::filesystem::path dir(path);
+          try
+          {
           if (boost::filesystem::create_directories(path))
             ROS_INFO("Created path: %s", path);
+          }
+          catch(const boost::filesystem::filesystem_error& e)
+          {
+            ROS_WARN("Directory already exists: %s", path);
+            i = maxPcdID;
+            continue;
+          }
 
           // Start processing
           sprintf(path, "%s/%i.pcd", argv[dirID], i);

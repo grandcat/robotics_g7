@@ -91,7 +91,8 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 //  cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
 //      Eigen::Translation3f(Eigen::Vector3f(0, 0, camera_translation_z));
   pcl::transformPointCloud(*pclFiltered, *pclFiltered, cameraPoseTransform);
-//  // TEST
+
+  // TEST
 //  sensor_msgs::PointCloud2 output;
 //  pcl::toROSMsg(*pclFiltered, output);
 //  pub_pcl_filtered.publish(output);
@@ -138,14 +139,15 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclObstacle.filter(*pclProcessed);
 //  ros::message_operations::Printer< ::pcl::ModelCoefficients> mC();
 
-  // TESTING PCL Object recognition
-//  static FeatureCloud objModel;
-//  compareModelWithScene(objModel);
-
   // Generate debugging output for rViz
   sensor_msgs::PointCloud2 output;
   pcl::toROSMsg(*pclProcessed, output);
   pub_pcl_filtered.publish(output);
+
+  // TESTING PCL Object recognition
+  pclFiltered = pclProcessed;
+  static FeatureCloud objModel;
+  compareModelWithScene(objModel);
 }
 
 void PclRecognition::compareModelWithScene(FeatureCloud& model)
@@ -163,7 +165,7 @@ void PclRecognition::compareModelWithScene(FeatureCloud& model)
 
   // TESTING (TODO: remove static, several obstacle pcls have to be compared to target pcl)
   static FeatureCloud featureObstacle;
-  featureObstacle.loadPcdFile("pcl_objects_cut/pcd_objects/corn/0.pcd");
+  featureObstacle.loadPcdFile("pcl_objects_cut/pcd_objects/tiger/0.pcd");
   sacIA.setInputCloud(featureObstacle.getObjModel());
   sacIA.setSourceFeatures(featureObstacle.getObjFeatures());
 
@@ -191,7 +193,7 @@ void PclRecognition::compareModelWithScene(FeatureCloud& model)
   sensor_msgs::PointCloud2 output;
   pcl::toROSMsg(pclTransformed, output);
   output.header.frame_id = pclFiltered->header.frame_id;
-  pub_pcl_filtered.publish(output);
+  pub_pcl_obj_alignment.publish(output);
 }
 
 } // END Namespace objRecognition

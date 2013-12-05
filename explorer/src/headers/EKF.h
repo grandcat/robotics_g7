@@ -16,6 +16,15 @@ using namespace Eigen;
 using namespace explorer;
 
 
+// Modes
+int mode = 0;
+
+enum MODE {
+	EXPLORE = 0,
+	GOTO_TARGETS,
+};
+
+
 ros::Subscriber enc_sub;
 ros::Subscriber sensors_sub;
 ros::Subscriber stop_EKF_sub;

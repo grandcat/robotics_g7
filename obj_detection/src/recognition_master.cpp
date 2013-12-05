@@ -18,7 +18,7 @@ namespace objRecognition
  */
 void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg)
 {
-  ros::Duration(0.2).sleep();
+  ros::Duration(0.1).sleep();
   // TODO: disable recognition when turning 90 degree
   // Get object positions (if any)
   objRecog_Colorfilter.color_filter(msg);
@@ -32,7 +32,6 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     ROS_INFO("Rejected basic obj detection, more than 2 objects or no objects.");
     return;
   }
-
   ROS_INFO("1. Obj:\n id:%i, cm y:%i x:%i", lastObjPositions[0].ROI_id,
       lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
@@ -48,11 +47,11 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
       lastRecognizedId = OBJTYPE_UNKNOWN_OBJECT_DETECTED;
 //      return;
     }
-
   // Don't send last object id again
-  if (lastRememberedObjId == lastRecognizedId) {
+  if (lastRememberedObjId == lastRecognizedId)
+  {
     ++count_LastObjType;
-    ROS_INFO("Received same object %i times", count_LastObjType);
+    ROS_INFO("Received same object (%s) %i times", TEXT_OBJECTS[lastRememberedObjId].c_str(), count_LastObjType);
   }
   else
   {
@@ -60,19 +59,19 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     count_LastObjType = 0;
   }
   lastRememberedObjId = lastRecognizedId;
-
   // Check whether it detected several times the same object
   if (count_LastObjType < 5)
     return;
 
-  // Dont't send same obj
+  // Dont't send last reported object again (is probably the same one)
   if (lastSendObjId == lastRecognizedId) {
     return;
   }
   lastSendObjId = lastRecognizedId;
 
+  // Report object with position
   relMazePos.id = (int)lastRecognizedId;
-  ROS_INFO("Detected object: %s", TEXT_OBJECTS[lastRecognizedId].c_str());
+  ROS_WARN("Report detected object: %s", TEXT_OBJECTS[lastRecognizedId].c_str());
   pub_recognition_result.publish(relMazePos);
   // TESTING (sleeping after each processing is good for system performance)
 //  ros::Duration(5).sleep();
@@ -167,7 +166,6 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
       relMazePos.x = -1;
     }
 
-//    relMazePos.y = 0; // TODO: needs more calculations and a noise-free depth image (use point cloud later maybe)
   return relMazePos;
 }
 

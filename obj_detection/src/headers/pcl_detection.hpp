@@ -105,6 +105,7 @@ public:
     sub_pcl_primesense = nh_.subscribe("/camera/depth_registered/points", 1,
                                        &objRecognition::PclRecognition::rcvPointCloud, this);
     pub_pcl_filtered = nh_.advertise<sensor_msgs::PointCloud2>("/camera/filtered_points", 1);
+    pub_pcl_obj_alignment = nh_.advertise<sensor_msgs::PointCloud2>("/camera/obj_aligned_points", 1);
     ROS_INFO("pcl_detection: Subscribed to pointcloud data.");
 
   }
@@ -135,7 +136,7 @@ private:
   // ROS connection
   ros::NodeHandle& nh_;
   ros::Subscriber sub_pcl_primesense;
-  ros::Publisher pub_pcl_filtered;
+  ros::Publisher pub_pcl_filtered, pub_pcl_obj_alignment;
 
   // Process behavior
   bool processingActive;
