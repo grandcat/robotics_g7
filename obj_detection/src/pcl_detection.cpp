@@ -118,10 +118,15 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclSegmentation.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
   pclSegmentation.setMethodType(pcl::SAC_RANSAC);
   pclSegmentation.setAxis(axisBottomPlane);
-  pclSegmentation.setEpsAngle(35.0f * (M_PI/180.0f));
+  pclSegmentation.setEpsAngle(30.0f * (M_PI/180.0f));
   pclSegmentation.setDistanceThreshold(0.01); // how close point must be to object to be inlier
   pclSegmentation.setMaxIterations(1000);
   pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
+
+  std::cerr << "Bottom plane: Model coefficients: " << coefficients->values[0] << " "
+                                        << coefficients->values[1] << " "
+                                        << coefficients->values[2] << " "
+                                        << coefficients->values[3] << std::endl;
   // Remove points of walls
   pcl::ExtractIndices<pcl::PointXYZ> pclObstacle;
   pclObstacle.setInputCloud(pclFiltered);
@@ -137,7 +142,6 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclObstacle.setInputCloud(pclProcessed);
   pclObstacle.setIndices(inlierIndices);
   pclObstacle.filter(*pclProcessed);
-//  ros::message_operations::Printer< ::pcl::ModelCoefficients> mC();
 
   // Generate debugging output for rViz
   sensor_msgs::PointCloud2 output;
@@ -145,10 +149,10 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pub_pcl_filtered.publish(output);
 
   // TESTING PCL Object recognition
-  pclFiltered = pclProcessed;
-  static FeatureCloud objModel;
-  compareModelWithScene(objModel);
-}
+
+}//  pclFiltered = pclProcessed;
+//  static FeatureCloud objModel;
+//  compareModelWithScene(objModel);
 
 void PclRecognition::compareModelWithScene(FeatureCloud& model)
 {
