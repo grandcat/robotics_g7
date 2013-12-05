@@ -117,7 +117,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			}
 
 
-			if(current_action.n != ACTION_GOTO_FORWARD)
+			//if(current_action.n != ACTION_GOTO_FORWARD)
 			{
 				// Stop EKF
 				Stop_EKF s;
@@ -409,6 +409,12 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					current_action.n = ACTION_NO;
 
 					printf("Done !\n");
+
+					// Relaunch EKF
+					Stop_EKF s;
+					s.stop = false;
+					s.rotation_angle = 0;
+					stop_EKF_pub.publish(s);
 				}
 			}
 
@@ -529,8 +535,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.01*cos(theta_true) + 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.01*sin(theta_true) - 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.01*cos(theta_true) + 0.03*sin(theta_true);
+			action.parameter2 = y_true + 0.01*sin(theta_true) - 0.03*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -547,8 +553,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.01*cos(theta_true) - 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.01*sin(theta_true) + 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.01*cos(theta_true) - 0.03*sin(theta_true);
+			action.parameter2 = y_true + 0.01*sin(theta_true) + 0.03*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -677,7 +683,7 @@ void update_map(double s1, double s2)
 		*/
 		path_finding(target);
 
-		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < dist_error)
+		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.05)
 		{
 			Action action;
 			action.n = ACTION_STOP;
@@ -1606,6 +1612,7 @@ int main(int argc, char** argv)
 
 		// Open maps
 		robot_map = imread("/home/robo/explorer/robot_map.png",0);
+		wall_map = imread("/home/robo/explorer/wall_map.png",0);
 
 
 		// Goto one object
