@@ -117,7 +117,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			}
 
 
-			//if(current_action.n != ACTION_GOTO_FORWARD)
+			if(current_action.n != ACTION_GOTO_FORWARD)
 			{
 				// Stop EKF
 				Stop_EKF s;
@@ -350,6 +350,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				static double x_cmd;
 				static double y_cmd;
 
+
 				// Init
 				if(!flag)
 				{
@@ -410,11 +411,13 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 					printf("Done !\n");
 
+					/*
 					// Relaunch EKF
 					Stop_EKF s;
 					s.stop = false;
 					s.rotation_angle = 0;
 					stop_EKF_pub.publish(s);
+					 */
 				}
 			}
 
@@ -461,7 +464,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					printf("Done !\n");
 				}
 			}
-			*/
+			 */
 		}
 	}
 
@@ -672,16 +675,22 @@ void update_map(double s1, double s2)
 		n.x = x_true;
 		n.y = y_true;
 
-		/*
-		Path p = path(n,target);
 
-		if(p.size() != 0)
+		if(mode == 2)
 		{
-			printf("Goto node: x = %f, y = %f\n",p.at(0).x,p.at(0).y);
-			goto_node(p.at(0));
+			Path p = path(n,target);
+
+			if(p.size() != 0)
+			{
+				printf("Goto node: x = %f, y = %f\n",p.at(0).x,p.at(0).y);
+				goto_node(p.at(0));
+			}
 		}
-		*/
-		path_finding(target);
+		else
+		{
+			path_finding(target);
+		}
+
 
 		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.05)
 		{
@@ -1406,11 +1415,11 @@ Node find_closest_node(std::vector<Node> vector)
  */
 void receive_object(const Object::ConstPtr &msg)
 {
-	//double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
-	//double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
+	double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
+	double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
 
-	double x_object = x_true + (0.3+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
-	double y_object = y_true + (0.3+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
+	//double x_object = x_true + (0.3+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
+	//double y_object = y_true + (0.3+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
 
 	Node node;
 
@@ -1549,7 +1558,7 @@ int main(int argc, char** argv)
 	/*
 	string say_out = string("espeak \"") + "Go" + string("\"");
 	system(say_out.c_str());
-	*/
+	 */
 
 
 	// Mode
@@ -1644,10 +1653,10 @@ int main(int argc, char** argv)
 	if(mode == EXPLORE)
 	{
 		// Save discrete map
-    	discrete_map.resize(500);
-    	std::ofstream os("/home/robo/explorer/discrete_map.dat",std::ios::binary);
-    	os.write(reinterpret_cast<const char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
-    	os.close();
+		discrete_map.resize(500);
+		std::ofstream os("/home/robo/explorer/discrete_map.dat",std::ios::binary);
+		os.write(reinterpret_cast<const char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
+		os.close();
 
 		// Save objects
 		objects.resize(500);
