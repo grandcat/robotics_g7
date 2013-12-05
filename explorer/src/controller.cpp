@@ -1114,6 +1114,17 @@ Path path(Node n1, Node n2)
 		}
 	}
 
+
+	// Debug
+	printf("------------------------------------\n");
+	printf("Path found:\n");
+	for(int i = 0; i < path.size(); i++)
+	{
+		printf("x = %f, y = %f\n",path.at(i).x,path.at(i).y);
+	}
+	printf("------------------------------------\n");
+
+
 	return path;
 }
 
