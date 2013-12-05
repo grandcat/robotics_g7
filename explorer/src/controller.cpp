@@ -529,8 +529,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.08*cos(theta_true) + 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.08*sin(theta_true) - 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.01*cos(theta_true) + 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.01*sin(theta_true) - 0.04*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -547,8 +547,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.06*cos(theta_true) - 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.06*sin(theta_true) + 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.01*cos(theta_true) - 0.04*sin(theta_true);
+			action.parameter2 = y_true + 0.01*sin(theta_true) + 0.04*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -1504,7 +1504,7 @@ int main(int argc, char** argv)
 		{
 			if((discrete_map.at(i).x == 0) & (discrete_map.at(i).y == 0))
 			{
-				printf("test\n");
+				//printf("test\n");
 				discrete_map.resize(i);
 				break;
 			}
@@ -1544,7 +1544,7 @@ int main(int argc, char** argv)
 
 
 		// Open maps
-		robot_map = imread("/home/robo/explorer/robot_map.png",1);
+		robot_map = imread("/home/robo/explorer/robot_map.png",0);
 
 
 		// Goto one object
@@ -1553,12 +1553,13 @@ int main(int argc, char** argv)
 			target.x = near_objects.at(0).x;
 			target.y = near_objects.at(0).y;
 			goto_target = true;
+			printf("Target: x = %f, y = %f\n",target.x,target.y);
 		}
 
 
 		// Debug
-		Node test = discrete_map.at(0);
-		printf("Node test: x = %f, y = %f\n",test.x,test.y);
+		//Node test = discrete_map.at(0);
+		//printf("Target: x = %f, y = %f\n",test.x,test.y);
 	}
 
 
