@@ -219,7 +219,7 @@ double angle(double th)
 void init()
 {
 	sigma = 1E-10 * MatrixXd::Identity(4,4);
-	sigma(2,2) = 1E-6; //-4
+	sigma(2,2) = 1E-4; //-4 //-6
 	sigma(3,3) = 1E-6;
 	R = 1E-10 * MatrixXd::Identity(4,4);
 	R(3,3) = 1E-8;
@@ -246,6 +246,7 @@ int main(int argc, char** argv)
 	// Init
 	init();
 
+	printf("mode = %d\n",mode);
 
 	if(mode == GOTO_TARGETS)
 	{
@@ -259,6 +260,8 @@ int main(int argc, char** argv)
 		x_true = odometry.at(0);
 		y_true = odometry.at(1);
 		theta_true = odometry.at(2);
+
+		printf("x = %f, y = %f, theta = %f\n",x_true,y_true,theta_true);
 	}
 
 
@@ -275,10 +278,10 @@ int main(int argc, char** argv)
 	{
 		// Save last odometry
     	std::vector<double> odometry;
+    	odometry.push_back(x_true + x*cos(theta_true) - y*sin(theta_true));
+    	odometry.push_back(y_true + x*sin(theta_true) + y*cos(theta_true));
+    	odometry.push_back(angle(theta_true + theta));
     	odometry.resize(3);
-    	odometry.push_back(x_true);
-    	odometry.push_back(y_true);
-    	odometry.push_back(theta_true);
 
     	std::ofstream os("/home/robo/explorer/last_odometry.dat",std::ios::binary);
     	os.write(reinterpret_cast<const char*>(&(odometry[0])),odometry.size()*sizeof(double));
