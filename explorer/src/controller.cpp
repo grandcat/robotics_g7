@@ -117,7 +117,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			}
 
 
-			//if(current_action.n != ACTION_GOTO_FORWARD)
+			if(current_action.n != ACTION_GOTO_FORWARD)
 			{
 				// Stop EKF
 				Stop_EKF s;
@@ -350,6 +350,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				static double x_cmd;
 				static double y_cmd;
 
+
 				// Init
 				if(!flag)
 				{
@@ -410,11 +411,13 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 					printf("Done !\n");
 
+					/*
 					// Relaunch EKF
 					Stop_EKF s;
 					s.stop = false;
 					s.rotation_angle = 0;
 					stop_EKF_pub.publish(s);
+					*/
 				}
 			}
 
