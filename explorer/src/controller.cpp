@@ -1415,11 +1415,11 @@ Node find_closest_node(std::vector<Node> vector)
  */
 void receive_object(const Object::ConstPtr &msg)
 {
-	//double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
-	//double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
+	double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
+	double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
 
-	double x_object = x_true + (0.3+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
-	double y_object = y_true + (0.3+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
+	//double x_object = x_true + (0.3+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
+	//double y_object = y_true + (0.3+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
 
 	Node node;
 
