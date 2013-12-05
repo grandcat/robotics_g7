@@ -90,6 +90,43 @@ class Contour_Filter
 	}
 
 
+	//src is a depth image, dst will be of same type
+	void shadow_filter(cv::Mat &src)
+	{
+		float threshold = 0.1;
+		for(int y_c=0; y_c<src.rows; y_c++){
+		   for(int x_c=0; x_c<src.cols; x_c++){
+			   if (x_c > 0 && y_c > 0 && x_c<src.cols-1 && y_c<src.rows-1){
+				   //center is at (y_c,x_c) , and we are guaranteed to be able to move one pixel away from it
+				   //find the max and min depth value inside the 3x3 mask
+				   float max = 0.0;
+				   float min = 4711.0; //a "lagom" big number
+				   for (int y = y_c-1; y < y_c+1; y++){
+					   for (int x = x_c-1; x < x_c+1; x++){
+						   if (src.at<float>(y,x) > max)
+							   max = src.at<float>(y,x);
+						   if (src.at<float>(y,x) < min)
+							   min = src.at<float>(y,x);
+					   }
+				   }
+				   //if we have detected a edge in the depth image, create a shadow
+				   if ( (max-min) > threshold && min > 0)
+				   {
+					   float mean = (max+min)/2;
+					   for (int y = y_c-1; y < y_c+1; y++){
+						   for (int x = x_c-1; x < x_c+1; x++){
+							   if (src.at<float>(y,x) > mean)
+								   src.at<float>(y,x)  = 0;
+						   }
+					   }
+				   }
+			   }
+			   //done with one mask
+
+		   }
+		}
+		//done with the outher loop
+	}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//TODO
@@ -127,6 +164,21 @@ class Contour_Filter
 
 		cv::Mat src_filtered = remove_noise(src);
 
+		cv::Mat shadow_img = src_filtered.clone();
+
+		shadow_filter(shadow_img);
+
+
+
+		cv::Mat src_bin_raw;//(src.size(), CV_8U);
+		// threshold to make it binary
+		threshold(src_filtered, src_bin_raw, 0, 255, CV_THRESH_BINARY);
+		cv::Mat src_bin;
+		src_bin_raw.convertTo(src_bin,CV_8U);
+		//cv::Mat src_bin(src_filtered.size(), CV_8U);
+
+
+
 		//Detect edges using sobel filter
 		cv::Mat sobel_img_raw, sobel_img_thresh, sobel_img;
 		int ddepth = -1; //same depth as source
@@ -137,14 +189,8 @@ class Contour_Filter
 		threshold(sobel_img_raw, sobel_img_thresh, 0.1, 255, CV_THRESH_BINARY);
 		sobel_img_thresh.convertTo(sobel_img,CV_8U);
 
-		/// Find contours
-		cv::Mat src_bin_raw;//(src.size(), CV_8U);
-		// threshold to make it binary
-		threshold(src_filtered, src_bin_raw, 0, 255, CV_THRESH_BINARY);
-		cv::Mat src_bin;
-		src_bin_raw.convertTo(src_bin,CV_8U);
-		//cv::Mat src_bin(src_filtered.size(), CV_8U);
 
+		/// Find contours
 		///*
 		//src_bin = src > 0;
 		std::vector<std::vector<cv::Point> > contours;
@@ -178,9 +224,10 @@ class Contour_Filter
 
 
 		cv::imshow("src filtered", src_filtered);
-		cv::imshow("src bin", src_bin);
-		cv::imshow("sobel",sobel_img);
-		cv::imshow("contours", drawing);
+		cv::imshow("shadow filter", shadow_img);
+		//cv::imshow("src bin", src_bin);
+		//cv::imshow("sobel",sobel_img);
+		//cv::imshow("contours", drawing);
 		cv::waitKey(3);
 	}
 
