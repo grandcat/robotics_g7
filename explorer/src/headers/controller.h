@@ -216,7 +216,4 @@ double angle(double theta);
 int nPi2(double theta);
 
 
-void correct_odometry();
-
-
 #endif /* CONTROLLER_H_ */

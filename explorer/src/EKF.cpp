@@ -16,6 +16,10 @@
 #include "headers/EKF.h"
 #include "headers/parameters.h"
 
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
 using namespace differential_drive;
 using namespace explorer;
 using namespace Eigen;
@@ -209,6 +213,9 @@ double angle(double th)
 }
 
 
+/**
+ * Initial EKF parameters
+ */
 void init()
 {
 	sigma = 1E-10 * MatrixXd::Identity(4,4);
@@ -225,7 +232,10 @@ void init()
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "EKF");
-	ros::NodeHandle nh;
+	ros::NodeHandle nh("~");
+
+	nh.getParam("mode",mode);
+
 	enc_sub = nh.subscribe("/motion/Encoders",1000,receive_enc);
 	sensors_sub = nh.subscribe("/sensors/ADC",1000,receive_sensors);
 	stop_EKF_sub = nh.subscribe("/motion/Stop_EKF",1000,receive_stop);
@@ -237,6 +247,21 @@ int main(int argc, char** argv)
 	init();
 
 
+	if(mode == GOTO_TARGETS)
+	{
+		// Load last odometry
+		std::vector<double> odometry;
+		odometry.resize(3);
+		std::ifstream is("/home/robo/explorer/last_odometry.dat",std::ios::binary);
+		is.read(reinterpret_cast<char*>(&(odometry[0])),odometry.size()*sizeof(double));
+		is.close();
+
+		x_true = odometry.at(0);
+		y_true = odometry.at(1);
+		theta_true = odometry.at(2);
+	}
+
+
 	ros::Rate loop_rate(100);
 
 	while(ros::ok())
@@ -245,7 +270,22 @@ int main(int argc, char** argv)
 		ros::spinOnce();
 	}
 
+
+	if(mode == EXPLORE)
+	{
+		// Save last odometry
+    	std::vector<double> odometry;
+    	odometry.resize(3);
+    	odometry.push_back(x_true);
+    	odometry.push_back(y_true);
+    	odometry.push_back(theta_true);
+
+    	std::ofstream os("/home/robo/explorer/last_odometry.dat",std::ios::binary);
+    	os.write(reinterpret_cast<const char*>(&(odometry[0])),odometry.size()*sizeof(double));
+    	os.close();
+	}
+
+
 	return 0;
 }
-
 

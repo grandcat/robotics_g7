@@ -488,7 +488,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
-	if(actions.empty() & priority.empty())
+	if(actions.empty() & priority.empty()) // PUT IN THE OTHER LOOP
 	{
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
@@ -577,6 +577,10 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 }
 
 
+/**
+ * Update the map
+ * Logic to find paths
+ */
 void update_map(double s1, double s2)
 {
 	// Robot
@@ -706,6 +710,9 @@ void update_map(double s1, double s2)
 }
 
 
+/**
+ * Draw the walls using Hough transform
+ */
 void Hough()
 {
 	vector<Vec4i> lines;
@@ -749,6 +756,9 @@ void Hough()
 }
 
 
+/**
+ * Merge close areas (of the robot path) if there is no wall between then
+ */
 void merge_areas()
 {
 	for(int i = 0; i < height; i++)
@@ -799,6 +809,10 @@ void merge_areas()
 }
 
 
+/**
+ * Find interesting areas that the robot has to discover
+ * and update the toDiscover map
+ */
 void interesting_nodes()
 {
 	toDiscover.clear();
@@ -929,6 +943,9 @@ void interesting_nodes()
 }
 
 
+/**
+ * Return true if we already visited the area where the robot is moving.
+ */
 bool visited_area()
 {
 	int rx = (x_true-origin_x+0.15*cos(theta_true))/resolution; // 0.2
@@ -943,6 +960,10 @@ bool visited_area()
 }
 
 
+/**
+ * Find a simple path to reach n
+ * from the current position
+ */
 void path_finding(Node n)
 {
 	Node n_true;
@@ -1066,6 +1087,10 @@ void path_finding(Node n)
 }
 
 
+/**
+ * Return a path with nodes that the robot has to follow
+ * to go from n1 to n2
+ */
 Path path(Node n1, Node n2)
 {
 	Path path;
@@ -1129,6 +1154,9 @@ Path path(Node n1, Node n2)
 }
 
 
+/**
+ * Transform coordinates into position on the map
+ */
 Pixel nodeToPixel(Node node)
 {
 	int px = (node.x-origin_x)/resolution;
@@ -1142,6 +1170,9 @@ Pixel nodeToPixel(Node node)
 }
 
 
+/**
+ * Transform a position on the map into real coordinates
+ */
 Node pixelToNode(Pixel pixel)
 {
 	Node node;
@@ -1149,6 +1180,7 @@ Node pixelToNode(Pixel pixel)
 	node.y = (height-pixel.i-1)*resolution+origin_y;
 	return node;
 }
+
 
 /**
  * @brief isPath  Check whether already explored path exists between Node n1 and n2
@@ -1261,6 +1293,10 @@ bool isPath(Node n1, Node n2)
 }
 
 
+/**
+ * Logic to reach a node
+ * Turn and go forward
+ */
 void goto_node(Node node)
 {
 	Action action;
@@ -1279,6 +1315,9 @@ void goto_node(Node node)
 }
 
 
+/**
+ * Save the current position
+ */
 void receive_odometry(const Odometry::ConstPtr &msg)
 {
 	x_true = msg->x;
@@ -1287,6 +1326,9 @@ void receive_odometry(const Odometry::ConstPtr &msg)
 }
 
 
+/**
+ * Create a node and add it to the discrete map
+ */
 void create_node(double x, double y)
 {
 	Node n;
@@ -1302,6 +1344,10 @@ void create_node(double x, double y)
 }
 
 
+/**
+ * Create interesting node we have to visit
+ * and save it to the toDiscover map
+ */
 void create_interesting_node(int i,int j)
 {
 	Node node;
@@ -1319,6 +1365,9 @@ void create_interesting_node(int i,int j)
 }
 
 
+/**
+ * Find the node in a vector which is the closest to the actual position
+ */
 Node find_closest_node(std::vector<Node> vector)
 {
 	Node node;
@@ -1346,13 +1395,16 @@ Node find_closest_node(std::vector<Node> vector)
 }
 
 
+/**
+ * Logic when an object is detected
+ */
 void receive_object(const Object::ConstPtr &msg)
 {
 	//double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
 	//double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
 
-	double x_object = x_true + (0.2+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
-	double y_object = y_true + (0.2+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
+	double x_object = x_true + (0.3+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
+	double y_object = y_true + (0.3+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
 
 	Node node;
 
@@ -1433,6 +1485,10 @@ double angle(double theta)
 }
 
 
+/**
+ * Return the number of times we have to multiply pi/2 to
+ * have the closest angle to theta
+ */
 int nPi2(double theta)
 {
 	int res = 0;
@@ -1457,12 +1513,6 @@ int nPi2(double theta)
 	}
 
 	return res/2;
-}
-
-
-void correct_odometry()
-{
-
 }
 
 
@@ -1611,6 +1661,7 @@ int main(int argc, char** argv)
 
 		imwrite("/home/robo/explorer/robot_map.png",robot_map,compression_params);
 		imwrite("/home/robo/explorer/wall_map.png",wall_map,compression_params);
+		imwrite("/home/robo/explorer/proc_map.png",proc_map,compression_params);
 	}
 
 

@@ -2,7 +2,9 @@
 
   <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
   <node pkg="explorer" name="motors" type="motors"/>
-  <node pkg="explorer" name="EKF" type="EKF"/>
+  <node pkg="explorer" name="EKF" type="EKF">
+  	<param name="mode" value="1"/>
+  </node>
   <node pkg="explorer" name="controller" type="controller" output="screen">
   	<param name="mode" value="1"/>
   </node>	
