@@ -497,6 +497,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
+	/*
 	if(actions.empty() & priority.empty()) // PUT IN THE OTHER LOOP
 	{
 		// Wall in front of the robot
@@ -524,10 +525,37 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			cmpt = 0;
 		}
 	}
+	*/
 
 
 	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
 	{
+		// Wall in front of the robot
+		if(s3 < dist_front_wall)
+		{
+			if(cmpt >= obstacle)
+			{
+				cmpt = 0;
+
+				Action action;
+				action.n = ACTION_ROTATION;
+				if(s1 < s2){action.parameter1 = -M_PI/2;}
+				else {action.parameter1 = M_PI/2;}
+				priority.push_back(action);
+
+				printf("Front wall\n");
+
+				return;
+			}
+			cmpt++;
+			return;
+		}
+		else
+		{
+			cmpt = 0;
+		}
+
+
 		// Bumpers
 		if(s8)
 		{
@@ -679,12 +707,7 @@ void update_map(double s1, double s2)
 		if(mode == 2)
 		{
 			Path p = path(n,target);
-
-			if(p.size() != 0)
-			{
-				printf("Goto node: x = %f, y = %f\n",p.at(0).x,p.at(0).y);
-				goto_node(p.at(0));
-			}
+			pathToActions(p);
 		}
 		else
 		{
@@ -705,8 +728,17 @@ void update_map(double s1, double s2)
 	visited_flag = visited_area();
 	if(visited_flag & actions.empty() & priority.empty())
 	{
-		//printf("Already visited !\n");
-		path_finding(find_closest_node(toDiscover));
+		printf("Already visited !\n");
+
+		if(mode == 2)
+		{
+			//Path p = path(find_closest_node(toDiscover),target);
+			//pathToActions(p);
+		}
+		else
+		{
+			path_finding(find_closest_node(toDiscover));
+		}
 	}
 
 
@@ -1474,6 +1506,18 @@ void receive_object(const Object::ConstPtr &msg)
 	target.x = 0;
 	target.y = 0;
 	goto_target = true;
+}
+
+
+/**
+ * Put the path in the actions list
+ */
+void pathToActions(Path path)
+{
+	for(int i = 0; i < path.size(); i++)
+	{
+		path_finding(path.at(i));
+	}
 }
 
 
