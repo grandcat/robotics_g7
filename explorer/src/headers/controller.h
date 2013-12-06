@@ -168,6 +168,7 @@ int hash_value(Node const &n) {
 }
 typedef std::vector<Node> Path;
 typedef boost::unordered_map<Node,Path> Hash;
+typedef std::pair<Node,Path> Pair;
 
 
 // Receive functions

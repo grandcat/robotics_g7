@@ -402,7 +402,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
-				if(dist < 0.08) // dist_error
+				if(dist < dist_error) // dist_error // 0.08
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -1156,7 +1156,7 @@ void path_finding(Node n)
 Path path(Node n1, Node n2)
 {
 	Path path;
-	Hash hash,end;
+	std::vector<Pair> hash,end;
 
 	for(int i = 0; i < discrete_map.size(); i++)
 	{
@@ -1166,7 +1166,13 @@ Path path(Node n1, Node n2)
 			{
 				Path p;
 				p.push_back(discrete_map.at(i));
-				hash[discrete_map.at(i)] = p;
+
+				Pair t;
+				t.first = discrete_map.at(i);
+				t.second = p;
+				hash.push_back(t);
+
+				//hash[discrete_map.at(i)] = p;
 			}
 		}
 
@@ -1177,54 +1183,82 @@ Path path(Node n1, Node n2)
 			p.push_back(discrete_map.at(i));
 			end[discrete_map.at(i)] = p;
 		}
-		*/
+		 */
 	}
 
 	Path p;
 	p.push_back(n2);
-	end[n2] = p;
+	Pair t;
+	t.first = n2;
+	t.second = p;
+	end.push_back(t);
+	//end[n2] = p;
+
+	for(int i = 0; i < hash.size(); i++)
+	{
+		if(hash.at(i).first == n2)
+		{
+			path.push_back(n2);
+			return path;
+		}
+	}
 
 	// BFS
-	Hash::iterator it;
-	for(it = hash.begin(); it != hash.end(); it++) // PROBLEM !
+	//Hash::iterator it;
+	//for(it = hash.begin(); it != hash.end(); it++) // PROBLEM !
+	for(int i = 0; i < hash.size(); i++)
 	{
-		Node n = it->first;
-		Path p = hash[n];
+		//Node n = it->first;
+		//Path p = hash[n];
+
+		Node n = hash.at(i).first;
+		Path p = hash.at(i).second;
 
 		printf("Treat node: x = %f, y = %f\n",n.x,n.y);
 
+		/*
 		if(end.count(n) != 0)
 		{
 			printf("PATH FOUND !\n");
-			path = hash[n];
+			//path = hash[n];
+			path = p;
 			break;
 		}
+		*/
 
 		// Expand nodes
 		for(int i = 0; i < discrete_map.size(); i++)
 		{
-			if((!(discrete_map.at(i) == n1)) & (hash.count(discrete_map.at(i)) == 0))
+			bool alreadyInHash = false;
+			for(int j = 0; j < hash.size(); j++)
+			{
+				if(discrete_map.at(i) == hash.at(j).first)
+				{
+					alreadyInHash = true;
+				}
+			}
+			if((!(discrete_map.at(i) == n1)) & !alreadyInHash)
 			{
 				if(isPath(n,discrete_map.at(i)))
 				{
 					Path pp = Path(p);
 					pp.push_back(discrete_map.at(i));
-					hash[discrete_map.at(i)] = pp;
+					//hash[discrete_map.at(i)] = pp;
+					Pair t;
+					t.first = discrete_map.at(i);
+					t.second = pp;
+					hash.push_back(t);
 					printf("Add node to hash: x = %f, y = %f\n",discrete_map.at(i).x,discrete_map.at(i).y);
+
+					if(discrete_map.at(i) == n2)
+					{
+						path = pp;
+						return path;
+					}
 				}
 			}
 		}
 	}
-
-
-	// Debug
-	printf("------------------------------------\n");
-	printf("Path found:\n");
-	for(int i = 0; i < path.size(); i++)
-	{
-		printf("x = %f, y = %f\n",path.at(i).x,path.at(i).y);
-	}
-	printf("------------------------------------\n");
 
 
 	return path;
@@ -1548,10 +1582,25 @@ void receive_object(const Object::ConstPtr &msg)
  */
 void pathToActions(Path path)
 {
+	/*
 	for(int i = 0; i < path.size(); i++)
 	{
 		path_finding(path.at(i));
 	}
+	*/
+
+
+	path_finding(path.at(0));
+
+
+	// Debug
+	printf("------------------------------------\n");
+	printf("Path found:\n");
+	for(int i = 0; i < path.size(); i++)
+	{
+		printf("x = %f, y = %f\n",path.at(i).x,path.at(i).y);
+	}
+	printf("------------------------------------\n");
 }
 
 
