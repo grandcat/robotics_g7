@@ -402,7 +402,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
-				if(dist < dist_error) // dist_error // 0.08
+				if(dist < 0.08) // dist_error // 0.08
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -705,7 +705,7 @@ void update_map(double s1, double s2)
 	// Test
 	if(mode == 2)
 	{
-		if(discrete_map.size() > 4)
+		if(discrete_map.size() > 5)
 		{
 			goto_target = true;
 			target.x = 0;
