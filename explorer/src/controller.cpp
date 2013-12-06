@@ -1627,7 +1627,6 @@ void create_important_node(double x, double y)
 }
 
 
-
 /**
  * Angle between ]-pi,pi]
  * @param th
