@@ -50,6 +50,31 @@ double minArea = 1000.0;
 //double maxArea = 100000.0;
 double maxArea = 15000.0;
 
+//object rectangle parameter
+//double minRatio = 4.3;
+const double minRatio = 5;
+
+struct ObjectRectangle
+{
+  unsigned int ROI_id;
+  cv::Rect boundRect;
+};
+
+struct DetectedObject : ObjectRectangle
+{
+  std::vector<cv::Point> contours_poly;
+  cv::RotatedRect rotatedRect;
+  cv::Point mc;
+
+//    friend std::ostream & operator<<(std::ostream & stream, const DetectedObject &a)
+//    {
+//    	stream 	<< "id: "<<a.ROI_id<<"\ncontours_poly: "<<a.contours_poly.size()<<"\nboundRect: ["<<a.boundRect.tl()<<", "<<a.boundRect.br()<<"]"
+//    			<<"\nrotatedRect: "<<a.rotatedRect.angle<<"\nmc: "<<a.mc;
+//    	return stream;
+//    }
+
+};
+
 //previous ROI
 cv::Rect prev_rect;
 int ROI_id_counter = 0;
