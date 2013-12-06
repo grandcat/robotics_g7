@@ -718,6 +718,11 @@ void update_map(double s1, double s2)
 			goto_target = true;
 			target.x = 0;
 			target.y = 0;
+
+			Action action;
+			action.n = ACTION_ROTATION;
+			action.parameter1 = M_PI;
+			priority.push_back(action);
 		}
 	}
 
