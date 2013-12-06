@@ -57,21 +57,21 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	static double s0,x_s0,y_s0;
 	if((s1 < 0.2) & !wall & (s1 < s2))
 	{
-		//init();
+		init();
 		x_s0 = x_s1;
 		y_s0 = y_s1;
 		right_sensor = false;
 		wall = true;
-		y_wall_bar = 0;
+		//y_wall_bar = 0;
 	}
 	if((s2 < 0.2) & !wall & (s2 < s1))
 	{
-		//init();
+		init();
 		x_s0 = x_s2;
 		y_s0 = y_s2;
 		right_sensor = true;
 		wall = true;
-		y_wall_bar = 0;
+		//y_wall_bar = 0;
 	}
 
 	// Sensor measurement

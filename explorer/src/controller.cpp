@@ -191,7 +191,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Rotation done
 				if(dtheta*dtheta < M_PI*M_PI/180/180*theta_error*theta_error)
 				{
-					create_node(x_true,y_true);
+					if(!goto_target) {create_node(x_true,y_true);}
 
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -324,7 +324,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Done
 				if(fabs(diff_ang) < M_PI/180*theta_error)
 				{
-					create_node(x_true,y_true);
+					if(!goto_target) {create_node(x_true,y_true);}
+
 
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -401,7 +402,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
-				if(dist < dist_error)
+				if(dist < 0.08) // dist_error
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -410,6 +411,11 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					current_action.n = ACTION_NO;
 
 					printf("Done !\n");
+
+					Node n;
+					n.x = current_action.parameter1;
+					n.y = current_action.parameter2;
+					current_node = n;
 
 					/*
 					// Relaunch EKF
@@ -525,7 +531,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			cmpt = 0;
 		}
 	}
-	*/
+	 */
 
 
 	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
@@ -696,6 +702,17 @@ void update_map(double s1, double s2)
 	proc_map = map.clone();
 
 
+	// Test
+	if(mode == 2)
+	{
+		if(discrete_map.size() > 4)
+		{
+			goto_target = true;
+			target.x = 0;
+			target.y = 0;
+		}
+	}
+
 	// Goto target
 	if(goto_target & actions.empty() & priority.empty())
 	{
@@ -706,7 +723,7 @@ void update_map(double s1, double s2)
 
 		if(mode == 2)
 		{
-			Path p = path(n,target);
+			Path p = path(current_node,target);
 			pathToActions(p);
 		}
 		else
@@ -730,13 +747,11 @@ void update_map(double s1, double s2)
 	{
 		printf("Already visited !\n");
 
-		if(mode == 2)
+		if(mode != 2)
 		{
 			//Path p = path(find_closest_node(toDiscover),target);
 			//pathToActions(p);
-		}
-		else
-		{
+
 			path_finding(find_closest_node(toDiscover));
 		}
 	}
@@ -1145,42 +1160,57 @@ Path path(Node n1, Node n2)
 
 	for(int i = 0; i < discrete_map.size(); i++)
 	{
-		if(isPath(n1,discrete_map.at(i)))
+		if(!(discrete_map.at(i) == n1))
 		{
-			Path p;
-			p.push_back(discrete_map.at(i));
-			hash[discrete_map.at(i)] = p;
+			if(isPath(n1,discrete_map.at(i)))
+			{
+				Path p;
+				p.push_back(discrete_map.at(i));
+				hash[discrete_map.at(i)] = p;
+			}
 		}
+
+		/*
 		if(isPath(n2,discrete_map.at(i)))
 		{
 			Path p;
 			p.push_back(discrete_map.at(i));
 			end[discrete_map.at(i)] = p;
 		}
+		*/
 	}
+
+	Path p;
+	p.push_back(n2);
+	end[n2] = p;
 
 	// BFS
 	Hash::iterator it;
-	for(it = hash.begin(); it != hash.end(); it++)
+	for(it = hash.begin(); it != hash.end(); it++) // PROBLEM !
 	{
 		Node n = it->first;
-		Path p = hash.at(n);
+		Path p = hash[n];
+
+		printf("Treat node: x = %f, y = %f\n",n.x,n.y);
 
 		if(end.count(n) != 0)
 		{
+			printf("PATH FOUND !\n");
+			path = hash[n];
 			break;
 		}
 
 		// Expand nodes
 		for(int i = 0; i < discrete_map.size(); i++)
 		{
-			if(!(discrete_map.at(i) == n))
+			if((!(discrete_map.at(i) == n1)) & (hash.count(discrete_map.at(i)) == 0))
 			{
 				if(isPath(n,discrete_map.at(i)))
 				{
-					Path pp = p;
+					Path pp = Path(p);
 					pp.push_back(discrete_map.at(i));
 					hash[discrete_map.at(i)] = pp;
+					printf("Add node to hash: x = %f, y = %f\n",discrete_map.at(i).x,discrete_map.at(i).y);
 				}
 			}
 		}
@@ -1386,6 +1416,8 @@ void create_node(double x, double y)
 
 	discrete_map.push_back(n);
 
+	current_node = n;
+
 	// Debug
 	printf("New node:  x = %f, y = %f\n",x,y);
 }
@@ -1501,11 +1533,13 @@ void receive_object(const Object::ConstPtr &msg)
 
 	std::cout << ss.str() << std::endl;
 
-
-	// Goto start
-	target.x = 0;
-	target.y = 0;
-	goto_target = true;
+	if(mode == 0)
+	{
+		// Goto start
+		target.x = 0;
+		target.y = 0;
+		goto_target = true;
+	}
 }
 
 
@@ -1606,7 +1640,7 @@ int main(int argc, char** argv)
 
 
 	// Mode
-	if(mode == EXPLORE)
+	if(mode == EXPLORE | mode == 2)
 	{
 		create_node(0,0);
 	}

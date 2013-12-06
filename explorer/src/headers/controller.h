@@ -115,7 +115,7 @@ double x_true,y_true,theta_true;
 // Errors
 const double x_error = 0.01;
 const double theta_error = 3;
-const double dist_error = 0.03;
+const double dist_error = 0.05;
 
 
 // Actions sequence
@@ -128,6 +128,8 @@ Action current_action;
 // Go somewhere
 bool goto_target = false;
 Node target;
+
+Node current_node;
 
 
 // IR sensor mean
