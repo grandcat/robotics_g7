@@ -551,6 +551,14 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 				printf("Front wall\n");
 
+
+				if((s1 > 0.15) & (s2 > 0.15) & !goto_target)
+				{
+					create_important_node(discrete_map.back().x,discrete_map.back().y);
+					create_important_node(x_true,y_true);
+				}
+
+
 				return;
 			}
 			cmpt++;
@@ -723,8 +731,14 @@ void update_map(double s1, double s2)
 
 		if(mode == 2)
 		{
-			Path p = path(current_node,target);
-			pathToActions(p);
+			for(int i = 0; i < important_nodes.size(); i++)
+			{
+				if(isPath(n,important_nodes.at(i)))
+				{
+					path_finding(important_nodes.at(i));
+					break;
+				}
+			}
 		}
 		else
 		{
@@ -1604,6 +1618,16 @@ void pathToActions(Path path)
 }
 
 
+void create_important_node(double x, double y)
+{
+	Node node;
+	node.x = x;
+	node.y = y;
+	important_nodes.push_back(node);
+}
+
+
+
 /**
  * Angle between ]-pi,pi]
  * @param th
@@ -1692,6 +1716,7 @@ int main(int argc, char** argv)
 	if(mode == EXPLORE | mode == 2)
 	{
 		create_node(0,0);
+		create_important_node(0,0);
 	}
 
 

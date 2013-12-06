@@ -146,6 +146,8 @@ std::vector<Node> discrete_map;
 std::vector<Node> objects;
 std::vector<Node> near_objects;
 
+std::vector<Node> important_nodes;
+
 std::vector<Node> toDiscover;
 
 Mat proc_map, robot_map, wall_map, map;
@@ -213,6 +215,8 @@ Node pixelToNode(Pixel pixel);
 void goto_node(Node node);
 
 void pathToActions(Path path);
+
+void create_important_node(double x, double y);
 
 
 // Angle between ]-pi,pi]
