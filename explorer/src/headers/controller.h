@@ -146,7 +146,8 @@ std::vector<Node> discrete_map;
 std::vector<Node> objects;
 std::vector<Node> near_objects;
 
-std::vector<Node> important_nodes;
+typedef std::pair<Node,Node> Nodes;
+std::vector<Nodes> important_nodes;
 
 std::vector<Node> toDiscover;
 
@@ -216,7 +217,7 @@ void goto_node(Node node);
 
 void pathToActions(Path path);
 
-void create_important_node(double x, double y);
+void create_important_node(double x1, double y1, double x2, double y2);
 
 
 // Angle between ]-pi,pi]

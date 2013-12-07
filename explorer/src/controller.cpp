@@ -402,7 +402,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
-				if(dist < 0.08) // dist_error // 0.08
+				if(dist < 0.1) // dist_error // 0.08
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -416,6 +416,14 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					n.x = current_action.parameter1;
 					n.y = current_action.parameter2;
 					current_node = n;
+
+					for(int i = 0; i < important_nodes.size(); i++)
+					{
+						if(important_nodes.at(i).first == n)
+						{
+							important_nodes.erase(important_nodes.begin()+i);
+						}
+					}
 
 					/*
 					// Relaunch EKF
@@ -554,8 +562,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 				if((s1 > 0.15) & (s2 > 0.15) & !goto_target)
 				{
-					create_important_node(discrete_map.back().x,discrete_map.back().y);
-					create_important_node(x_true,y_true);
+					create_important_node(discrete_map.back().x,discrete_map.back().y,x_true,y_true);
 				}
 
 
@@ -713,7 +720,7 @@ void update_map(double s1, double s2)
 	// Test
 	if(mode == 2)
 	{
-		if(discrete_map.size() > 5)
+		if(discrete_map.size() > 3)
 		{
 			goto_target = true;
 			target.x = 0;
@@ -738,9 +745,10 @@ void update_map(double s1, double s2)
 		{
 			for(int i = 0; i < important_nodes.size(); i++)
 			{
-				if(isPath(n,important_nodes.at(i)))
+				if(isPath(n,important_nodes.at(i).second))
 				{
-					path_finding(important_nodes.at(i));
+					path_finding(important_nodes.at(i).second);
+					goto_node(important_nodes.at(i).first);
 					break;
 				}
 			}
@@ -1623,12 +1631,14 @@ void pathToActions(Path path)
 }
 
 
-void create_important_node(double x, double y)
+void create_important_node(double x1, double y1, double x2, double y2)
 {
-	Node node;
-	node.x = x;
-	node.y = y;
-	important_nodes.push_back(node);
+	Nodes nodes;
+	nodes.first.x = x1;
+	nodes.first.y = y1;
+	nodes.second.x = x2;
+	nodes.second.x = y2;
+	important_nodes.push_back(nodes);
 }
 
 
@@ -1720,7 +1730,7 @@ int main(int argc, char** argv)
 	if(mode == EXPLORE | mode == 2)
 	{
 		create_node(0,0);
-		create_important_node(0,0);
+		create_important_node(0,0,0.2,0);
 	}
 
 
