@@ -10,6 +10,7 @@ class Contour_Filter
 		image_transport::Publisher img_pub_;
 
 		std::vector<DetectedObject> objects;
+		image_transport::Subscriber image_sub_color;
 
 	public:
 
@@ -23,8 +24,11 @@ class Contour_Filter
 
 		//image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Contour_Filter::contour_filter, this);
 		image_sub_ = it_.subscribe("/camera/depth/image_rect", 1, &Contour_Filter::depth_contour_filter, this);
-		//img_pub_ = it_.advertise("/contour_filter/filtered_image", 1);
+
 		//obj_pub_ = nh_.advertise<contour_filter::Objects>("/recognition/detect", 1);
+		image_sub_color = it_.subscribe("/camera/rgb/image_color", 1, &Contour_Filter::show_detected_objects, this);
+
+		img_pub_ = it_.advertise("/color_filter/filtered_image", 1);
 	}
 
 	~Contour_Filter()
@@ -33,7 +37,84 @@ class Contour_Filter
 	}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//TODO
+	//Translate the coordinates between depth and color so that the rectangle are covering the whole object
+	//use the contour to mask out the image instead of the ROI
+	void show_detected_objects(const sensor_msgs::ImageConstPtr& msg)
+	{
+                //ros::Duration(0.5).sleep();
 
+		cv_bridge::CvImagePtr cv_ptr;
+		try
+		{
+			cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+		}
+		catch (cv_bridge::Exception& e)
+		{
+			ROS_ERROR("cv_bridge exception: %s", e.what());
+			return;
+		}
+
+
+
+		cv::Mat src;
+		src = cv_ptr->image; //get the source image from the pointer
+
+		//crop out the objects from the image
+		cv::Mat crop_img = cv::Mat::zeros( src.size(), src.type());
+		cv::Mat mask = cv::Mat::zeros( src.size(), src.type());
+		cv::Scalar color_white = cv::Scalar( 255, 255, 255);
+		for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+		{
+			//Drawing the up-right rectangle as the ROI
+			//cv::Rect ROI(it->boundRect.x, it->boundRect.y, it->boundRect.width , it->boundRect.height);
+			//rectangle(mask, ROI.tl(), ROI.br(), color_white, CV_FILLED); //mask
+
+			//Drawing the found contours of the objects as the ROI
+			std::vector<cv::Point> contour_copy = it->contours_poly;
+
+			moveContour(contour_copy, DEPTH_TO_COLOR_DX, DEPTH_TO_COLOR_DY); //move the contour of depth image to match the color image
+
+			std::vector<std::vector<cv::Point> > T = std::vector<std::vector<cv::Point> >(1,contour_copy);
+			for (unsigned int i = 0; i < T.size(); i++)
+			{
+				drawContours( mask, T,i, color_white, CV_FILLED, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
+			}
+
+			//increase the size of the contour
+			cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(13, 13));
+			cv::dilate(mask, mask, element);
+
+			// Cut out ROI and store it in crop_img
+			src.copyTo(crop_img, mask);
+		}
+		//for some reason the source image get overwritten. Retrieve it back!
+		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+		src = cv_ptr->image.clone();
+
+		if(FLAG_SHOW_IMAGE)
+			imshow("Found objects in color image", crop_img);
+
+		//publish image
+	    cv_bridge::CvImagePtr img_ptr = cv_ptr;
+	    crop_img.copyTo(img_ptr->image);
+	    img_pub_.publish(img_ptr->toImageMsg());
+
+
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void moveContour(std::vector<cv::Point>& contour, int dx, int dy)
+	{
+	    for (size_t i=0; i<contour.size(); i++)
+	    {
+	        contour[i].x += dx;
+	        contour[i].y += dy;
+	    }
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	cv::Mat remove_noise(const cv::Mat& src, int iter = 0, int kernel_size = 9)
 	{
 		//only start to remove the noise if we have enough previous images saved
@@ -96,13 +177,11 @@ class Contour_Filter
 	{
 		dst = src.clone();
 
-		int m_size = 7;
-		float threshold = 0.02;
-		//float threshold = 0.05;
+		int m_size = SHADOW_FILTER_MASK_SIZE;
+		float threshold = SHADOW_FILTER_THRESHOLD;
 		for(int y_c=0; y_c<src.rows; y_c++){
 		   for(int x_c=0; x_c<src.cols; x_c++){
 			   //center is at (y_c,x_c) , and we are guaranteed to be able to move floor(m_size/2) pixel away from it
-			   //if (x_c > 0 && y_c > 0 && x_c<src.cols-1 && y_c<src.rows-1){
 			   if (x_c > (int)(m_size/2)-1 && y_c > (int)(m_size/2)-1 && x_c<src.cols-(int)(m_size/2)-1 && y_c<src.rows-(int)(m_size/2)-1){
 				   //find the max and min depth value inside the 3x3 mask
 				   float max = 0.0;
@@ -152,7 +231,7 @@ class Contour_Filter
 		}
 
 //http://docs.opencv.org/doc/tutorials/imgproc/shapedescriptors/find_contours/find_contours.html
-		cv::Mat src, src_gray, src_gray_blur;
+		cv::Mat src;
 		src = cv_ptr->image; //get the source image from the pointer
 
 		//remove top part of image (set to black)
@@ -180,23 +259,24 @@ class Contour_Filter
 		shadow_bin_raw.convertTo(shadow_bin,CV_8U);
 
 		//Does some erosion and dilation to remove some of the pixels
-		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(9, 9));
+		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(11, 11));
 		cv::erode(shadow_bin, shadow_bin, element);
 		cv::dilate(shadow_bin, shadow_bin, element);
 
 		/// Find contours
 		std::vector<std::vector<cv::Point> > contours;
 		std::vector<cv::Vec4i> hierarchy;
-		cv::Mat shadow_bin_temp, sobel_img_temp;
-		shadow_bin.copyTo(shadow_bin_temp); //findContours will change the input image, that's why we create a copy.
+		cv::Mat shadow_bin_copy;
+		shadow_bin.copyTo(shadow_bin_copy); //findContours will change the input image, that's why we create a copy.
 
-		findContours( shadow_bin_temp, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, cv::Point(0, 0) );
+		findContours( shadow_bin_copy, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_NONE, cv::Point(0, 0) );
 
 
 		//clear the object vector, and creates a temporary vector storing all detectable things
 		objects.clear();
 		objects.reserve(contours.size());
-
+		std::vector<DetectedObject> temp_objects;
+		temp_objects.reserve(contours.size());
 		for(unsigned int i = 0; i < contours.size(); ++i )
 		{
 			DetectedObject newObj;
@@ -218,40 +298,51 @@ class Contour_Filter
 			cv::Moments mu = moments( contours[i], false );
 
 			newObj.mc = cv::Point( (int)mu.m10/mu.m00 , (int)mu.m01/mu.m00 );
-			objects.push_back(newObj); //put the new object in the vector called objects
+			temp_objects.push_back(newObj); //put the new object in the vector called objects
 		}
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//merge shadow and object into one object
+
+		if (temp_objects.size() == 2){
+			DetectedObject shadow_obj;
+			DetectedObject obj;
+			//check which one could be the object and which one is its shadow
+			if ( contourArea(temp_objects[0].contours_poly) > contourArea(temp_objects[1].contours_poly) ){
+				shadow_obj = temp_objects[0];
+				obj = temp_objects[1];
+			}
+			else{
+				shadow_obj = temp_objects[1];
+				obj = temp_objects[0];
+			}
+			//go through all points around the smallest contour, if a point is inside the bigger one we know it's its shadow
+			for (unsigned int i = 0; i < obj.contours_poly.size(); i++){
+				cv::Point2f point = obj.contours_poly[i];
+				int is_inside = pointPolygonTest( shadow_obj.contours_poly, point, false );
+				if (is_inside == 1)
+				{
+					//just in case that the shadows middle point is not located on the object, we change the middle point.
+					//Then save the shadow as the object
+					shadow_obj.mc = obj.mc;
+					objects.push_back(shadow_obj);
+					break;
+				}
+			}
+		}
+		else if(temp_objects.size() != 0)
+		{
+			objects = temp_objects;
+		}
 
 
-//
-//		  //crop out the objects from the image
-//		  cv::Mat crop_img = cv::Mat::zeros( src_image.size(), src_image.type());
-//		  cv::Mat mask = cv::Mat::zeros( src_image.size(), src_image.type());
-//		  cv::Scalar color_white = cv::Scalar( 255, 255, 255);
-//		  for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-//		  {
-//			  cv::Rect ROI(it->boundRect.x, it->boundRect.y, it->boundRect.width , it->boundRect.height);
-//			  rectangle(mask, ROI.tl(), ROI.br(), color_white, CV_FILLED); //mask
-//
-//			  // Cut out ROI and store it in crop_img
-//			  src_image.copyTo(crop_img, mask);
-//		  }
-//		  //for some reason the source image get overwritten. Retrieve it back!
-//		  cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-//		  src_image = cv_ptr->image.clone();
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		if (FLAG_SHOW_IMAGE)
 		{
-			cv::imshow("Original", src);
+			//cv::imshow("Original", src);
 			//cv::imshow("src filtered", src_filtered);
 			//cv::imshow("shadow filter", shadow_img);
-			//cv::imshow("shadow binary", shadow_bin);
+			cv::imshow("shadow binary", shadow_bin);
 
 			cv::Mat drawing = cv::Mat::zeros( src.size(), CV_8UC3 );
 			cv::Scalar color_red = cv::Scalar( 0, 0, 255 );
@@ -277,6 +368,7 @@ class Contour_Filter
 				for (unsigned int i = 0; i < T.size(); i++)
 				{
 					drawContours( drawing, T,i, color_red, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+					//drawContours( drawing, T,i, color_red, CV_FILLED, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
 
 				}
 
@@ -293,9 +385,7 @@ class Contour_Filter
 
 
 
-
-
-			imshow( "Found objects", drawing );
+			imshow( "Found contours in depth image", drawing );
 
 			cv::waitKey(3);
 		}
@@ -316,92 +406,6 @@ class Contour_Filter
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void contour_filter(const sensor_msgs::ImageConstPtr& msg)
-	{
-                //ros::Duration(0.5).sleep();
-
-		cv_bridge::CvImagePtr cv_ptr;
-		try
-		{
-			cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-		}
-		catch (cv_bridge::Exception& e)
-		{
-			ROS_ERROR("cv_bridge exception: %s", e.what());
-			return;
-		}
-
-//http://docs.opencv.org/doc/tutorials/imgproc/shapedescriptors/find_contours/find_contours.html
-		cv::Mat src, src_gray, src_gray_blur;
-		src = cv_ptr->image; //get the source image from the pointer
-
-		//remove top part of image (set to black)
-		int y_remove = 100;
-		for(int i=0; i<y_remove; i++)
-		   for(int j=0; j<src.cols; j++)
-		   {
-			   src.at<cv::Vec3b>(i,j)[0] = 0;
-			   src.at<cv::Vec3b>(i,j)[1] = 0;
-			   src.at<cv::Vec3b>(i,j)[2] = 0;
-		   }
-
-		cv::cvtColor(src, src_gray, CV_BGR2GRAY); //change color image to gray-scale
-		cv::blur( src_gray, src_gray_blur, cv::Size(5,5) ); //blur the gray-scale image
-
-		cv::Mat canny_img, sobel_img;
-		std::vector<std::vector<cv::Point> > contours;
-		std::vector<cv::Vec4i> hierarchy;
-
-		/// Detect edges using canny
-		int min_thresh = 0;
-		int max_thresh = 255;
-		cv::Canny( src_gray_blur, canny_img, min_thresh, max_thresh, 5 );
-
-		//Detect edges using sobel filter
-		int ddepth = -1; //same depth as source
-		int dx = 1;
-		int dy = 1;
-		int ksize = 3;
-		cv::Sobel(src_gray_blur, sobel_img, ddepth, dx, dy, ksize);
-
-		/// Find contours
-		findContours( sobel_img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-		std::vector< std::vector<cv::Point> > contours_obj;
-		std::vector<cv::Point> cur_contours_poly;
-		contours_obj.reserve(contours.size()); //reserve space
-		for(unsigned int i = 0; i < contours.size(); i++ )
-		{
-			approxPolyDP( cv::Mat(contours[i]), cur_contours_poly, 3, true );
-			double area = contourArea(cur_contours_poly);
-			//std::cout<<"Area of contour nr "<<i<<": "<<area<<std::endl;
-			if (area >= minArea && area<= maxArea) //save the closed approximated contour if it's area is "lagom"
-				contours_obj.push_back(cur_contours_poly);
-		}
-
-		/// Draw polygonal contour + bonding rectangles
-		cv::Mat drawing = cv::Mat::zeros( src.size(), CV_8UC3 );
-		for(unsigned int i = 0; i< contours_obj.size(); i++ )
-		{
-			cv::Scalar color = cv::Scalar( 0, 0, 255 );
-			drawContours( drawing, contours_obj, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
-			//drawContours( drawing, contours, i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
-		}
-
-
-
-
-		//cv::imshow("src", src);
-		cv::imshow("gray-scale", src_gray_blur);
-		//cv::imshow("canny edge", canny_img);
-		cv::imshow("sobel edge", sobel_img);
-		cv::imshow("contours", drawing);
-		cv::waitKey(3);
-
-
-
-
-
-	}
 
 };
 
@@ -425,7 +429,7 @@ int main(int argc, char** argv)
 
 	Contour_Filter cf;
 	puts("Contour filter is up and running!");
-	puts("Message is being sent to /recognition/detect");
+	puts("Found object images are being sent to /color_filter/filtered_image");
 	ros::spin();
 
 	return 0;

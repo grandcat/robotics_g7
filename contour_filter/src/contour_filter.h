@@ -79,4 +79,11 @@ struct DetectedObject : ObjectRectangle
 cv::Rect prev_rect;
 int ROI_id_counter = 0;
 
+//parameters for the shadow filter
+int SHADOW_FILTER_MASK_SIZE = 7;
+float SHADOW_FILTER_THRESHOLD = 0.02;
+
+//contour translation between depth to color image
+int DEPTH_TO_COLOR_DX = -30;
+int DEPTH_TO_COLOR_DY = 0;
 #endif /* CONTOUR_FILTER_H_ */
