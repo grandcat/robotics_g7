@@ -19,6 +19,9 @@
 // PCL: normals & feature
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/fpfh.h>
+// PCL Detetion and extraction
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 #define VOXEL_LEAF_SIZE 0.005
 
@@ -66,37 +69,34 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 
       return;
     }
-  // Only process every 30th frame (TODO: improve)
+  // Only process every 20th frame (TODO: improve)
   ++cWaitFrames;
-  cWaitFrames %= 30;
+  cWaitFrames %= 20;
   if (cWaitFrames != 0)
     {
       return;
     }
 
+  // Convert to PCL data representation for more advanced treatment of Pointclouds
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pclRaw(new pcl::PointCloud<pcl::PointXYZ>);
+  pclFiltered = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*pc_raw, *pclRaw);
+
+  // Rotate whole point cloud to correct sensor orientation (pose)
+  pcl::transformPointCloud(*pclRaw, *pclRaw, cameraPoseTransform);
+
   // Reduce view 100cm to the front (Z axes) and downsample amount of points
-  sensor_msgs::PointCloud2 cloudVoxel;
-  pcl::VoxelGrid<sensor_msgs::PointCloud2> pclVoxelFilter;
-  pclVoxelFilter.setInputCloud(pc_raw);
+  // Note: bug in VoxelGrid implementation: use different input/output clouds!
+  pcl::VoxelGrid<pcl::PointXYZ> pclVoxelFilter;
+  pclVoxelFilter.setInputCloud(pclRaw);
   pclVoxelFilter.setFilterFieldName("z");
   pclVoxelFilter.setFilterLimits(0.0, 1.0);  //< only take XYZ points maximum 1m away from camera on z axis
   pclVoxelFilter.setLeafSize(VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE);
-  pclVoxelFilter.filter(cloudVoxel);
+  pclVoxelFilter.filter(*pclFiltered);
 
-  // Convert to PCL data representation for more advanced treatment of Pointclouds
-  pclFiltered = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-//  pcl::PointCloud<pcl::PointXYZ>::Ptr pclProcessed(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(cloudVoxel, *pclFiltered);
   ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
 
-  // Rotate whole point cloud to correct sensor orientation (pose)
-  pcl::transformPointCloud(*pclFiltered, *pclFiltered, cameraPoseTransform);
-
-//    pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
-//    pclOutlierFilter.setInputCloud(pclFiltered);
-//    pclOutlierFilter.setMeanK(50);
-//    pclOutlierFilter.setStddevMulThresh(1.0);
-//    pclOutlierFilter.filter(*pclFiltered);
+  // Old place for transform
 
   /*
    * Determine plane surfaces and remove
@@ -208,6 +208,32 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclExtractIdx.setInputCloud(pclFiltered);
   pclExtractIdx.setIndices(inlierIndices);
   pclExtractIdx.filter(*pclFiltered);
+
+  // Eucledian cluster extraction
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr sTree(new pcl::search::KdTree<pcl::PointXYZ>);
+  sTree->setInputCloud(pclFiltered);    // be careful with empty cloud!
+  std::vector<pcl::PointIndices> clusters;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZ> pclCluster;
+  pclCluster.setClusterTolerance (0.05);
+  pclCluster.setMinClusterSize(32);
+  pclCluster.setMaxClusterSize(10000);
+  pclCluster.setSearchMethod(sTree);
+  pclCluster.setInputCloud(pclFiltered);
+  pclCluster.extract(clusters);
+
+  std::cerr << "Number of extracted clusters: " << clusters.size() << std::endl;
+  int clustId = 0;
+  for (std::vector<pcl::PointIndices>::const_iterator it = clusters.begin (); it != clusters.end (); ++it)
+  {
+    std::vector<int>::const_iterator clustIter = it->indices.begin();
+    std::cerr << "Cluster " << clustId << " ("
+              << pclFiltered->points[*clustIter].x << " "
+              << pclFiltered->points[*clustIter].y << " "
+              << pclFiltered->points[*clustIter].z << ") "
+              << " Count: " << it->indices.size() << std::endl;
+  ++clustId;
+  }
+
 
   // Generate debugging output for rViz
   sensor_msgs::PointCloud2 output;
