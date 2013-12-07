@@ -72,6 +72,7 @@ int mode = 0;
 enum MODE {
 	EXPLORE = 0,
 	GOTO_TARGETS,
+	TEST,
 };
 
 
@@ -158,6 +159,7 @@ const int height = 600;
 const int width = 600;
 const double resolution = 0.02;
 
+// Map constants
 const int sz1 = 11;
 const int sz2 = 11;
 
@@ -165,6 +167,7 @@ bool visited_flag = false;
 
 
 // Path
+/*
 int hash_value(Node const &n) {
     boost::hash<int> hasher;
     return hasher(n.x) + hasher(n.y);
@@ -172,6 +175,7 @@ int hash_value(Node const &n) {
 typedef std::vector<Node> Path;
 typedef boost::unordered_map<Node,Path> Hash;
 typedef std::pair<Node,Path> Pair;
+*/
 
 
 // Receive functions
@@ -203,7 +207,7 @@ Node find_closest_node(std::vector<Node> vector);
 
 void path_finding(Node node);
 
-Path path(Node n1, Node n2);
+//Path path(Node n1, Node n2);
 
 bool visited_area();
 
@@ -215,7 +219,7 @@ Node pixelToNode(Pixel pixel);
 
 void goto_node(Node node);
 
-void pathToActions(Path path);
+//void pathToActions(Path path);
 
 void create_important_node(double x1, double y1, double x2, double y2);
 

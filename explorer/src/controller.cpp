@@ -748,7 +748,7 @@ void update_map(double s1, double s2)
 		n.y = y_true;
 
 
-		if(mode == 2)
+		//if(mode == 2)
 		{
 			for(int i = 0; i < important_nodes.size(); i++)
 			{
@@ -765,10 +765,12 @@ void update_map(double s1, double s2)
 				}
 			}
 		}
+		/*
 		else
 		{
 			path_finding(target);
 		}
+		*/
 
 
 		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.05)
@@ -1192,6 +1194,7 @@ void path_finding(Node n)
  * Return a path with nodes that the robot has to follow
  * to go from n1 to n2
  */
+/*
 Path path(Node n1, Node n2)
 {
 	Path path;
@@ -1214,15 +1217,6 @@ Path path(Node n1, Node n2)
 				//hash[discrete_map.at(i)] = p;
 			}
 		}
-
-		/*
-		if(isPath(n2,discrete_map.at(i)))
-		{
-			Path p;
-			p.push_back(discrete_map.at(i));
-			end[discrete_map.at(i)] = p;
-		}
-		 */
 	}
 
 	Path p;
@@ -1254,16 +1248,6 @@ Path path(Node n1, Node n2)
 		Path p = hash.at(i).second;
 
 		printf("Treat node: x = %f, y = %f\n",n.x,n.y);
-
-		/*
-		if(end.count(n) != 0)
-		{
-			printf("PATH FOUND !\n");
-			//path = hash[n];
-			path = p;
-			break;
-		}
-		*/
 
 		// Expand nodes
 		for(int i = 0; i < discrete_map.size(); i++)
@@ -1302,6 +1286,7 @@ Path path(Node n1, Node n2)
 
 	return path;
 }
+*/
 
 
 /**
@@ -1619,18 +1604,10 @@ void receive_object(const Object::ConstPtr &msg)
 /**
  * Put the path in the actions list
  */
+/*
 void pathToActions(Path path)
 {
-	/*
-	for(int i = 0; i < path.size(); i++)
-	{
-		path_finding(path.at(i));
-	}
-	*/
-
-
 	path_finding(path.at(0));
-
 
 	// Debug
 	printf("------------------------------------\n");
@@ -1641,8 +1618,12 @@ void pathToActions(Path path)
 	}
 	printf("------------------------------------\n");
 }
+*/
 
 
+/**
+ * Create nodes if the robot made a choice when it has to turn
+ */
 void create_important_node(double x1, double y1, double x2, double y2)
 {
 	Nodes nodes;
@@ -1750,18 +1731,19 @@ int main(int argc, char** argv)
 
 	if(mode == GOTO_TARGETS)
 	{
-		// Open discrete_map
-		discrete_map.resize(500);
-		std::ifstream is("/home/robo/explorer/discrete_map.dat",std::ios::binary);
-		is.read(reinterpret_cast<char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
+		// Open important_nodes map
+		important_nodes.resize(500);
+		std::ifstream is("/home/robo/explorer/important_nodes.dat",std::ios::binary);
+		is.read(reinterpret_cast<char*>(&(important_nodes[0])),important_nodes.size()*sizeof(Nodes));
 		is.close();
 
-		for(int i = 1; i < discrete_map.size(); i++)
+		// Resize
+		for(int i = 1; i < important_nodes.size(); i++)
 		{
-			if((discrete_map.at(i).x == 0) & (discrete_map.at(i).y == 0))
+			if((important_nodes.at(i).second.x == 0) & (important_nodes.at(i).second.y == 0))
 			{
 				//printf("test\n");
-				discrete_map.resize(i);
+				important_nodes.resize(i);
 				break;
 			}
 		}
@@ -1773,6 +1755,7 @@ int main(int argc, char** argv)
 		is2.read(reinterpret_cast<char*>(&(objects[0])),objects.size()*sizeof(Node));
 		is2.close();
 
+		// Resize
 		for(int i = 0; i < objects.size(); i++)
 		{
 			if((objects.at(i).x == 0) & (objects.at(i).y == 0))
@@ -1789,6 +1772,7 @@ int main(int argc, char** argv)
 		is3.read(reinterpret_cast<char*>(&(near_objects[0])),near_objects.size()*sizeof(Node));
 		is3.close();
 
+		// Resize
 		for(int i = 0; i < near_objects.size(); i++)
 		{
 			if((near_objects.at(i).x == 0) & (near_objects.at(i).y == 0))
@@ -1832,10 +1816,10 @@ int main(int argc, char** argv)
 
 	if(mode == EXPLORE)
 	{
-		// Save discrete map
-		discrete_map.resize(500);
-		std::ofstream os("/home/robo/explorer/discrete_map.dat",std::ios::binary);
-		os.write(reinterpret_cast<const char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
+		// Save dimportant_nodes map
+		important_nodes.resize(500);
+		std::ofstream os("/home/robo/explorer/important_nodes.dat",std::ios::binary);
+		os.write(reinterpret_cast<const char*>(&(important_nodes[0])),important_nodes.size()*sizeof(Nodes));
 		os.close();
 
 		// Save objects
