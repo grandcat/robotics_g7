@@ -263,6 +263,15 @@ int main(int argc, char** argv)
 		y_true = odometry.at(1);
 		theta_true = odometry.at(2);
 
+		// Failed to go back to (0,0)
+		double distance = sqrt((x_true)*(x_true)+(y_true)*(y_true));
+		if(distance > 0.1)
+		{
+			x_true = 0;
+			y_true = 0;
+			theta_true = 0;
+		}
+
 		printf("x = %f, y = %f, theta = %f\n",x_true,y_true,theta_true);
 	}
 
