@@ -750,7 +750,7 @@ void update_map(double s1, double s2)
 		n.y = y_true;
 
 
-		//if(mode == 2)
+		if((mode == EXPLORE) |(mode == 2))
 		{
 			for(int i = 0; i < important_nodes.size(); i++)
 			{
@@ -767,12 +767,33 @@ void update_map(double s1, double s2)
 				}
 			}
 		}
+
 		/*
 		else
 		{
 			path_finding(target);
 		}
 		 */
+
+
+		if(mode == GOTO_TARGETS)
+		{
+			for(int i = 0; i < important_nodes.size(); i++)
+			{
+				int j = important_nodes.size()-i-1;
+				if(isPath(n,important_nodes.at(j).second))
+				{
+					printf("PATH FOUND\n");
+					path_finding(important_nodes.at(j).second);
+					goto_node(important_nodes.at(j).first);
+					break;
+				}
+				else
+				{
+					printf("No path to x = %f, y = %f\n",important_nodes.at(j).second.x,important_nodes.at(j).second.y);
+				}
+			}
+		}
 
 
 		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.05)
