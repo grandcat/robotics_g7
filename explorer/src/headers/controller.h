@@ -187,6 +187,8 @@ void receive_odometry(const Odometry::ConstPtr &msg);
 
 void receive_object(const Object::ConstPtr &msg);
 
+void merge_objects();
+
 
 // Map explorer
 void update_map(double s1, double s2);

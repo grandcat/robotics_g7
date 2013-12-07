@@ -511,7 +511,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
-/*
+	/*
 	if(actions.empty() & priority.empty()) // PUT IN THE OTHER LOOP
 	{
 		// Wall in front of the robot
@@ -544,7 +544,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			cmpt = 0;
 		}
 	}
-*/
+	 */
 
 
 	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
@@ -770,7 +770,7 @@ void update_map(double s1, double s2)
 		{
 			path_finding(target);
 		}
-		*/
+		 */
 
 
 		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.05)
@@ -1286,7 +1286,7 @@ Path path(Node n1, Node n2)
 
 	return path;
 }
-*/
+ */
 
 
 /**
@@ -1554,6 +1554,8 @@ void receive_object(const Object::ConstPtr &msg)
 	node.y = y_true;
 	near_objects.push_back(node);
 
+	merge_objects();
+
 
 	// Talk
 	std_msgs::String talk;
@@ -1591,12 +1593,32 @@ void receive_object(const Object::ConstPtr &msg)
 
 	std::cout << ss.str() << std::endl;
 
-	if(mode == 0)
+	if((mode == 0) & (objects.size() > 0)) // Change condition (number of objects)
 	{
 		// Goto start
 		target.x = 0;
 		target.y = 0;
 		goto_target = true;
+	}
+}
+
+
+/**
+ * Remove new position near an object
+ * if it already exists another one close to this position
+ */
+void merge_objects()
+{
+	Node o1 = near_objects.back();
+	for(int i = 0; i < near_objects.size()-1; i++)
+	{
+		Node o2 = near_objects.at(i);
+		double distance = sqrt((o1.x-o2.x)*(o1.x-o2.x)+(o1.y-o2.y)*(o1.y-o2.y));
+		if(distance < 0.1)
+		{
+			near_objects.pop_back();
+			return;
+		}
 	}
 }
 
@@ -1618,7 +1640,7 @@ void pathToActions(Path path)
 	}
 	printf("------------------------------------\n");
 }
-*/
+ */
 
 
 /**
