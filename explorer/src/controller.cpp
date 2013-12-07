@@ -700,24 +700,26 @@ void update_map(double s1, double s2)
 
 
 	// Objects
-	for(int i = 0; i < objects.size(); i++)
+	for(int i = 2; i < objects.size()-2; i++)
 	{
 		Pixel object = nodeToPixel(objects.at(i));
 
+		if((object.i < height) & (object.j < width))
+		{
+			map.at<uchar>(object.i,object.j) = 250;
 
-		map.at<uchar>(object.i,object.j) = 250;
+			map.at<uchar>(object.i+1,object.j) = 250;
+			map.at<uchar>(object.i+2,object.j) = 250;
 
-		map.at<uchar>(object.i+1,object.j) = 250;
-		map.at<uchar>(object.i+2,object.j) = 250;
+			map.at<uchar>(object.i-1,object.j) = 250;
+			map.at<uchar>(object.i-2,object.j) = 250;
 
-		map.at<uchar>(object.i-1,object.j) = 250;
-		map.at<uchar>(object.i-2,object.j) = 250;
+			map.at<uchar>(object.i,object.j+1) = 250;
+			map.at<uchar>(object.i,object.j+2) = 250;
 
-		map.at<uchar>(object.i,object.j+1) = 250;
-		map.at<uchar>(object.i,object.j+2) = 250;
-
-		map.at<uchar>(object.i,object.j-1) = 250;
-		map.at<uchar>(object.i,object.j-2) = 250;
+			map.at<uchar>(object.i,object.j-1) = 250;
+			map.at<uchar>(object.i,object.j-2) = 250;
+		}
 	}
 
 
