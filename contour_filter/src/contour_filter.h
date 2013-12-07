@@ -48,7 +48,7 @@ Filter_mode mode;
 double minArea = 1000.0;
 //double minArea = 10.0;
 //double maxArea = 100000.0;
-double maxArea = 15000.0;
+double maxArea = 17000.0;
 
 //object rectangle parameter
 //double minRatio = 4.3;

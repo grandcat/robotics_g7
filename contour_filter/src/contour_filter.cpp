@@ -259,7 +259,8 @@ class Contour_Filter
 		shadow_bin_raw.convertTo(shadow_bin,CV_8U);
 
 		//Does some erosion and dilation to remove some of the pixels
-		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(11, 11));
+		//cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(11, 11));
+		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(15, 15));
 		cv::erode(shadow_bin, shadow_bin, element);
 		cv::dilate(shadow_bin, shadow_bin, element);
 
