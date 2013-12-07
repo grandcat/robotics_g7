@@ -72,6 +72,7 @@ int mode = 0;
 enum MODE {
 	EXPLORE = 0,
 	GOTO_TARGETS,
+	TEST,
 };
 
 
@@ -95,9 +96,9 @@ const double alpha = 5; // 10
 const double x_cmd_traj = 0.2;
 const double y_cmd_traj = 0.18;
 double y_cmd_change = 0.0;
-const double x_backward_dist = 0.08;
+const double x_backward_dist = 0.12; // 0.08
 const double x_forward_dist = 0.18;
-const double dist_front_wall = 0.19; // 0.18
+const double dist_front_wall = 0.20; // 0.18
 const double x_catch_wall = 0.17;
 
 
@@ -115,7 +116,7 @@ double x_true,y_true,theta_true;
 // Errors
 const double x_error = 0.01;
 const double theta_error = 3;
-const double dist_error = 0.03;
+const double dist_error = 0.05;
 
 
 // Actions sequence
@@ -128,6 +129,8 @@ Action current_action;
 // Go somewhere
 bool goto_target = false;
 Node target;
+
+Node current_node;
 
 
 // IR sensor mean
@@ -144,6 +147,10 @@ std::vector<Node> discrete_map;
 std::vector<Node> objects;
 std::vector<Node> near_objects;
 
+typedef std::pair<Node,Node> Nodes;
+std::vector<Nodes> important_nodes;
+std::vector<Nodes> important_nodes_targets;
+
 std::vector<Node> toDiscover;
 
 Mat proc_map, robot_map, wall_map, map;
@@ -153,6 +160,7 @@ const int height = 600;
 const int width = 600;
 const double resolution = 0.02;
 
+// Map constants
 const int sz1 = 11;
 const int sz2 = 11;
 
@@ -160,12 +168,15 @@ bool visited_flag = false;
 
 
 // Path
+/*
 int hash_value(Node const &n) {
     boost::hash<int> hasher;
     return hasher(n.x) + hasher(n.y);
 }
 typedef std::vector<Node> Path;
 typedef boost::unordered_map<Node,Path> Hash;
+typedef std::pair<Node,Path> Pair;
+*/
 
 
 // Receive functions
@@ -176,6 +187,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg);
 void receive_odometry(const Odometry::ConstPtr &msg);
 
 void receive_object(const Object::ConstPtr &msg);
+
+void merge_objects();
 
 
 // Map explorer
@@ -197,7 +210,7 @@ Node find_closest_node(std::vector<Node> vector);
 
 void path_finding(Node node);
 
-Path path(Node n1, Node n2);
+//Path path(Node n1, Node n2);
 
 bool visited_area();
 
@@ -208,6 +221,12 @@ Pixel nodeToPixel(Node node);
 Node pixelToNode(Pixel pixel);
 
 void goto_node(Node node);
+
+//void pathToActions(Path path);
+
+void create_important_node(double x1, double y1, double x2, double y2);
+
+void create_important_node_targets(double x1, double y1, double x2, double y2);
 
 
 // Angle between ]-pi,pi]

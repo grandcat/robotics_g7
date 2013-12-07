@@ -45,13 +45,45 @@ enum Filter_mode
 Filter_mode mode;
 
 //object contour parameters
-//double minArea = 1000.0;
-double minArea = 10.0;
+double minArea = 1000.0;
+//double minArea = 10.0;
 //double maxArea = 100000.0;
-double maxArea = 1000.0;
+double maxArea = 17000.0;
+
+//object rectangle parameter
+//double minRatio = 4.3;
+const double minRatio = 5;
+
+struct ObjectRectangle
+{
+  unsigned int ROI_id;
+  cv::Rect boundRect;
+};
+
+struct DetectedObject : ObjectRectangle
+{
+  std::vector<cv::Point> contours_poly;
+  cv::RotatedRect rotatedRect;
+  cv::Point mc;
+
+//    friend std::ostream & operator<<(std::ostream & stream, const DetectedObject &a)
+//    {
+//    	stream 	<< "id: "<<a.ROI_id<<"\ncontours_poly: "<<a.contours_poly.size()<<"\nboundRect: ["<<a.boundRect.tl()<<", "<<a.boundRect.br()<<"]"
+//    			<<"\nrotatedRect: "<<a.rotatedRect.angle<<"\nmc: "<<a.mc;
+//    	return stream;
+//    }
+
+};
 
 //previous ROI
 cv::Rect prev_rect;
 int ROI_id_counter = 0;
 
+//parameters for the shadow filter
+int SHADOW_FILTER_MASK_SIZE = 7;
+float SHADOW_FILTER_THRESHOLD = 0.02;
+
+//contour translation between depth to color image
+int DEPTH_TO_COLOR_DX = -30;
+int DEPTH_TO_COLOR_DY = 0;
 #endif /* CONTOUR_FILTER_H_ */

@@ -191,7 +191,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Rotation done
 				if(dtheta*dtheta < M_PI*M_PI/180/180*theta_error*theta_error)
 				{
-					create_node(x_true,y_true);
+					if(!goto_target) {create_node(x_true,y_true);}
 
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -324,7 +324,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				// Done
 				if(fabs(diff_ang) < M_PI/180*theta_error)
 				{
-					create_node(x_true,y_true);
+					if(!goto_target) {create_node(x_true,y_true);}
+
 
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -349,6 +350,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			{
 				static double x_cmd;
 				static double y_cmd;
+
 
 				// Init
 				if(!flag)
@@ -400,7 +402,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
-				if(dist < dist_error)
+				if(dist < 0.05) // dist_error // 0.08
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -409,6 +411,44 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					current_action.n = ACTION_NO;
 
 					printf("Done !\n");
+
+					Node n;
+					n.x = current_action.parameter1;
+					n.y = current_action.parameter2;
+					current_node = n;
+
+
+					if(mode == EXPLORE)
+					{
+						for(int i = 0; i < important_nodes.size(); i++)
+						{
+							if(important_nodes.at(i).first == n)
+							{
+								important_nodes.erase(important_nodes.begin()+i);
+							}
+						}
+					}
+
+
+					if(mode == GOTO_TARGETS)
+					{
+						for(int i = 0; i < important_nodes.size(); i++)
+						{
+							if(important_nodes.at(i).second == n)
+							{
+								important_nodes_targets.erase(important_nodes_targets.begin()+i);
+							}
+						}
+					}
+
+
+					/*
+					// Relaunch EKF
+					Stop_EKF s;
+					s.stop = false;
+					s.rotation_angle = 0;
+					stop_EKF_pub.publish(s);
+					 */
 				}
 			}
 
@@ -455,7 +495,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					printf("Done !\n");
 				}
 			}
-			*/
+			 */
 		}
 	}
 
@@ -488,6 +528,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
+	/*
 	if(actions.empty() & priority.empty()) // PUT IN THE OTHER LOOP
 	{
 		// Wall in front of the robot
@@ -505,6 +546,11 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 				printf("Front wall\n");
 
+				if((s1 > 0.15) & (s2 > 0.15) & !goto_target)
+				{
+					create_important_node(discrete_map.back().x,discrete_map.back().y,x_true,y_true);
+				}
+
 				return;
 			}
 			cmpt++;
@@ -515,10 +561,60 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			cmpt = 0;
 		}
 	}
+	 */
 
 
 	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
 	{
+
+		// Wall in front of the robot
+		if(s3 < dist_front_wall)
+		{
+			if(cmpt >= obstacle)
+			{
+				cmpt = 0;
+
+				Action action;
+				action.n = ACTION_ROTATION;
+				if(s1 < s2){action.parameter1 = -M_PI/2;}
+				else {action.parameter1 = M_PI/2;}
+				priority.push_back(action);
+
+				printf("Front wall\n");
+
+
+				if((s1 > 0.15) & (s2 > 0.15) & !goto_target)
+				{
+					create_important_node(discrete_map.back().x,discrete_map.back().y,x_true,y_true);
+
+					double theta = nPi2(theta_true)*M_PI/2;
+					double x2,y2;
+					if(s1 < s2)
+					{
+						x2 = x_true + 0.2*sin(theta);
+						y2 = y_true - 0.2*cos(theta);
+					}
+					else
+					{
+						x2 = x_true - 0.2*sin(theta);
+						y2 = y_true + 0.2*cos(theta);
+					}
+					create_important_node_targets(x_true,y_true,x2,y2);
+				}
+
+
+				return;
+			}
+			cmpt++;
+			return;
+		}
+		else
+		{
+			cmpt = 0;
+		}
+
+
+
 		// Bumpers
 		if(s8)
 		{
@@ -529,8 +625,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.01*cos(theta_true) + 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.01*sin(theta_true) - 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.01*cos(theta_true) + 0.03*sin(theta_true);
+			action.parameter2 = y_true + 0.01*sin(theta_true) - 0.03*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -547,8 +643,8 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			priority.push_back(action);
 
 			action.n = ACTION_GOTO_FORWARD;
-			action.parameter1 = x_true + 0.01*cos(theta_true) - 0.04*sin(theta_true);
-			action.parameter2 = y_true + 0.01*sin(theta_true) + 0.04*cos(theta_true);
+			action.parameter1 = x_true + 0.01*cos(theta_true) - 0.03*sin(theta_true);
+			action.parameter2 = y_true + 0.01*sin(theta_true) + 0.03*cos(theta_true);
 			priority.push_back(action);
 
 			printf("Hurt wall\n");
@@ -635,29 +731,47 @@ void update_map(double s1, double s2)
 
 
 	// Objects
-	for(int i = 0; i < objects.size(); i++)
+	for(int i = 2; i < objects.size()-2; i++)
 	{
 		Pixel object = nodeToPixel(objects.at(i));
 
+		if((object.i < height) & (object.j < width))
+		{
+			map.at<uchar>(object.i,object.j) = 250;
 
-		map.at<uchar>(object.i,object.j) = 250;
+			map.at<uchar>(object.i+1,object.j) = 250;
+			map.at<uchar>(object.i+2,object.j) = 250;
 
-		map.at<uchar>(object.i+1,object.j) = 250;
-		map.at<uchar>(object.i+2,object.j) = 250;
+			map.at<uchar>(object.i-1,object.j) = 250;
+			map.at<uchar>(object.i-2,object.j) = 250;
 
-		map.at<uchar>(object.i-1,object.j) = 250;
-		map.at<uchar>(object.i-2,object.j) = 250;
+			map.at<uchar>(object.i,object.j+1) = 250;
+			map.at<uchar>(object.i,object.j+2) = 250;
 
-		map.at<uchar>(object.i,object.j+1) = 250;
-		map.at<uchar>(object.i,object.j+2) = 250;
-
-		map.at<uchar>(object.i,object.j-1) = 250;
-		map.at<uchar>(object.i,object.j-2) = 250;
+			map.at<uchar>(object.i,object.j-1) = 250;
+			map.at<uchar>(object.i,object.j-2) = 250;
+		}
 	}
 
 
 	proc_map = map.clone();
 
+
+	// Test
+	if(mode == 2)
+	{
+		if((discrete_map.size() > 4) & !goto_target)
+		{
+			goto_target = true;
+			target.x = 0;
+			target.y = 0;
+
+			Action action;
+			action.n = ACTION_ROTATION;
+			action.parameter1 = M_PI;
+			priority.push_back(action);
+		}
+	}
 
 	// Goto target
 	if(goto_target & actions.empty() & priority.empty())
@@ -666,18 +780,54 @@ void update_map(double s1, double s2)
 		n.x = x_true;
 		n.y = y_true;
 
-		/*
-		Path p = path(n,target);
 
-		if(p.size() != 0)
+		if((mode == EXPLORE) |(mode == 2))
 		{
-			printf("Goto node: x = %f, y = %f\n",p.at(0).x,p.at(0).y);
-			goto_node(p.at(0));
+			for(int i = 0; i < important_nodes.size(); i++)
+			{
+				if(isPath(n,important_nodes.at(i).second))
+				{
+					printf("PATH FOUND\n");
+					path_finding(important_nodes.at(i).second);
+					goto_node(important_nodes.at(i).first);
+					break;
+				}
+				else
+				{
+					printf("No path to x = %f, y = %f\n",important_nodes.at(i).second.x,important_nodes.at(i).second.y);
+				}
+			}
 		}
-		*/
-		path_finding(target);
 
-		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < dist_error)
+		/*
+		else
+		{
+			path_finding(target);
+		}
+		 */
+
+
+		if(mode == GOTO_TARGETS)
+		{
+			for(int i = 0; i < important_nodes.size(); i++)
+			{
+				int j = important_nodes.size()-i-1;
+				if(isPath(n,important_nodes.at(j).first))
+				{
+					printf("PATH FOUND\n");
+					path_finding(important_nodes.at(j).first);
+					goto_node(important_nodes.at(j).second);
+					break;
+				}
+				else
+				{
+					printf("No path to x = %f, y = %f\n",important_nodes.at(j).first.x,important_nodes.at(j).first.y);
+				}
+			}
+		}
+
+
+		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.05)
 		{
 			Action action;
 			action.n = ACTION_STOP;
@@ -688,10 +838,17 @@ void update_map(double s1, double s2)
 
 	// Check visited area
 	visited_flag = visited_area();
-	if(visited_flag & actions.empty() & priority.empty())
+	if(visited_flag & actions.empty() & priority.empty() & !goto_target)
 	{
-		//printf("Already visited !\n");
-		path_finding(find_closest_node(toDiscover));
+		printf("Already visited !\n");
+
+		if(mode != 2)
+		{
+			//Path p = path(find_closest_node(toDiscover),target);
+			//pathToActions(p);
+
+			path_finding(find_closest_node(toDiscover));
+		}
 	}
 
 
@@ -1091,67 +1248,99 @@ void path_finding(Node n)
  * Return a path with nodes that the robot has to follow
  * to go from n1 to n2
  */
+/*
 Path path(Node n1, Node n2)
 {
 	Path path;
-	Hash hash,end;
+	std::vector<Pair> hash,end;
 
 	for(int i = 0; i < discrete_map.size(); i++)
 	{
-		if(isPath(n1,discrete_map.at(i)))
+		if(!(discrete_map.at(i) == n1))
 		{
-			Path p;
-			p.push_back(discrete_map.at(i));
-			hash[discrete_map.at(i)] = p;
+			if(isPath(n1,discrete_map.at(i)))
+			{
+				Path p;
+				p.push_back(discrete_map.at(i));
+
+				Pair t;
+				t.first = discrete_map.at(i);
+				t.second = p;
+				hash.push_back(t);
+
+				//hash[discrete_map.at(i)] = p;
+			}
 		}
-		if(isPath(n2,discrete_map.at(i)))
+	}
+
+	Path p;
+	p.push_back(n2);
+	Pair t;
+	t.first = n2;
+	t.second = p;
+	end.push_back(t);
+	//end[n2] = p;
+
+	for(int i = 0; i < hash.size(); i++)
+	{
+		if(hash.at(i).first == n2)
 		{
-			Path p;
-			p.push_back(discrete_map.at(i));
-			end[discrete_map.at(i)] = p;
+			path.push_back(n2);
+			return path;
 		}
 	}
 
 	// BFS
-	Hash::iterator it;
-	for(it = hash.begin(); it != hash.end(); it++)
+	//Hash::iterator it;
+	//for(it = hash.begin(); it != hash.end(); it++) // PROBLEM !
+	for(int i = 0; i < hash.size(); i++)
 	{
-		Node n = it->first;
-		Path p = hash.at(n);
+		//Node n = it->first;
+		//Path p = hash[n];
 
-		if(end.count(n) != 0)
-		{
-			break;
-		}
+		Node n = hash.at(i).first;
+		Path p = hash.at(i).second;
+
+		printf("Treat node: x = %f, y = %f\n",n.x,n.y);
 
 		// Expand nodes
 		for(int i = 0; i < discrete_map.size(); i++)
 		{
-			if(!(discrete_map.at(i) == n))
+			bool alreadyInHash = false;
+			for(int j = 0; j < hash.size(); j++)
+			{
+				if(discrete_map.at(i) == hash.at(j).first)
+				{
+					alreadyInHash = true;
+				}
+			}
+			if((!(discrete_map.at(i) == n1)) & !alreadyInHash)
 			{
 				if(isPath(n,discrete_map.at(i)))
 				{
-					Path pp = p;
+					Path pp = Path(p);
 					pp.push_back(discrete_map.at(i));
-					hash[discrete_map.at(i)] = pp;
+					//hash[discrete_map.at(i)] = pp;
+					Pair t;
+					t.first = discrete_map.at(i);
+					t.second = pp;
+					hash.push_back(t);
+					printf("Add node to hash: x = %f, y = %f\n",discrete_map.at(i).x,discrete_map.at(i).y);
+
+					if(discrete_map.at(i) == n2)
+					{
+						path = pp;
+						return path;
+					}
 				}
 			}
 		}
 	}
 
 
-	// Debug
-	printf("------------------------------------\n");
-	printf("Path found:\n");
-	for(int i = 0; i < path.size(); i++)
-	{
-		printf("x = %f, y = %f\n",path.at(i).x,path.at(i).y);
-	}
-	printf("------------------------------------\n");
-
-
 	return path;
 }
+ */
 
 
 /**
@@ -1339,6 +1528,8 @@ void create_node(double x, double y)
 
 	discrete_map.push_back(n);
 
+	current_node = n;
+
 	// Debug
 	printf("New node:  x = %f, y = %f\n",x,y);
 }
@@ -1400,11 +1591,11 @@ Node find_closest_node(std::vector<Node> vector)
  */
 void receive_object(const Object::ConstPtr &msg)
 {
-	//double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
-	//double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
+	double x_object = x_true + (msg->x+x_prime)*cos(theta_true) - (msg->y+y_prime)*sin(theta_true);
+	double y_object = y_true + (msg->x+x_prime)*sin(theta_true) + (msg->y+y_prime)*cos(theta_true);
 
-	double x_object = x_true + (0.3+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
-	double y_object = y_true + (0.3+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
+	//double x_object = x_true + (0.3+x_prime)*cos(theta_true) - (0+y_prime)*sin(theta_true);
+	//double y_object = y_true + (0.3+x_prime)*sin(theta_true) + (0+y_prime)*cos(theta_true);
 
 	Node node;
 
@@ -1416,6 +1607,8 @@ void receive_object(const Object::ConstPtr &msg)
 	node.x = x_true;
 	node.y = y_true;
 	near_objects.push_back(node);
+
+	merge_objects();
 
 
 	// Talk
@@ -1454,11 +1647,86 @@ void receive_object(const Object::ConstPtr &msg)
 
 	std::cout << ss.str() << std::endl;
 
+	if((mode == 0) & (objects.size() > 0)) // Change condition (number of objects)
+	{
+		// Goto start
+		target.x = 0;
+		target.y = 0;
+		goto_target = true;
+	}
+}
 
-	// Goto start
-	target.x = 0;
-	target.y = 0;
-	goto_target = true;
+
+/**
+ * Remove new position near an object
+ * if it already exists another one close to this position
+ */
+void merge_objects()
+{
+	Node o1 = near_objects.back();
+	for(int i = 0; i < near_objects.size()-1; i++)
+	{
+		Node o2 = near_objects.at(i);
+		double distance = sqrt((o1.x-o2.x)*(o1.x-o2.x)+(o1.y-o2.y)*(o1.y-o2.y));
+		if(distance < 0.1)
+		{
+			near_objects.pop_back();
+			return;
+		}
+	}
+}
+
+
+/**
+ * Put the path in the actions list
+ */
+/*
+void pathToActions(Path path)
+{
+	path_finding(path.at(0));
+
+	// Debug
+	printf("------------------------------------\n");
+	printf("Path found:\n");
+	for(int i = 0; i < path.size(); i++)
+	{
+		printf("x = %f, y = %f\n",path.at(i).x,path.at(i).y);
+	}
+	printf("------------------------------------\n");
+}
+ */
+
+
+/**
+ * Create nodes if the robot made a choice when it has to turn
+ */
+void create_important_node(double x1, double y1, double x2, double y2)
+{
+	Nodes nodes;
+	nodes.first.x = x1;
+	nodes.first.y = y1;
+	nodes.second.x = x2;
+	nodes.second.y = y2;
+	important_nodes.push_back(nodes);
+
+	printf("Important nodes: x1 = %f, y1 = %f, x2 = %f, y2 = %f\n",x1,y1,x2,y2);
+}
+
+
+/**
+ * Create nodes if the robot made a choice when it has to turn
+ * Made to find path to targets
+ */
+void create_important_node_targets(double x1, double y1, double x2, double y2)
+{
+	Nodes nodes;
+	nodes.first.x = x1;
+	nodes.first.y = y1;
+	nodes.second.x = x2;
+	nodes.second.y = y2;
+	important_nodes_targets.push_back(nodes);
+
+	printf("Important nodes targets: x1 = %f, y1 = %f, x2 = %f, y2 = %f\n",x1,y1,x2,y2);
 }
 
 
@@ -1543,30 +1811,33 @@ int main(int argc, char** argv)
 	/*
 	string say_out = string("espeak \"") + "Go" + string("\"");
 	system(say_out.c_str());
-	*/
+	 */
 
 
 	// Mode
-	if(mode == EXPLORE)
+	if(mode == EXPLORE | mode == 2)
 	{
 		create_node(0,0);
+		create_important_node(0,0,0.2,0);
+		create_important_node_targets(0,0,0.2,0);
 	}
 
 
 	if(mode == GOTO_TARGETS)
 	{
-		// Open discrete_map
-		discrete_map.resize(500);
-		std::ifstream is("/home/robo/explorer/discrete_map.dat",std::ios::binary);
-		is.read(reinterpret_cast<char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
+		// Open important_nodes_targets map
+		important_nodes_targets.resize(500);
+		std::ifstream is("/home/robo/explorer/important_nodes_targets.dat",std::ios::binary);
+		is.read(reinterpret_cast<char*>(&(important_nodes_targets[0])),important_nodes_targets.size()*sizeof(Nodes));
 		is.close();
 
-		for(int i = 1; i < discrete_map.size(); i++)
+		// Resize
+		for(int i = 1; i < important_nodes_targets.size(); i++)
 		{
-			if((discrete_map.at(i).x == 0) & (discrete_map.at(i).y == 0))
+			if((important_nodes_targets.at(i).second.x == 0) & (important_nodes_targets.at(i).second.y == 0))
 			{
 				//printf("test\n");
-				discrete_map.resize(i);
+				important_nodes_targets.resize(i);
 				break;
 			}
 		}
@@ -1578,6 +1849,7 @@ int main(int argc, char** argv)
 		is2.read(reinterpret_cast<char*>(&(objects[0])),objects.size()*sizeof(Node));
 		is2.close();
 
+		// Resize
 		for(int i = 0; i < objects.size(); i++)
 		{
 			if((objects.at(i).x == 0) & (objects.at(i).y == 0))
@@ -1594,6 +1866,7 @@ int main(int argc, char** argv)
 		is3.read(reinterpret_cast<char*>(&(near_objects[0])),near_objects.size()*sizeof(Node));
 		is3.close();
 
+		// Resize
 		for(int i = 0; i < near_objects.size(); i++)
 		{
 			if((near_objects.at(i).x == 0) & (near_objects.at(i).y == 0))
@@ -1606,6 +1879,7 @@ int main(int argc, char** argv)
 
 		// Open maps
 		robot_map = imread("/home/robo/explorer/robot_map.png",0);
+		wall_map = imread("/home/robo/explorer/wall_map.png",0);
 
 
 		// Goto one object
@@ -1636,11 +1910,11 @@ int main(int argc, char** argv)
 
 	if(mode == EXPLORE)
 	{
-		// Save discrete map
-    	discrete_map.resize(500);
-    	std::ofstream os("/home/robo/explorer/discrete_map.dat",std::ios::binary);
-    	os.write(reinterpret_cast<const char*>(&(discrete_map[0])),discrete_map.size()*sizeof(Node));
-    	os.close();
+		// Save important_nodes_targets map
+		important_nodes_targets.resize(500);
+		std::ofstream os("/home/robo/explorer/important_nodes_targets.dat",std::ios::binary);
+		os.write(reinterpret_cast<const char*>(&(important_nodes_targets[0])),important_nodes_targets.size()*sizeof(Nodes));
+		os.close();
 
 		// Save objects
 		objects.resize(500);

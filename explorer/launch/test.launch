@@ -2,15 +2,15 @@
 
   <node name="serial_node" pkg="rosserial_python" type="serial_node.py"/>
   <node pkg="explorer" name="motors" type="motors"/>
-  <node pkg="explorer" name="EKF" type="EKF" output="screen">
-  	<param name="mode" value="1"/>
+  <node pkg="explorer" name="EKF" type="EKF">
+  	<param name="mode" value="2"/>
   </node>
   <node pkg="explorer" name="controller" type="controller" output="screen">
-  	<param name="mode" value="1"/>
+  	<param name="mode" value="2"/>
   </node>	
   
-  <node pkg="obj_detection" name="recogntion_master" type="recognition_master" output="screen"/>
+  <node pkg="obj_detection" name="recogntion_master" type="recognition_master"/>
   
   <node pkg="robot_talk" name="robot_talk" type="robot_talk"/>
-
+  
 </launch>
