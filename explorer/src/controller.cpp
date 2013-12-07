@@ -402,7 +402,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
-				if(dist < 0.1) // dist_error // 0.08
+				if(dist < 0.05) // dist_error // 0.08
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -511,7 +511,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 	s7 = false;
 
 
-	/*
+/*
 	if(actions.empty() & priority.empty()) // PUT IN THE OTHER LOOP
 	{
 		// Wall in front of the robot
@@ -529,6 +529,11 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 
 				printf("Front wall\n");
 
+				if((s1 > 0.15) & (s2 > 0.15) & !goto_target)
+				{
+					create_important_node(discrete_map.back().x,discrete_map.back().y,x_true,y_true);
+				}
+
 				return;
 			}
 			cmpt++;
@@ -539,11 +544,12 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 			cmpt = 0;
 		}
 	}
-	 */
+*/
 
 
 	if(priority.empty() & (current_action.n != ACTION_GOTO_ROTATION) & (current_action.n != ACTION_ROTATION))
 	{
+
 		// Wall in front of the robot
 		if(s3 < dist_front_wall)
 		{
@@ -575,6 +581,7 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 		{
 			cmpt = 0;
 		}
+
 
 
 		// Bumpers
@@ -720,7 +727,7 @@ void update_map(double s1, double s2)
 	// Test
 	if(mode == 2)
 	{
-		if(discrete_map.size() > 3)
+		if((discrete_map.size() > 4) & !goto_target)
 		{
 			goto_target = true;
 			target.x = 0;
@@ -747,9 +754,14 @@ void update_map(double s1, double s2)
 			{
 				if(isPath(n,important_nodes.at(i).second))
 				{
+					printf("PATH FOUND\n");
 					path_finding(important_nodes.at(i).second);
 					goto_node(important_nodes.at(i).first);
 					break;
+				}
+				else
+				{
+					printf("No path to x = %f, y = %f\n",important_nodes.at(i).second.x,important_nodes.at(i).second.y);
 				}
 			}
 		}
@@ -770,7 +782,7 @@ void update_map(double s1, double s2)
 
 	// Check visited area
 	visited_flag = visited_area();
-	if(visited_flag & actions.empty() & priority.empty())
+	if(visited_flag & actions.empty() & priority.empty() & !goto_target)
 	{
 		printf("Already visited !\n");
 
@@ -1637,8 +1649,10 @@ void create_important_node(double x1, double y1, double x2, double y2)
 	nodes.first.x = x1;
 	nodes.first.y = y1;
 	nodes.second.x = x2;
-	nodes.second.x = y2;
+	nodes.second.y = y2;
 	important_nodes.push_back(nodes);
+
+	printf("Important nodes: x1 = %f, y1 = %f, x2 = %f, y2 = %f\n",x1,y1,x2,y2);
 }
 
 
