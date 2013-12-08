@@ -223,6 +223,68 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
     img_pub_.publish(img_ptr->toImageMsg());
   }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Testing to calculate the contours of the found figures
+//
+//	cv::Mat test_src;
+//	test_src = cv_ptr->image; //get the source image from the pointer
+//
+//	//crop out the objects from the image
+//	cv::Mat test_crop_img = cv::Mat::zeros( test_src.size(), test_src.type());
+//	cv::Mat test_mask = cv::Mat::zeros( test_src.size(), test_src.type());
+//	for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
+//	{
+//		//Drawing the up-right rectangle as the ROI
+//		//cv::Rect ROI(it->boundRect.x, it->boundRect.y, it->boundRect.width , it->boundRect.height);
+//		//rectangle(mask, ROI.tl(), ROI.br(), color_white, CV_FILLED); //mask
+//
+//		//Drawing the found contours of the objects as the ROI
+//		std::vector<cv::Point> contour_copy = it->contours_poly;
+//
+//		std::vector<std::vector<cv::Point> > T = std::vector<std::vector<cv::Point> >(1,contour_copy);
+//		for (unsigned int i = 0; i < T.size(); i++)
+//		{
+//			drawContours( test_mask, T,i, cv::Scalar( 255, 255, 255), CV_FILLED, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
+//		}
+//
+//		//increase the size of the contour
+//		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(13, 13));
+//		cv::dilate(test_mask, test_mask, element);
+//
+//		// Cut out ROI and store it in crop_img
+//		test_src.copyTo(test_crop_img, test_mask);
+//	}
+//	//for some reason the source image get overwritten. Retrieve it back!
+//	cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+//	test_src = cv_ptr->image.clone();
+//
+//
+//
+//	cv::Mat crop_img_gray, canny_output, canny_output_copy;
+//	cvtColor( test_crop_img, crop_img_gray, CV_BGR2GRAY );
+//	blur( crop_img_gray, crop_img_gray, cv::Size(3,3) );
+//	cv::Canny( crop_img_gray, canny_output, 0, 255, 3 );
+//	  canny_output.copyTo(canny_output_copy);
+//	  std::vector<std::vector<cv::Point> > test_contours;
+//	  std::vector<cv::Vec4i> test_hierarchy;
+//	  findContours( canny_output_copy, test_contours, test_hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+//	  /// Draw contours
+//	  cv::Mat test_drawing = cv::Mat::zeros( crop_img.size(), CV_8UC3 );
+//	  for( int i = 0; i< test_contours.size(); i++ )
+//	  {
+//	      drawContours( test_drawing, test_contours, i, cv::Scalar( 255, 255, 255), 2, 8, test_hierarchy, 0, cv::Point() );
+//	  }
+//	  std::cout<<"Size: "<<test_contours.size()<<std::endl;
+//	  cv::imshow("Cropped image", test_crop_img);
+//	  cv::imshow("Cropped blurred image", crop_img_gray);
+//	  cv::imshow("Canny edge", canny_output);
+//	  cv::imshow("found contours", test_drawing);
+//
+//	  cv::waitKey(3);
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //track objects
 
   //if there where no previous rectangles, add some!

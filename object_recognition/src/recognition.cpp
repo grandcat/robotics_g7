@@ -16,6 +16,7 @@
 #include <fstream>
 #include <boost/algorithm/string.hpp>
 
+#include <algorithm> //for find function
 #include "recognition_constants.hpp"
 #include <object_recognition/Recognized_objects.h> //msg for recognized object
 
@@ -55,6 +56,8 @@ struct IdImg
 	double score_hsv;
 	double score_feat;
 	double score_total;
+	int nrOfFesturesFound;
+	int nrOfFesturesTotal;
 
     bool operator<(const IdImg& a) const
     {
@@ -64,7 +67,8 @@ struct IdImg
     friend std::ostream & operator<<(std::ostream & stream, const IdImg &a)
     {
     	stream 	<< "Name: "<<a.name<<"\nTotal score: "<<a.score_total
-    			<<"\nRGB score: "<<a.score_rgb<<"\nHSV score: "<<a.score_hsv<<"\nFeat score: "<<a.score_feat;
+    			<<"\nRGB score: "<<a.score_rgb<<"\nHSV score: "<<a.score_hsv<<"\nFeat score: "<<a.score_feat
+    			<<"\nFound features: "<<a.nrOfFesturesFound<<"\nTotal features: "<<a.nrOfFesturesTotal;
     	return stream;
     }
 };
@@ -81,6 +85,7 @@ int keypThreshold = 30;
 vector<int> identified;
 vector<double> obj_scores;
 
+bool FLAG_SHOW_OUTPUT = false;
 
 /*
  * OLD, NOT USED ANYMORE!
@@ -290,7 +295,7 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 		matched_objects[i].obj = trainImg[i].obj;
 		matched_objects[i].name = trainImg[i].name;
 
-		//only store the score if it is positive (positive correlation)
+
 		//nomalize the score to be between [0,1] (divide the length of the vector
 		//with the max lenght of the vector.
 
@@ -308,21 +313,7 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 
 
 
-		//TODO
-		// If negative correlation it will not be a match but will not show when taking the square. 
-		// Therefore matched objects should not include negative correlation
-//		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
-//
-//
-//
-//			/*double res = resB*resB + resG*resG + resR*resR + resH*resH;
-//			if(res > bestRes) {
-//				bestRes = res;
-//				bestColorMatch = trainImg[i].obj;
-//				//std::cout << "RGB match: " << objects[bestColorMatch-1] << " Res: " << bestRes << std::endl;
-//				//std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
-//			}*/
-//		}
+
 
 	}
 	//std::cout << "Best match color: " << bestColorMatch << std::endl;
@@ -335,6 +326,9 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 		BFMatcher matcher(cv::NORM_L1, true);
 		vector<cv::DMatch> matches;
 		matcher.match(feat.descriptors, trainImg[i].feat.descriptors, matches);
+
+		matched_objects[i].nrOfFesturesFound = matches.size();
+		matched_objects[i].nrOfFesturesTotal = trainImg[i].feat.keypoints.size();
 
 		// Check percent of keypoints that match
 		float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
@@ -357,47 +351,31 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 
 	std::sort(matched_objects.begin(), matched_objects.end());
 
-	//return matched_objects;
-	//take out the 3 best unique matches (FOR LATER!!!)
-	int max_size = 5;
-	int saved_obj = 0;
-	bool flag_unique_obj = true;
-	std::vector<IdImg> best_matches(max_size);
-	for (int i=0; i< matched_objects.size(); i++)
-	{
-		if (saved_obj == max_size) break;
+	//take out the max_size best unique matches. If max_size is -1 (or a number that best_matches.size() never can be,
+	//then create a rank list of all objects
+	int max_size = -1;
+	std::vector<int> saved_id;
+	std::vector<IdImg> best_matches;
 
-		else if (saved_obj == 0)
-		{
-			best_matches[saved_obj] = matched_objects[i];
-			saved_obj++;
-			continue;
-		}
+	for (int i=0; i < matched_objects.size(); i++)
+	{
+		if (best_matches.size() == max_size) break;
+
 		else
 		{
-			//check if we have not already saved the same object
+			//if the item does not exist in the vector
+			if (std::find(saved_id.begin(), saved_id.end(), matched_objects[i].obj)==saved_id.end())
+			{
+				//std::cout<<"New id: "<<matched_objects[i].obj<<std::endl;
+				saved_id.push_back(matched_objects[i].obj);
+				best_matches.push_back(matched_objects[i]);
 
-			for (int j = 0; j < saved_obj; j++)
-			{
-				if (best_matches[j].obj == matched_objects[i].obj) flag_unique_obj = false;
 			}
-			if (flag_unique_obj)
-			{
-				best_matches[saved_obj] = matched_objects[i];
-				saved_obj++;
-				flag_unique_obj = true;
-			}
+			else
+				continue;
 		}
-
 	}
 
-//	for (int i = 0; i < best_matches.size(); i++)
-//	{
-//		std::cout<<best_matches[i]<<std::endl;
-//	}
-//	std::cout<<""<<std::endl;
-
-	//return matched_objects;
 	return best_matches;
 }
 
@@ -532,13 +510,19 @@ public:
 
 		// Detect objects through feature detection
 		int featSize = featureDetector(src).keypoints.size();
-		//std::cout << "Nr keypoints: " << featSize << std::endl;
+
+		if (FLAG_SHOW_OUTPUT)
+		{
+			//std::cout << "Nr keypoints: " << featSize << std::endl;
+		}
 
 		int type; //{"pepper", "lemon", "pear", "carrot", "giraff", "tiger", "hippo"};
 
 		// Try to recognize object if enough keys are detected
+		//keypThreshold = 0;
 		if(featSize > keypThreshold) {
-			std::cout << "Sees an object" << std::endl;
+			if (FLAG_SHOW_OUTPUT)
+				std::cout << "Sees an object with nr of feature:\n"<<featSize << std::endl;
 			
 			// Color detection
 			RGBHist rgb = colorDetectionRGB(src);
@@ -554,12 +538,19 @@ public:
 			std::vector<IdImg> objects = identifyObject(rgb, hsv, feat);
 
 			type = objects[0].obj;
-			for (unsigned int i = 0; i < objects.size() && i < 5; ++i)
-			{
-				std::cout<<i+1<<": "<<objects[i]<<std::endl;
 
+			if (FLAG_SHOW_OUTPUT)
+			{
+				int nr_to_show = 5;
+				for (unsigned int i = 0; i < objects.size() && i < nr_to_show; ++i)
+				//for (unsigned int i = 0; i < objects.size(); ++i)
+				{
+					std::cout<<i+1<<": "<<objects[i]<<std::endl;
+					std::cout<<"---------------------------"<<std::endl;
+
+				}
+				std::cout<<"\n";
 			}
-			std::cout<<"\n";
 
 			std::string name  = objects[0].name;
 			//std::cout << "Recognized object: " << name << std::endl;
@@ -579,10 +570,13 @@ public:
 		}
 		else //no object found
 		{
-			std::cout << "no object" << std::endl;
-                        type = (int)objRecognition::OBJTYPE_NO_OBJECT;
+			if (FLAG_SHOW_OUTPUT)
+			{
+				std::cout << "no object\n" << std::endl;
+			}
+            type = (int)objRecognition::OBJTYPE_NO_OBJECT;
 		}
-		std::cout<<"\n";
+
 
 		//Create ros-message
 		object_recognition::Recognized_objects obj_msg;
@@ -606,8 +600,12 @@ int main(int argc, char** argv)
   ROS_INFO("[Object features] Start training.");
   train();
   ROS_INFO("Training complete!");
+  FLAG_SHOW_OUTPUT = true;
+
+
 	// Train mode
 	if(argc > 1) {
+
 		/*train();
 		Mat src = imread( argv[1] );
 		RGBHist hist = colorDetectionRGB(src);
