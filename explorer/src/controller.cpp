@@ -1819,6 +1819,7 @@ int main(int argc, char** argv)
 	{
 		create_node(0,0);
 		create_important_node(0,0,0.2,0);
+		create_important_node_targets(0,0,0.2,0);
 	}
 
 
