@@ -424,7 +424,8 @@ void receive_EKF(const EKF::ConstPtr &msg)
 						{
 							if(important_nodes.at(i).first == n)
 							{
-								important_nodes.erase(important_nodes.begin()+i);
+								important_nodes.resize(i);
+								//important_nodes.erase(important_nodes.begin()+i);
 							}
 						}
 					}
@@ -436,7 +437,11 @@ void receive_EKF(const EKF::ConstPtr &msg)
 						{
 							if(important_nodes.at(i).second == n)
 							{
-								important_nodes_targets.erase(important_nodes_targets.begin()+i);
+								for(int j = 0; j <= i; j++)
+								{
+									important_nodes_targets.erase(important_nodes_targets.begin()+j);
+								}
+								//important_nodes_targets.erase(important_nodes_targets.begin()+i);
 							}
 						}
 					}
