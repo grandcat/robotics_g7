@@ -1663,11 +1663,12 @@ void receive_object(const Object::ConstPtr &msg)
 
 
 /**
- * Remove new position near an object
+ * Remove new position near an object and object position
  * if it already exists another one close to this position
  */
 void merge_objects()
 {
+	// Near objects
 	Node o1 = near_objects.back();
 	for(int i = 0; i < near_objects.size()-1; i++)
 	{
@@ -1676,6 +1677,19 @@ void merge_objects()
 		if(distance < 0.1)
 		{
 			near_objects.pop_back();
+			break;
+		}
+	}
+
+	// Objects
+	o1 = objects.back();
+	for(int i = 0; i < objects.size()-1; i++)
+	{
+		Node o2 = objects.at(i);
+		double distance = sqrt((o1.x-o2.x)*(o1.x-o2.x)+(o1.y-o2.y)*(o1.y-o2.y));
+		if(distance < 0.1)
+		{
+			objects.pop_back();
 			return;
 		}
 	}
