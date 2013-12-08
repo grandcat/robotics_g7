@@ -275,11 +275,6 @@ Features featureDetector(Mat img)
 std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 {
 	std::vector<IdImg> matched_objects(trainImg.size()); //vector that will hold information from all tested objects
-	
-	// Match color histogram
-	/*int bestColorMatch = 0;
-	double bestRGBRes = 0.7;
-	double bestHSVRes = 0.7;*/
 
 	for(unsigned int i=0; i < trainImg.size(); ++i) {
 		//RGB
@@ -298,25 +293,18 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 
 		//nomalize the score to be between [0,1] (divide the length of the vector
 		//with the max lenght of the vector.
-
 		//std::cout<<resB<<" "<<resG<<" "<<resR<<" "<<resH<<" "<<resS<<" "<<resV<<" "<<std::endl;
-		matched_objects[i].score_rgb = sqrt( resB*resB + resG*resG + resR*resR)/sqrt(3);
-		matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
-//		if(resB > 0 && resG > 0 && resR > 0)
-//			matched_objects[i].score_rgb = sqrt( resB*resB + resG*resG + resR*resR)/sqrt(3);
-//		else
-//			matched_objects[i].score_rgb = 0;
-//		if (resH > 0 && resS > 0 && resV > 0)
-//			matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
-//		else
-//			matched_objects[i].score_hsv = 0;
-
-
-
-
-
+		//matched_objects[i].score_rgb = sqrt( resB*resB + resG*resG + resR*resR)/sqrt(3);
+		//matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
+		if(resB > 0 && resG > 0 && resR > 0)
+			matched_objects[i].score_rgb = sqrt( resB*resB + resG*resG + resR*resR)/sqrt(3);
+		else
+			matched_objects[i].score_rgb = 0;
+		if (resH > 0 && resS > 0 && resV > 0)
+			matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
+		else
+			matched_objects[i].score_hsv = 0;
 	}
-	//std::cout << "Best match color: " << bestColorMatch << std::endl;
 
 	// Match descriptors
 	//int bestDescriptMatch = 0;
@@ -331,22 +319,14 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 		matched_objects[i].nrOfFesturesTotal = trainImg[i].feat.keypoints.size();
 
 		// Check percent of keypoints that match
-		float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
+		//float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
+		float res = (float)matches.size() / feat.keypoints.size();
 
 		///////////////////////////////////////////////////////////
 		matched_objects[i].score_feat = (double)res;
 		//matched_objects[i].score_total = matched_objects[i].score_rgb * matched_objects[i].score_hsv * matched_objects[i].score_feat;
-		//matched_objects[i].score_total = matched_objects[i].score_hsv * matched_objects[i].score_feat;
-		matched_objects[i].score_total = matched_objects[i].score_hsv ;
-		/*if(res > matchPercent) {
-			matchPercent = res;
-			bestDescriptMatch = trainImg[i].obj;
-			//std::cout << "Descriptor match: " << objects[bestDescriptMatch-1] << " Percent: " << matchPercent << std::endl;
-			if(bestDescriptMatch == bestColorMatch) {
-				//std::cout << "Best desc & color match: " << objects[bestDescriptMatch-1] << std::endl;
-				break;
-			}
-		}*/
+		matched_objects[i].score_total = matched_objects[i].score_hsv * matched_objects[i].score_feat;
+		//matched_objects[i].score_total = matched_objects[i].score_hsv ;
 	}
 
 	std::sort(matched_objects.begin(), matched_objects.end());
