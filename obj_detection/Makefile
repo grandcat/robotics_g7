@@ -358,6 +358,21 @@ src/color_filter.s:
 .PHONY : src/color_filter.s
 
 # target to build an object file
+src/conditional_euclidean_clustering.o:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/conditional_euclidean_clustering.o
+.PHONY : src/conditional_euclidean_clustering.o
+
+# target to preprocess a source file
+src/conditional_euclidean_clustering.i:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/conditional_euclidean_clustering.i
+.PHONY : src/conditional_euclidean_clustering.i
+
+# target to generate assembly for a file
+src/conditional_euclidean_clustering.s:
+	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/conditional_euclidean_clustering.s
+.PHONY : src/conditional_euclidean_clustering.s
+
+# target to build an object file
 src/pcl_detection.o:
 	$(MAKE) -f CMakeFiles/pcl_processing.dir/build.make CMakeFiles/pcl_processing.dir/src/pcl_detection.o
 .PHONY : src/pcl_detection.o
@@ -462,6 +477,9 @@ help:
 	@echo "... src/color_filter.o"
 	@echo "... src/color_filter.i"
 	@echo "... src/color_filter.s"
+	@echo "... src/conditional_euclidean_clustering.o"
+	@echo "... src/conditional_euclidean_clustering.i"
+	@echo "... src/conditional_euclidean_clustering.s"
 	@echo "... src/pcl_detection.o"
 	@echo "... src/pcl_detection.i"
 	@echo "... src/pcl_detection.s"

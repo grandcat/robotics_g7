@@ -22,6 +22,7 @@
 // PCL Detetion and extraction
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include "headers/conditional_euclidean_clustering.hpp"   // Copied version of PCL 1-7
 
 #define VOXEL_LEAF_SIZE 0.005
 
@@ -64,6 +65,21 @@ void FeatureCloud::computeFeatureDescriptor()
  * Class ImageFetchSmooth
  *
  */
+
+/**
+ * @brief customEuclideanSegmCond
+ *  This function mainly used as a work around for a bug in the original cluster segmentation of PCL 1.5
+ * @param point_a
+ * @param point_b
+ * @param squared_distance
+ * @return
+ */
+bool
+customEuclideanSegmCond(const pcl::PointXYZ& point_a, const pcl::PointXYZ& point_b, float squared_distance)
+{
+  return true;
+}
+
 void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_raw)
 {
   if (!processingActive)  // TODO: replace by shutdown subscribtion when not needed
@@ -186,7 +202,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   // Create box which removes everything left and right to bottom plane description
   pcl::CropBox<pcl::PointXYZ> pclCropUnusedArea;
   pclCropUnusedArea.setInputCloud(pclFiltered);
-  pclCropUnusedArea.setMin(Eigen::Vector4f(std::min(planeEdge_mostLeft, -0.1f), -0.2, 0.0, 1));    // y: max height of object
+  pclCropUnusedArea.setMin(Eigen::Vector4f(std::min(planeEdge_mostLeft +0.01f, -0.1f), -0.2, 0.0, 1));    // y: max height of object
   pclCropUnusedArea.setMax(Eigen::Vector4f(std::max(planeEdge_mostRight - 0.02f, 0.1f), 0.03, 1.0, 1));
   pclCropUnusedArea.filter(*pclFiltered);
   std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
@@ -208,22 +224,27 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclExtractIdx.filter(*pclFiltered);
 
   std::cerr << "Points left after cropping all walls:" << pclFiltered->points.size() << std::endl;
+  // If no points left: stop analysis to prevent seg faults
+  if (pclFiltered->points.size() == 0)
+  {
+    ROS_INFO("[PCL processing] Reject this frame, no points left after removing the walls.");
+    return;
+  }
 
   // Eucledian cluster extraction
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr sTree(new pcl::search::KdTree<pcl::PointXYZ>);
-  sTree->setInputCloud(pclFiltered);    // be careful with empty cloud!
-  std::vector<pcl::PointIndices> clusters;
-  pcl::EuclideanClusterExtraction<pcl::PointXYZ> pclCluster;
+  pcl::IndicesClustersPtr clusters (new pcl::IndicesClusters);
+  pcl::ConditionalEuclideanClustering<pcl::PointXYZ> pclCluster;
   pclCluster.setClusterTolerance (0.05);
+  pclCluster.setConditionFunction(&customEuclideanSegmCond);
   pclCluster.setMinClusterSize(32);
   pclCluster.setMaxClusterSize(10000);
-  pclCluster.setSearchMethod(sTree);
+//  pclCluster.setSearchMethod(sTree);
   pclCluster.setInputCloud(pclFiltered);
-  pclCluster.extract(clusters);
+  pclCluster.segment(*clusters);
 
-  std::cerr << "Number of extracted clusters: " << clusters.size() << std::endl;
+  std::cerr << "Number of extracted clusters: " << clusters->size() << std::endl;
   int clustId = 0;
-  for (std::vector<pcl::PointIndices>::const_iterator it = clusters.begin (); it != clusters.end (); ++it)
+  for (std::vector<pcl::PointIndices>::const_iterator it = clusters->begin (); it != clusters->end (); ++it)
   {
     Eigen::Vector4f clustCentroid;
     pcl::compute3DCentroid(*pclFiltered, *it, clustCentroid);

@@ -19,8 +19,7 @@
 
 namespace objRecognition
 {
-
-/**
+ /*
  * @brief ModelCloud class
  */
 class FeatureCloud
