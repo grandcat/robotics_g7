@@ -417,13 +417,30 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					n.y = current_action.parameter2;
 					current_node = n;
 
-					for(int i = 0; i < important_nodes.size(); i++)
+
+					if(mode == EXPLORE)
 					{
-						if(important_nodes.at(i).first == n)
+						for(int i = 0; i < important_nodes.size(); i++)
 						{
-							important_nodes.erase(important_nodes.begin()+i);
+							if(important_nodes.at(i).first == n)
+							{
+								important_nodes.erase(important_nodes.begin()+i);
+							}
 						}
 					}
+
+
+					if(mode == GOTO_TARGETS)
+					{
+						for(int i = 0; i < important_nodes.size(); i++)
+						{
+							if(important_nodes.at(i).second == n)
+							{
+								important_nodes_targets.erase(important_nodes_targets.begin()+i);
+							}
+						}
+					}
+
 
 					/*
 					// Relaunch EKF
@@ -569,6 +586,20 @@ void receive_sensors(const AnalogC::ConstPtr &msg)
 				if((s1 > 0.15) & (s2 > 0.15) & !goto_target)
 				{
 					create_important_node(discrete_map.back().x,discrete_map.back().y,x_true,y_true);
+
+					double theta = nPi2(theta_true)*M_PI/2;
+					double x2,y2;
+					if(s1 < s2)
+					{
+						x2 = x_true + 0.2*sin(theta);
+						y2 = y_true - 0.2*cos(theta);
+					}
+					else
+					{
+						x2 = x_true - 0.2*sin(theta);
+						y2 = y_true + 0.2*cos(theta);
+					}
+					create_important_node_targets(x_true,y_true,x2,y2);
 				}
 
 
@@ -781,16 +812,16 @@ void update_map(double s1, double s2)
 			for(int i = 0; i < important_nodes.size(); i++)
 			{
 				int j = important_nodes.size()-i-1;
-				if(isPath(n,important_nodes.at(j).second))
+				if(isPath(n,important_nodes.at(j).first))
 				{
 					printf("PATH FOUND\n");
-					path_finding(important_nodes.at(j).second);
-					goto_node(important_nodes.at(j).first);
+					path_finding(important_nodes.at(j).first);
+					goto_node(important_nodes.at(j).second);
 					break;
 				}
 				else
 				{
-					printf("No path to x = %f, y = %f\n",important_nodes.at(j).second.x,important_nodes.at(j).second.y);
+					printf("No path to x = %f, y = %f\n",important_nodes.at(j).first.x,important_nodes.at(j).first.y);
 				}
 			}
 		}
@@ -1683,6 +1714,23 @@ void create_important_node(double x1, double y1, double x2, double y2)
 
 
 /**
+ * Create nodes if the robot made a choice when it has to turn
+ * Made to find path to targets
+ */
+void create_important_node_targets(double x1, double y1, double x2, double y2)
+{
+	Nodes nodes;
+	nodes.first.x = x1;
+	nodes.first.y = y1;
+	nodes.second.x = x2;
+	nodes.second.y = y2;
+	important_nodes_targets.push_back(nodes);
+
+	printf("Important nodes targets: x1 = %f, y1 = %f, x2 = %f, y2 = %f\n",x1,y1,x2,y2);
+}
+
+
+/**
  * Angle between ]-pi,pi]
  * @param th
  * @return
@@ -1776,19 +1824,19 @@ int main(int argc, char** argv)
 
 	if(mode == GOTO_TARGETS)
 	{
-		// Open important_nodes map
-		important_nodes.resize(500);
-		std::ifstream is("/home/robo/explorer/important_nodes.dat",std::ios::binary);
-		is.read(reinterpret_cast<char*>(&(important_nodes[0])),important_nodes.size()*sizeof(Nodes));
+		// Open important_nodes_targets map
+		important_nodes_targets.resize(500);
+		std::ifstream is("/home/robo/explorer/important_nodes_targets.dat",std::ios::binary);
+		is.read(reinterpret_cast<char*>(&(important_nodes_targets[0])),important_nodes_targets.size()*sizeof(Nodes));
 		is.close();
 
 		// Resize
-		for(int i = 1; i < important_nodes.size(); i++)
+		for(int i = 1; i < important_nodes_targets.size(); i++)
 		{
-			if((important_nodes.at(i).second.x == 0) & (important_nodes.at(i).second.y == 0))
+			if((important_nodes_targets.at(i).second.x == 0) & (important_nodes_targets.at(i).second.y == 0))
 			{
 				//printf("test\n");
-				important_nodes.resize(i);
+				important_nodes_targets.resize(i);
 				break;
 			}
 		}
@@ -1861,10 +1909,10 @@ int main(int argc, char** argv)
 
 	if(mode == EXPLORE)
 	{
-		// Save dimportant_nodes map
-		important_nodes.resize(500);
-		std::ofstream os("/home/robo/explorer/important_nodes.dat",std::ios::binary);
-		os.write(reinterpret_cast<const char*>(&(important_nodes[0])),important_nodes.size()*sizeof(Nodes));
+		// Save important_nodes_targets map
+		important_nodes_targets.resize(500);
+		std::ofstream os("/home/robo/explorer/important_nodes_targets.dat",std::ios::binary);
+		os.write(reinterpret_cast<const char*>(&(important_nodes_targets[0])),important_nodes_targets.size()*sizeof(Nodes));
 		os.close();
 
 		// Save objects

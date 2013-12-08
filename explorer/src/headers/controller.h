@@ -149,6 +149,7 @@ std::vector<Node> near_objects;
 
 typedef std::pair<Node,Node> Nodes;
 std::vector<Nodes> important_nodes;
+std::vector<Nodes> important_nodes_targets;
 
 std::vector<Node> toDiscover;
 
@@ -224,6 +225,8 @@ void goto_node(Node node);
 //void pathToActions(Path path);
 
 void create_important_node(double x1, double y1, double x2, double y2);
+
+void create_important_node_targets(double x1, double y1, double x2, double y2);
 
 
 // Angle between ]-pi,pi]
