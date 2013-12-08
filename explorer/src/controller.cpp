@@ -736,11 +736,11 @@ void update_map(double s1, double s2)
 
 
 	// Objects
-	for(int i = 2; i < objects.size()-2; i++)
+	for(int i = 0; i < objects.size(); i++)
 	{
 		Pixel object = nodeToPixel(objects.at(i));
 
-		if((object.i < height) & (object.j < width))
+		if((object.i < height-2) & (object.j < width-2) & (object.i > 1) & (object.j > 1))
 		{
 			map.at<uchar>(object.i,object.j) = 250;
 

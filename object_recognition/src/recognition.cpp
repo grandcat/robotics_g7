@@ -63,7 +63,7 @@ struct IdImg
 
     friend std::ostream & operator<<(std::ostream & stream, const IdImg &a)
     {
-    	stream 	<< "id: "<<a.obj<<"\nName: "<<a.name<<"\nTotal score: "<<a.score_total
+    	stream 	<< "Name: "<<a.name<<"\nTotal score: "<<a.score_total
     			<<"\nRGB score: "<<a.score_rgb<<"\nHSV score: "<<a.score_hsv<<"\nFeat score: "<<a.score_feat;
     	return stream;
     }
@@ -119,11 +119,11 @@ vector<double> obj_scores;
  */
 void drawHistograms(RGBHist hist)
 {
-	Mat bHist = hist.bHist;
-	Mat gHist = hist.gHist;
-	Mat rHist = hist.rHist;
+  Mat bHist = hist.bHist;
+  Mat gHist = hist.gHist;
+  Mat rHist = hist.rHist;
 
-	int histSize = 256;
+  int histSize = 256;
   int hist_w = 512; 
   int hist_h = 400;
   int bin_w = cvRound( (double) hist_w/histSize );
@@ -151,12 +151,12 @@ void drawHistograms(RGBHist hist)
  */
 HSVHist colorDetectionHSV(Mat img)
 {
-	Mat hsvImg;
-	cvtColor( img, hsvImg, CV_BGR2HSV );
+  Mat hsvImg;
+  cvtColor( img, hsvImg, CV_BGR2HSV );
 
-	//Split image into planes (HSV)
-	vector<Mat> planes;
-	split( hsvImg, planes );
+  //Split image into planes (HSV)
+  vector<Mat> planes;
+  split( hsvImg, planes );
 
 	// Set bins for hue and saturation
   int histSize[] = { 180, 256, 256 };
@@ -180,8 +180,10 @@ HSVHist colorDetectionHSV(Mat img)
   normalize( sHist, sHist, 0, 1, NORM_MINMAX, -1, Mat() );
   normalize( vHist, vHist, 0, 1, NORM_MINMAX, -1, Mat() );
 
-	hHist.at<float>(0) = 0;
-	sHist.at<float>(0) = 0;
+  //In the RGB case we needed to set the "black-color" bins to zero,
+  //in HSV repr. darkness is located in vHist in the first bin.
+	//hHist.at<float>(0) = 0;
+	//sHist.at<float>(0) = 0;
 	vHist.at<float>(0) = 0;
 
 	HSVHist hist;
@@ -265,7 +267,7 @@ Features featureDetector(Mat img)
 /*
  * Try to identify the object by comparing color histogram, hue and feature detection to train images
  */
-std::vector<IdImg> identifyObject(RGBHist rgb, HSVHist hsv, Features feat)
+std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 {
 	std::vector<IdImg> matched_objects(trainImg.size()); //vector that will hold information from all tested objects
 	
@@ -276,36 +278,52 @@ std::vector<IdImg> identifyObject(RGBHist rgb, HSVHist hsv, Features feat)
 
 	for(unsigned int i=0; i < trainImg.size(); ++i) {
 		//RGB
-		double resB = compareHist(rgb.bHist, trainImg[i].rgb.bHist, CV_COMP_CORREL);
-		double resG = compareHist(rgb.gHist, trainImg[i].rgb.gHist, CV_COMP_CORREL);
-		double resR = compareHist(rgb.rHist, trainImg[i].rgb.rHist, CV_COMP_CORREL);
+		double resB = 1 - compareHist(rgb.bHist, trainImg[i].rgb.bHist, CV_COMP_BHATTACHARYYA);
+		double resG = 1 - compareHist(rgb.gHist, trainImg[i].rgb.gHist, CV_COMP_BHATTACHARYYA);
+		double resR = 1 - compareHist(rgb.rHist, trainImg[i].rgb.rHist, CV_COMP_BHATTACHARYYA);
 		//HSV
-		double resH = compareHist(hsv.hHist, trainImg[i].hsv.hHist, CV_COMP_CORREL);
-		double resS = compareHist(hsv.sHist, trainImg[i].hsv.sHist, CV_COMP_CORREL);
-		double resV = compareHist(hsv.vHist, trainImg[i].hsv.vHist, CV_COMP_CORREL);
+		double resH = 1 - compareHist(hsv.hHist, trainImg[i].hsv.hHist, CV_COMP_BHATTACHARYYA);
+		double resS = 1 - compareHist(hsv.sHist, trainImg[i].hsv.sHist, CV_COMP_BHATTACHARYYA);
+		double resV = 1 - compareHist(hsv.vHist, trainImg[i].hsv.vHist, CV_COMP_BHATTACHARYYA);
 
 		/////////////////////////////////////////////////////////
 		matched_objects[i].obj = trainImg[i].obj;
-    matched_objects[i].name = trainImg[i].name;
+		matched_objects[i].name = trainImg[i].name;
 
-		matched_objects[i].score_rgb = resB*resB + resG*resG + resR*resR;
-		matched_objects[i].score_hsv = resH*resH + resS*resS + resV*resV;
+		//only store the score if it is positive (positive correlation)
+		//nomalize the score to be between [0,1] (divide the length of the vector
+		//with the max lenght of the vector.
+
+		//std::cout<<resB<<" "<<resG<<" "<<resR<<" "<<resH<<" "<<resS<<" "<<resV<<" "<<std::endl;
+		matched_objects[i].score_rgb = sqrt( resB*resB + resG*resG + resR*resR)/sqrt(3);
+		matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
+//		if(resB > 0 && resG > 0 && resR > 0)
+//			matched_objects[i].score_rgb = sqrt( resB*resB + resG*resG + resR*resR)/sqrt(3);
+//		else
+//			matched_objects[i].score_rgb = 0;
+//		if (resH > 0 && resS > 0 && resV > 0)
+//			matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
+//		else
+//			matched_objects[i].score_hsv = 0;
+
+
 
 		//TODO
 		// If negative correlation it will not be a match but will not show when taking the square. 
 		// Therefore matched objects should not include negative correlation
-		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
+//		if(resB > 0 && resG > 0 && resR > 0 && resH > 0) {
+//
+//
+//
+//			/*double res = resB*resB + resG*resG + resR*resR + resH*resH;
+//			if(res > bestRes) {
+//				bestRes = res;
+//				bestColorMatch = trainImg[i].obj;
+//				//std::cout << "RGB match: " << objects[bestColorMatch-1] << " Res: " << bestRes << std::endl;
+//				//std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
+//			}*/
+//		}
 
-
-
-			/*double res = resB*resB + resG*resG + resR*resR + resH*resH;
-			if(res > bestRes) {
-				bestRes = res;
-				bestColorMatch = trainImg[i].obj;
-				//std::cout << "RGB match: " << objects[bestColorMatch-1] << " Res: " << bestRes << std::endl;
-				//std::cout << "Histogram compare B,G,R for " << trainImg[i].obj << ": " << resG << ", " << resB << ", " << resR << ", " << resH << std::endl;
-			}*/
-		}
 	}
 	//std::cout << "Best match color: " << bestColorMatch << std::endl;
 
@@ -323,8 +341,9 @@ std::vector<IdImg> identifyObject(RGBHist rgb, HSVHist hsv, Features feat)
 
 		///////////////////////////////////////////////////////////
 		matched_objects[i].score_feat = (double)res;
-		matched_objects[i].score_total = matched_objects[i].score_rgb * matched_objects[i].score_hsv * matched_objects[i].score_feat;
-
+		//matched_objects[i].score_total = matched_objects[i].score_rgb * matched_objects[i].score_hsv * matched_objects[i].score_feat;
+		//matched_objects[i].score_total = matched_objects[i].score_hsv * matched_objects[i].score_feat;
+		matched_objects[i].score_total = matched_objects[i].score_hsv ;
 		/*if(res > matchPercent) {
 			matchPercent = res;
 			bestDescriptMatch = trainImg[i].obj;
@@ -340,7 +359,7 @@ std::vector<IdImg> identifyObject(RGBHist rgb, HSVHist hsv, Features feat)
 
 	//return matched_objects;
 	//take out the 3 best unique matches (FOR LATER!!!)
-	int max_size = 3;
+	int max_size = 5;
 	int saved_obj = 0;
 	bool flag_unique_obj = true;
 	std::vector<IdImg> best_matches(max_size);
@@ -372,13 +391,14 @@ std::vector<IdImg> identifyObject(RGBHist rgb, HSVHist hsv, Features feat)
 
 	}
 
-	for (int i = 0; i < best_matches.size(); i++)
-	{
-		std::cout<<best_matches[i]<<std::endl;
-	}
-	std::cout<<""<<std::endl;
+//	for (int i = 0; i < best_matches.size(); i++)
+//	{
+//		std::cout<<best_matches[i]<<std::endl;
+//	}
+//	std::cout<<""<<std::endl;
 
-	return matched_objects;
+	//return matched_objects;
+	return best_matches;
 }
 
 
@@ -387,6 +407,7 @@ std::vector<IdImg> identifyObject(RGBHist rgb, HSVHist hsv, Features feat)
  */
 void train()
 {
+	ROS_INFO("Training started...");
 	// Get all folders for train images
 	vector<std::string> imgDir;
   class dirent *ent;
@@ -396,7 +417,7 @@ void train()
     std::size_t isTest = imgDirName.find("test");
     //get image directories
     if (imgDirName[0] != '.' && isTest == std::string::npos) {
-      std::cout << imgDirName << std::endl;
+      //std::cout << imgDirName << std::endl;
       imgDir.push_back(imgDirName);
   	}
   }
@@ -434,7 +455,7 @@ void train()
 				dummy.hsv = colorDetectionHSV(img);
 				dummy.feat = featureDetector(img);
 				//std::cout<<"obj: "<<dummy.obj<<std::endl;
-				//std::cout<<"name: "<<dummy.name<<std::endl;
+				std::cout<<"Trained "<<dummy.name<<std::endl;
 				trainImg.push_back(dummy);
 
 				// write train data to text file
@@ -533,6 +554,13 @@ public:
 			std::vector<IdImg> objects = identifyObject(rgb, hsv, feat);
 
 			type = objects[0].obj;
+			for (unsigned int i = 0; i < objects.size() && i < 5; ++i)
+			{
+				std::cout<<i+1<<": "<<objects[i]<<std::endl;
+
+			}
+			std::cout<<"\n";
+
 			std::string name  = objects[0].name;
 			//std::cout << "Recognized object: " << name << std::endl;
 
@@ -554,6 +582,7 @@ public:
 			std::cout << "no object" << std::endl;
                         type = (int)objRecognition::OBJTYPE_NO_OBJECT;
 		}
+		std::cout<<"\n";
 
 		//Create ros-message
 		object_recognition::Recognized_objects obj_msg;
@@ -576,7 +605,7 @@ int main(int argc, char** argv)
 	// Train on test images
   ROS_INFO("[Object features] Start training.");
   train();
-
+  ROS_INFO("Training complete!");
 	// Train mode
 	if(argc > 1) {
 		/*train();
@@ -630,8 +659,8 @@ int main(int argc, char** argv)
 	  else std::cout << "Unable to open file"; */
 
 	  ImageConverter ic;
-          ROS_INFO("object recognition is up and running!");
-          ROS_INFO("Messages are being sent to /recognition/recognized");
+	  ROS_INFO("object recognition is up and running!");
+	  ROS_INFO("Messages are being sent to /recognition/recognized");
 	  ros::spin();
 	}
 
