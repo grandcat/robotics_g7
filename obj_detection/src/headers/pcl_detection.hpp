@@ -130,6 +130,7 @@ public:
    */
   void start()
   {
+    cProcessedFrames = 0;
     processingActive = true;
   }
 

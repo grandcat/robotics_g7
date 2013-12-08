@@ -87,11 +87,13 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
       ROS_INFO_ONCE("Ignore pointcloud frame (not started!)");
       return;
     }
-  // Only process every 20th frame (TODO: improve)
+  // Process and collect obj information during 5 frames to reduce noise
   ++cProcessedFrames;
-  cProcessedFrames %= 10;
-  if (cProcessedFrames != 0)
+  cProcessedFrames %= 6;
+  if (cProcessedFrames == 0)
     {
+      processingActive = false;
+      // TODO: process collected information hier
       return;
     }
 
