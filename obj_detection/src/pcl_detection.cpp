@@ -29,7 +29,7 @@
 namespace objRecognition
 {
 
-const float CLUSTER_DROP_HEIGHT = 0.10;  // Drop elements higher than this cluster center height
+const float CLUSTER_DROP_HEIGHT = 0.075;  // Drop elements higher than this cluster center height (e.x. traps)
 const float EDGE_MAX_Z_DEPTH = 0.01;
 
 /*
@@ -112,10 +112,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclVoxelFilter.setFilterLimits(0.0, 1.0);  //< only take XYZ points maximum 1m away from camera on z axis
   pclVoxelFilter.setLeafSize(VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE);
   pclVoxelFilter.filter(*pclFiltered);
-
   ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
-
-  // Old place for transform
 
   /*
    * Determine plane surfaces and remove
@@ -139,25 +136,17 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclSegmentation.setMaxIterations(1000);
   pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
 
-  // Check bottom plane and remove outliers
-//  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> pclOutlierFilter;
-//  pclOutlierFilter.setInputCloud(pclFiltered);
-//  pclOutlierFilter.setIndices(inlierIndices);
-//  pclOutlierFilter.setMeanK(50);
-//  pclOutlierFilter.setStddevMulThresh(1.0);
-////  pclOutlierFilter.filter(*inlierIndices);
-
   if (!coefficients)
   {
     ROS_WARN("[PCL processing] Couldn't calculate bottom plane coefficient"
              "(due to missing point), aborting PCL recognition for this frame");
     return;
   }
-  std::cerr << "Bottom plane: Model coefficients: " << coefficients->values[0] << " "
+  std::cout << "Bottom plane: Model coefficients: " << coefficients->values[0] << " "
                                         << coefficients->values[1] << " "
                                         << coefficients->values[2] << " "
                                         << coefficients->values[3] << std::endl;
-  std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
+  std::cout << "Model inliers: " << inlierIndices->indices.size () << std::endl;
 
   // Approximate left and right edge of plane surface
   std::vector<Eigen::Vector3f> edgeLeft(100, Eigen::Vector3f(0, 0, 0)), edgeRight(100, Eigen::Vector3f(0, 0, 0));
@@ -178,11 +167,9 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
       edgeRight[gridPos][1] = pclFiltered->points[inlierIndices->indices[i]].y;
       edgeRight[gridPos][2] = pclFiltered->points[inlierIndices->indices[i]].z;
     }
-
   }
   float planeEdge_mostLeft = filteredMeanfromPlaneEdge(edgeLeft);
   float planeEdge_mostRight = filteredMeanfromPlaneEdge(edgeRight);
-
   std::cerr << "Most left: " << planeEdge_mostLeft
             << ", Most right: " << planeEdge_mostRight << std::endl;
 
@@ -202,7 +189,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   // Create box which removes everything left and right to bottom plane description
   pcl::CropBox<pcl::PointXYZ> pclCropUnusedArea;
   pclCropUnusedArea.setInputCloud(pclFiltered);
-  pclCropUnusedArea.setMin(Eigen::Vector4f(std::min(planeEdge_mostLeft +0.01f, -0.1f), -0.2, 0.0, 1));    // y: max height of object
+  pclCropUnusedArea.setMin(Eigen::Vector4f(std::min(planeEdge_mostLeft + 0.01f, -0.1f), -0.2, 0.0, 1));    // y: max height of object
   pclCropUnusedArea.setMax(Eigen::Vector4f(std::max(planeEdge_mostRight - 0.02f, 0.1f), 0.03, 1.0, 1));
   pclCropUnusedArea.filter(*pclFiltered);
   std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
@@ -227,14 +214,14 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   // If no points left: stop analysis to prevent seg faults
   if (pclFiltered->points.size() == 0)
   {
-    ROS_INFO("[PCL processing] Reject this frame, no points left after removing the walls.");
+    ROS_INFO("[PCL processing] Reject this frame, no points left after removing all walls.");
     return;
   }
 
   // Eucledian cluster extraction
   pcl::IndicesClustersPtr clusters (new pcl::IndicesClusters);
   pcl::ConditionalEuclideanClustering<pcl::PointXYZ> pclCluster;
-  pclCluster.setClusterTolerance (0.05);
+  pclCluster.setClusterTolerance (0.04);
   pclCluster.setConditionFunction(&customEuclideanSegmCond);
   pclCluster.setMinClusterSize(32);
   pclCluster.setMaxClusterSize(10000);
@@ -248,7 +235,6 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   {
     Eigen::Vector4f clustCentroid;
     pcl::compute3DCentroid(*pclFiltered, *it, clustCentroid);
-
     // Drop cluster centers which are too high and probably only noise (centroid y is mostly negative)
     if ((clustCentroid[1] + CLUSTER_DROP_HEIGHT) < 0)
       continue;
@@ -259,14 +245,13 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 //              << pclFiltered->points[*clustIter].y << " "
 //              << pclFiltered->points[*clustIter].z << ") "
 //              << " Count: " << it->indices.size() << std::endl;
-    std::cerr << "Cluster Centroid" << clustId << " ("
+    std::cerr << "Cluster Centroid " << clustId << " ("
               << clustCentroid[0] << " "
               << clustCentroid[1] << " "
               << clustCentroid[2] << ") "
               << " Count: " << it->indices.size() << std::endl;
   ++clustId;
   }
-
 
   // Generate debugging output for rViz
   sensor_msgs::PointCloud2 output;
@@ -277,13 +262,6 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   //  pclFiltered = pclProcessed;
   //  static FeatureCloud objModel;
   //  compareModelWithScene(objModel);
-
-}
-
-void PclRecognition::filteredPCLfromPlaneEdges(std::vector<Eigen::Vector3f>& pEdgeLeft,
-                                               std::vector<Eigen::Vector3f>& pEdgeRight,
-                                               pcl::PointCloud<pcl::PointXYZ>& pPclOut)
-{
 
 }
 
@@ -310,10 +288,10 @@ float PclRecognition::filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3
     ++countVals;
     dataSeen = true;
 
-    std::cerr << "Point on left edge: ("
-              << (*it)[0] << " "
-              << (*it)[1] << " "
-              << (*it)[2] << ") " << std::endl;
+//    std::cerr << "Point on left edge: ("
+//              << (*it)[0] << " "
+//              << (*it)[1] << " "
+//              << (*it)[2] << ") " << std::endl;
   }
 
   return (avgVals / countVals);

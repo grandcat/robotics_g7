@@ -134,10 +134,6 @@ public:
   }
 
 private:
-  void filteredPCLfromPlaneEdges(std::vector<Eigen::Vector3f>& pEdgeLeft,
-                                 std::vector<Eigen::Vector3f>& pEdgeRight,
-                                 pcl::PointCloud<pcl::PointXYZ>& pPclOut);
-
   static float filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3f>& pEdge);
 
 private:
