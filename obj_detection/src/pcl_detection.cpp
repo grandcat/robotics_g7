@@ -68,7 +68,7 @@ void FeatureCloud::computeFeatureDescriptor()
 
 /**
  * @brief customEuclideanSegmCond
- *  This function mainly used as a work around for a bug in the original cluster segmentation of PCL 1.5
+ *  This function is mainly used as a work around for a bug in the original cluster segmentation of PCL 1.5
  * @param point_a
  * @param point_b
  * @param squared_distance
@@ -84,14 +84,13 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 {
   if (!processingActive)  // TODO: replace by shutdown subscribtion when not needed
     {
-      ROS_INFO("Ignore pointcloud frame (not started!)");
-
+      ROS_INFO_ONCE("Ignore pointcloud frame (not started!)");
       return;
     }
   // Only process every 20th frame (TODO: improve)
-  ++cWaitFrames;
-  cWaitFrames %= 20;
-  if (cWaitFrames != 0)
+  ++cProcessedFrames;
+  cProcessedFrames %= 10;
+  if (cProcessedFrames != 0)
     {
       return;
     }

@@ -1,4 +1,14 @@
 /*
+ * Copied from pcl source code on 2013 8th Dec.
+ * Original implementation of library 1.5 is buggy (Segmentation fault in special cases, but still quite often)
+ * See http://dev.pointclouds.org/issues/675 for more information why PCL 1.5 Euclidean Cluster algorithm
+ * can't be used
+ *
+ * Note: included implementation in header file as well due to linking problems. May be a conflict with the
+ * original library
+ */
+
+/*
  * Software License Agreement (BSD License)
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org

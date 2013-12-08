@@ -19,6 +19,9 @@
 
 namespace objRecognition
 {
+const int AMOUNT_COMPARE_FRAMES = 5;
+
+
  /*
  * @brief ModelCloud class
  */
@@ -94,7 +97,7 @@ class PclRecognition
    * Class PclRecognition
    */
 public:
-  PclRecognition(ros::NodeHandle& nh) : nh_(nh), processingActive(false), cWaitFrames(0)
+  PclRecognition(ros::NodeHandle& nh) : nh_(nh), processingActive(false), cProcessedFrames(0)
   {
     // Initialize camera pose transformation
 //    cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
@@ -109,6 +112,8 @@ public:
     pub_pcl_obj_alignment = nh_.advertise<sensor_msgs::PointCloud2>("/camera/obj_aligned_points", 1);
     ROS_INFO("pcl_detection: Subscribed to pointcloud data.");
 
+    // Prepare obj detection
+    lastObjCmPos.reserve(AMOUNT_COMPARE_FRAMES);
   }
 
   /**
@@ -144,11 +149,12 @@ private:
 
   // Process behavior
   bool processingActive;
-  int cWaitFrames;
+  int cProcessedFrames;
 
   // Point cloud data
   Eigen::Affine3f cameraPoseTransform;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pclFiltered;
+  std::vector<std::vector<Eigen::Vector4f> > lastObjCmPos;
   // Sample Consensus Initial Alignment
   pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> sacIA;
 };
