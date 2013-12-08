@@ -235,13 +235,13 @@ class Contour_Filter
 		src = cv_ptr->image; //get the source image from the pointer
 
 		//remove top part of image (set to black)
-		int y_remove = 100; float max_depth = 0.75;
-		for(int i=0; i<src.rows; i++)
-		   for(int j=0; j<src.cols; j++)
-		   {
-			   if ( isnan(src.at<float>(i,j)) || i <= y_remove || src.at<float>(i,j) >= max_depth )
-				   src.at<float>(i,j) = 0;
-		   }
+//		int y_remove = 100; float max_depth = 0.75;
+//		for(int i=0; i<src.rows; i++)
+//		   for(int j=0; j<src.cols; j++)
+//		   {
+//			   if ( isnan(src.at<float>(i,j)) || i <= y_remove || src.at<float>(i,j) >= max_depth )
+//				   src.at<float>(i,j) = 0;
+//		   }
 
 
 
