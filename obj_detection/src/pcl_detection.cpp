@@ -28,6 +28,9 @@
 namespace objRecognition
 {
 
+const float CLUSTER_DROP_HEIGHT = 0.10;  // Drop elements higher than this cluster center height
+const float EDGE_MAX_Z_DEPTH = 0.01;
+
 /*
  *
  * Class ModelCloud
@@ -140,37 +143,38 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
                                         << coefficients->values[3] << std::endl;
   std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
 
-  float point_mostLeft = 0, point_mostRight = 0, point_closeRobot = 10;
+  // Approximate left and right edge of plane surface
+  float planeEdge_mostLeft;
+  std::vector<Eigen::Vector3f> edgeLeft(100, Eigen::Vector3f(0, 0, 0));
   for (size_t i = 0; i < inlierIndices->indices.size(); ++i)
   {
-    if (pclFiltered->points[inlierIndices->indices[i]].x < point_mostLeft)
+    // Map points to grid: point 0.432 --> 43, point 0.439 --> 43
+    int gridPos = pclFiltered->points[inlierIndices->indices[i]].z * 100;
+
+    if (pclFiltered->points[inlierIndices->indices[i]].x < edgeLeft[gridPos][0])
     {
-      point_mostLeft = pclFiltered->points[inlierIndices->indices[i]].x;
-      std::cerr << "Point left [" << inlierIndices->indices[i] << "]: ("
-                << pclFiltered->points[inlierIndices->indices[i]].x << " "
-                << pclFiltered->points[inlierIndices->indices[i]].y << " "
-                << pclFiltered->points[inlierIndices->indices[i]].z << ") " << std::endl;
+      edgeLeft[gridPos][0] = pclFiltered->points[inlierIndices->indices[i]].x;
+      edgeLeft[gridPos][1] = pclFiltered->points[inlierIndices->indices[i]].y;
+      edgeLeft[gridPos][2] = pclFiltered->points[inlierIndices->indices[i]].z;
     }
-    else if (pclFiltered->points[inlierIndices->indices[i]].x > point_mostRight)
-      point_mostRight = pclFiltered->points[inlierIndices->indices[i]].x;
-    if (pclFiltered->points[inlierIndices->indices[i]].z < point_closeRobot)
-      point_closeRobot = pclFiltered->points[inlierIndices->indices[i]].z;
 
-//    if (i > 30)
-//      continue;
-
-//    float pCoeff = pclFiltered->points[inlierIndices->indices[i]].x * coefficients->values[0] +
-//        pclFiltered->points[inlierIndices->indices[i]].y * coefficients->values[1] +
-//        pclFiltered->points[inlierIndices->indices[i]].z * coefficients->values[2];
-//    std::cerr << "Compare [" << inlierIndices->indices[i] << "]: ("
-//              << pclFiltered->points[inlierIndices->indices[i]].x << " "
-//              << pclFiltered->points[inlierIndices->indices[i]].y << " "
-//              << pclFiltered->points[inlierIndices->indices[i]].x << ") "
-//              << "calculated:" << pCoeff << " orig:" << coefficients->values[3] << std::endl;
   }
-  std::cout << "Most left (ground plane): " << point_mostLeft
-            << " Most right: " << point_mostRight
-            << " Close Robot:" << point_closeRobot << std::endl;
+  // DEBUG
+  float avg_xLeft = 0.;
+  int avg_xLeft_count = 0;
+  for (std::vector<Eigen::Vector3f>::const_iterator it = edgeLeft.begin(); it != edgeLeft.end(); ++it)
+  {
+    std::cerr << "Point on left edge: ("
+              << (*it)[0] << " "
+              << (*it)[1] << " "
+              << (*it)[2] << ") " << std::endl;
+    if ((*it)[0] == 0.)
+      continue;
+    avg_xLeft += (*it)[0];
+    ++avg_xLeft_count;
+  }
+  planeEdge_mostLeft = avg_xLeft / avg_xLeft_count;
+  std::cerr << "Most left: " << planeEdge_mostLeft << std::endl;
 
   // Remove points of side walls
   bool rmBottomPlane;
@@ -188,8 +192,8 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   // Create box which removes everything left and right to bottom plane description
   pcl::CropBox<pcl::PointXYZ> pclCropUnusedArea;
   pclCropUnusedArea.setInputCloud(pclFiltered);
-  pclCropUnusedArea.setMin(Eigen::Vector4f(point_mostLeft, -0.2, 0.0, 1));    // y: max height of object
-  pclCropUnusedArea.setMax(Eigen::Vector4f(point_mostRight, 0.03, 1.0, 1));
+  pclCropUnusedArea.setMin(Eigen::Vector4f(planeEdge_mostLeft, -0.2, 0.0, 1));    // y: max height of object
+  pclCropUnusedArea.setMax(Eigen::Vector4f(0.9, 0.03, 1.0, 1));
   pclCropUnusedArea.filter(*pclFiltered);
   std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
 
@@ -225,11 +229,23 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   int clustId = 0;
   for (std::vector<pcl::PointIndices>::const_iterator it = clusters.begin (); it != clusters.end (); ++it)
   {
-    std::vector<int>::const_iterator clustIter = it->indices.begin();
-    std::cerr << "Cluster " << clustId << " ("
-              << pclFiltered->points[*clustIter].x << " "
-              << pclFiltered->points[*clustIter].y << " "
-              << pclFiltered->points[*clustIter].z << ") "
+    Eigen::Vector4f clustCentroid;
+    pcl::compute3DCentroid(*pclFiltered, *it, clustCentroid);
+
+    // Drop cluster centers which are too high and probably only noise (centroid y is mostly negative)
+    if ((clustCentroid[1] + CLUSTER_DROP_HEIGHT) < 0)
+      continue;
+
+//    std::vector<int>::const_iterator clustIter = it->indices.begin();
+//    std::cerr << "Cluster point" << clustId << " ("
+//              << pclFiltered->points[*clustIter].x << " "
+//              << pclFiltered->points[*clustIter].y << " "
+//              << pclFiltered->points[*clustIter].z << ") "
+//              << " Count: " << it->indices.size() << std::endl;
+    std::cerr << "Cluster Centroid" << clustId << " ("
+              << clustCentroid[0] << " "
+              << clustCentroid[1] << " "
+              << clustCentroid[2] << ") "
               << " Count: " << it->indices.size() << std::endl;
   ++clustId;
   }
@@ -241,10 +257,20 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pub_pcl_filtered.publish(output);
 
   // TESTING PCL Object recognition
+  //  pclFiltered = pclProcessed;
+  //  static FeatureCloud objModel;
+  //  compareModelWithScene(objModel);
 
-}//  pclFiltered = pclProcessed;
-//  static FeatureCloud objModel;
-//  compareModelWithScene(objModel);
+}
+
+void PclRecognition::filteredPCLfromPlaneEdges(std::vector<Eigen::Vector3f>& pEdgeLeft,
+                                               std::vector<Eigen::Vector3f>& pEdgeRight,
+                                               pcl::PointCloud<pcl::PointXYZ>& pPclOut)
+{
+
+}
+
+
 
 void PclRecognition::compareModelWithScene(FeatureCloud& model)
 {

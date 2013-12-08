@@ -135,6 +135,11 @@ public:
   }
 
 private:
+  void filteredPCLfromPlaneEdges(std::vector<Eigen::Vector3f>& pEdgeLeft,
+                                 std::vector<Eigen::Vector3f>& pEdgeRight,
+                                 pcl::PointCloud<pcl::PointXYZ>& pPclOut);
+
+private:
   // ROS connection
   ros::NodeHandle& nh_;
   ros::Subscriber sub_pcl_primesense;
