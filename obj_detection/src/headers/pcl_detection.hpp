@@ -139,6 +139,8 @@ private:
                                  std::vector<Eigen::Vector3f>& pEdgeRight,
                                  pcl::PointCloud<pcl::PointXYZ>& pPclOut);
 
+  static float filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3f>& pEdge);
+
 private:
   // ROS connection
   ros::NodeHandle& nh_;

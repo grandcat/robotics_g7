@@ -144,8 +144,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
 
   // Approximate left and right edge of plane surface
-  float planeEdge_mostLeft;
-  std::vector<Eigen::Vector3f> edgeLeft(100, Eigen::Vector3f(0, 0, 0));
+  std::vector<Eigen::Vector3f> edgeLeft(100, Eigen::Vector3f(0, 0, 0)), edgeRight(100, Eigen::Vector3f(0, 0, 0));
   for (size_t i = 0; i < inlierIndices->indices.size(); ++i)
   {
     // Map points to grid: point 0.432 --> 43, point 0.439 --> 43
@@ -157,24 +156,19 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
       edgeLeft[gridPos][1] = pclFiltered->points[inlierIndices->indices[i]].y;
       edgeLeft[gridPos][2] = pclFiltered->points[inlierIndices->indices[i]].z;
     }
+    else if (pclFiltered->points[inlierIndices->indices[i]].x > edgeRight[gridPos][0])
+    {
+      edgeRight[gridPos][0] = pclFiltered->points[inlierIndices->indices[i]].x;
+      edgeRight[gridPos][1] = pclFiltered->points[inlierIndices->indices[i]].y;
+      edgeRight[gridPos][2] = pclFiltered->points[inlierIndices->indices[i]].z;
+    }
 
   }
-  // DEBUG
-  float avg_xLeft = 0.;
-  int avg_xLeft_count = 0;
-  for (std::vector<Eigen::Vector3f>::const_iterator it = edgeLeft.begin(); it != edgeLeft.end(); ++it)
-  {
-    std::cerr << "Point on left edge: ("
-              << (*it)[0] << " "
-              << (*it)[1] << " "
-              << (*it)[2] << ") " << std::endl;
-    if ((*it)[0] == 0.)
-      continue;
-    avg_xLeft += (*it)[0];
-    ++avg_xLeft_count;
-  }
-  planeEdge_mostLeft = avg_xLeft / avg_xLeft_count;
-  std::cerr << "Most left: " << planeEdge_mostLeft << std::endl;
+  float planeEdge_mostLeft = filteredMeanfromPlaneEdge(edgeLeft);
+  float planeEdge_mostRight = filteredMeanfromPlaneEdge(edgeRight);
+
+  std::cerr << "Most left: " << planeEdge_mostLeft
+            << ", Most right: " << planeEdge_mostRight << std::endl;
 
   // Remove points of side walls
   bool rmBottomPlane;
@@ -192,8 +186,8 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   // Create box which removes everything left and right to bottom plane description
   pcl::CropBox<pcl::PointXYZ> pclCropUnusedArea;
   pclCropUnusedArea.setInputCloud(pclFiltered);
-  pclCropUnusedArea.setMin(Eigen::Vector4f(planeEdge_mostLeft, -0.2, 0.0, 1));    // y: max height of object
-  pclCropUnusedArea.setMax(Eigen::Vector4f(0.9, 0.03, 1.0, 1));
+  pclCropUnusedArea.setMin(Eigen::Vector4f(std::min(planeEdge_mostLeft, -0.1f), -0.2, 0.0, 1));    // y: max height of object
+  pclCropUnusedArea.setMax(Eigen::Vector4f(std::max(planeEdge_mostRight - 0.02f, 0.1f), 0.03, 1.0, 1));
   pclCropUnusedArea.filter(*pclFiltered);
   std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
 
@@ -212,6 +206,8 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclExtractIdx.setInputCloud(pclFiltered);
   pclExtractIdx.setIndices(inlierIndices);
   pclExtractIdx.filter(*pclFiltered);
+
+  std::cerr << "Points left after cropping all walls:" << pclFiltered->points.size() << std::endl;
 
   // Eucledian cluster extraction
   pcl::search::KdTree<pcl::PointXYZ>::Ptr sTree(new pcl::search::KdTree<pcl::PointXYZ>);
@@ -268,6 +264,38 @@ void PclRecognition::filteredPCLfromPlaneEdges(std::vector<Eigen::Vector3f>& pEd
                                                pcl::PointCloud<pcl::PointXYZ>& pPclOut)
 {
 
+}
+
+/**
+ * @brief PclRecognition::filteredMeanfromPlaneEdge
+ *  Only take first bunch of edge data, filter sequence of data which is not connected (noise)
+ * @param pEdge
+ * @return
+ */
+float PclRecognition::filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3f>& pEdge)
+{
+  // TODO: use biggest sequence instead for mean value
+  bool dataSeen = false;
+  float avgVals = 0.;
+  int countVals = 0;
+  for (std::vector<Eigen::Vector3f>::const_iterator it = pEdge.begin(); it != pEdge.end(); ++it)
+  {
+    if ((*it)[0] == 0. && !dataSeen)
+      continue;
+    else if ((*it)[0] == 0. && dataSeen)
+      break;
+
+    avgVals += (*it)[0];
+    ++countVals;
+    dataSeen = true;
+
+    std::cerr << "Point on left edge: ("
+              << (*it)[0] << " "
+              << (*it)[1] << " "
+              << (*it)[2] << ") " << std::endl;
+  }
+
+  return (avgVals / countVals);
 }
 
 
