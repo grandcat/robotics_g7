@@ -343,19 +343,19 @@ tools_pcl_objects_cutter/fast:
 .PHONY : tools_pcl_objects_cutter/fast
 
 # target to build an object file
-src/color_filter.o:
-	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/color_filter.o
-.PHONY : src/color_filter.o
+src/contour_filter.o:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/contour_filter.o
+.PHONY : src/contour_filter.o
 
 # target to preprocess a source file
-src/color_filter.i:
-	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/color_filter.i
-.PHONY : src/color_filter.i
+src/contour_filter.i:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/contour_filter.i
+.PHONY : src/contour_filter.i
 
 # target to generate assembly for a file
-src/color_filter.s:
-	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/color_filter.s
-.PHONY : src/color_filter.s
+src/contour_filter.s:
+	$(MAKE) -f CMakeFiles/recognition_master.dir/build.make CMakeFiles/recognition_master.dir/src/contour_filter.s
+.PHONY : src/contour_filter.s
 
 # target to build an object file
 src/pcl_detection.o:
@@ -459,9 +459,9 @@ help:
 	@echo "... test_depth"
 	@echo "... tests"
 	@echo "... tools_pcl_objects_cutter"
-	@echo "... src/color_filter.o"
-	@echo "... src/color_filter.i"
-	@echo "... src/color_filter.s"
+	@echo "... src/contour_filter.o"
+	@echo "... src/contour_filter.i"
+	@echo "... src/contour_filter.s"
 	@echo "... src/pcl_detection.o"
 	@echo "... src/pcl_detection.i"
 	@echo "... src/pcl_detection.s"

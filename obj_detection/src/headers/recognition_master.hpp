@@ -4,7 +4,7 @@
 #include <ros/ros.h>
 #include "recognition_constants.hpp"
 // Object recognition: color filter
-#include "color_filter.hpp"
+#include "contour_filter.hpp"
 // Message headers (for communication)
 #include "explorer/Object.h"
 #include "color_filter/Objects.h"
@@ -25,13 +25,13 @@ public:
       lastSendObjId(OBJTYPE_NO_OBJECT), count_LastObjType(0), debugWindows(false)
   {
     // Subscribe to RGB & depth image: Processing by slaves and estimation of objects position
-    sub_rgb_img = it_.subscribe("/camera/rgb/image_rect_color", 1,
+    sub_rgb_img = it_.subscribe("/camera/depth/image_rect", 1,
                                 &objRecognition::RecognitionMaster::runRecognitionPipeline, this);
     // TODO: Initialize recognition slave: color_filter
 
     sub_obj_recogn_type = nh_.subscribe("/recognition/recognized", 1,
                                         &objRecognition::RecognitionMaster::rcvObjType, this);
-    subscribeDepthImg();  // TODO: remove with optimization
+//    subscribeDepthImg();  // TODO: remove with optimization
     pub_recognition_result = nh_.advertise<explorer::Object>("/recognition/object_pos_relative", 5);
     ROS_INFO("[Recognition master] Subscribed to recognition slaves, advertising to explorer.");
 
@@ -54,9 +54,9 @@ public:
 
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
 
-  inline void setDebugView(bool pColorFilter = true, bool pDepthImg = true)
+  inline void setDebugView(bool pContourFilter = true, bool pDepthImg = true)
   {
-    objRecog_Colorfilter.showDebugOutput(pColorFilter);
+    objRecog_Contourfilter.showDebugOutput(pContourFilter);
     debugWindows = pDepthImg;
   }
 
@@ -76,7 +76,7 @@ private:
   ros::Publisher pub_recognition_result;
 
   // Recognition slaves: color_filter, feature_recognition
-  Color_Filter objRecog_Colorfilter;
+  Contour_Filter objRecog_Contourfilter;
   std::vector<DetectedObject> lastObjPositions;
 
   // Depth image (for distance)

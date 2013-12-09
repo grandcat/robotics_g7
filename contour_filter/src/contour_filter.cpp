@@ -277,7 +277,7 @@ void Contour_Filter::depth_contour_filter(const sensor_msgs::ImageConstPtr& msg)
 	}
 
 
-	if (FLAG_SHOW_IMAGE)
+        if (FLAG_SHOW_IMAGE)
 	{
 		std::cout<<"Found "<<objects.size()<<" objects"<<std::endl;
 		for (unsigned int i = 0; i < objects.size(); ++i)
@@ -327,18 +327,18 @@ void Contour_Filter::depth_contour_filter(const sensor_msgs::ImageConstPtr& msg)
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "contour_filter");
+
+
+  ros::init(argc, argv, "contour_filter");
+  Contour_Filter cf;
 	if (argc != 1)
 	{
 		if (atoi(argv[1]) == 1)
 		{
-			FLAG_SHOW_IMAGE = true;
+                        cf.showDebugOutput();
 		}
 	}
 
-
-
-	Contour_Filter cf;
 	std::cout<<"Contour filter is up and running!"<<std::endl;
 	std::cout<<"Found object images are being sent to /color_filter/filtered_image"<<std::endl;
 	ros::spin();

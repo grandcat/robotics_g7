@@ -18,11 +18,26 @@ namespace objRecognition
  */
 void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg)
 {
-  ros::Duration(0.1).sleep();
+//  ros::Duration(0.1).sleep();
+
+//  ROS_INFO("[recognition master] received depth image %f", ros::Time::now().toSec());
+  // Convert depth image to OpenCV Mat format
+  cv_bridge::CvImagePtr cv_ptr;
+  try
+    {
+      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+      curDepthImg = cv_ptr->image;
+    }
+  catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("[Recognition master] cv_bridge exception: %s", e.what());
+      return;
+    }
+
   // TODO: disable recognition when turning 90 degree
   // Get object positions (if any)
-  objRecog_Colorfilter.color_filter(msg);
-  lastObjPositions = objRecog_Colorfilter.getDetectedObjects();
+  objRecog_Contourfilter.depth_contour_filter(curDepthImg);
+  lastObjPositions = objRecog_Contourfilter.getDetectedObjects();
   unsigned int cDetectedObjs = lastObjPositions.size();
   ROS_INFO("Detected amount of objects: %u", cDetectedObjs);
 
@@ -32,8 +47,7 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     ROS_INFO("Rejected basic obj detection, more than 2 objects or no objects.");
     return;
   }
-  ROS_INFO("1. Obj:\n id:%i, cm y:%i x:%i", lastObjPositions[0].ROI_id,
-      lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
+//  ROS_INFO("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   explorer::Object relMazePos = translateCvToMap(lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
   // If position couldn't determined, reject frame
@@ -90,13 +104,11 @@ void RecognitionMaster::rcvObjType(const object_recognition::Recognized_objects:
 
 void RecognitionMaster::rcvDepthImg(const sensor_msgs::ImageConstPtr& msg)
 {
-  ++cRejectedFrames;
-  // TODO: deactivate subscription if no depth pos was requested for 10 frames
+//  ++cRejectedFrames;
 //  ros::Duration(4).sleep(); // <-- same thread as rgb image, therefore same rate
   ROS_INFO("[recognition master] received depth image %f", ros::Time::now().toSec());
   // Convert depth image to OpenCV Mat format
   cv_bridge::CvImagePtr cv_ptr;
-
   try
     {
       cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
