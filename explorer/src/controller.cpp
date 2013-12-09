@@ -215,6 +215,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 			}
 
 
+			/*
 			// GOTO with true odometry
 			if(current_action.n == ACTION_GOTO)
 			{
@@ -275,6 +276,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 					}
 				}
 			}
+			*/
 
 
 			// Rotate without correction
@@ -441,65 +443,12 @@ void receive_EKF(const EKF::ConstPtr &msg)
 								{
 									important_nodes_targets.erase(important_nodes_targets.begin()+j);
 								}
+								break;
 							}
 						}
 					}
-
-
-					/*
-					// Relaunch EKF
-					Stop_EKF s;
-					s.stop = false;
-					s.rotation_angle = 0;
-					stop_EKF_pub.publish(s);
-					 */
 				}
 			}
-
-			/*
-			if(current_action.n == ACTION_GOTO_FORWARD)
-			{
-				static double x_cmd;
-
-				// Init
-				if(!flag)
-				{
-					x_cmd = x + current_action.parameter1;
-					flag = true;
-				}
-
-
-				diff_ang = atan((y_cmd-y)/(x_cmd-x))-theta;
-				diff_ang = angle(diff_ang);
-
-				dist = x_cmd-x;
-
-				// Saturations
-				if(dist > x_cmd_traj)
-				{
-					dist = x_cmd_traj;
-				}
-
-				if(diff_ang > M_PI/2) {diff_ang = M_PI/2;}
-				if(diff_ang < -M_PI/2) {diff_ang = -M_PI/2;}
-
-
-				speed.V = rho*dist*r;
-				speed.W = -2*r/l*alpha*diff_ang;
-
-
-				if(dist < dist_error)
-				{
-					if(busy == BUSY_ACTIONS) {actions.pop_front();}
-					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
-
-					busy = NOT_BUSY;
-					current_action.n = ACTION_NO;
-
-					printf("Done !\n");
-				}
-			}
-			 */
 		}
 	}
 
