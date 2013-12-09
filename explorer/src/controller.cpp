@@ -1916,14 +1916,10 @@ int main(int argc, char** argv)
 		wall_map = imread("/home/robo/explorer/wall_map.png",0);
 
 
-		// Goto one object
-		if(!near_objects.empty())
-		{
-			target.x = near_objects.at(0).x;
-			target.y = near_objects.at(0).y;
-			goto_target = true;
-			printf("Target: x = %f, y = %f\n",target.x,target.y);
-		}
+		// Goto targets
+		target.x = important_nodes_targets.back().second.x;
+		target.y = important_nodes_targets.back().second.y;
+		goto_target = true;
 
 
 		// Debug
