@@ -69,13 +69,6 @@ struct DetectedObject : ObjectRectangle
   cv::RotatedRect rotatedRect;
   cv::Point mc;
 
-//    friend std::ostream & operator<<(std::ostream & stream, const DetectedObject &a)
-//    {
-//    	stream 	<< "id: "<<a.ROI_id<<"\ncontours_poly: "<<a.contours_poly.size()<<"\nboundRect: ["<<a.boundRect.tl()<<", "<<a.boundRect.br()<<"]"
-//    			<<"\nrotatedRect: "<<a.rotatedRect.angle<<"\nmc: "<<a.mc;
-//    	return stream;
-//    }
-
 };
 
 
