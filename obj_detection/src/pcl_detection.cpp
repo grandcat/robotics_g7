@@ -85,6 +85,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   if (!processingActive)  // TODO: replace by shutdown subscribtion when not needed
     {
       ROS_INFO_ONCE("Ignore pointcloud frame (not started!)");
+      sub_pcl_primesense.shutdown();
       return;
     }
   // Process and collect obj information during 5 frames to reduce noise
@@ -94,7 +95,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
     {
       processingActive = false;
       // TODO: process collected information hier
-      return;
+//      return;
     }
 
   // Convert to PCL data representation for more advanced treatment of Pointclouds
@@ -176,7 +177,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 
   // Remove points of side walls
   bool rmBottomPlane;
-  ros::param::param<bool>("pcl_remove_bottom", rmBottomPlane, false);
+  ros::param::param<bool>("pcl_remove_bottom", rmBottomPlane, true);
   pcl::ExtractIndices<pcl::PointXYZ> pclExtractIdx;
   pclExtractIdx.setNegative(true);    // inverse: remove walls
   if (rmBottomPlane)
@@ -184,7 +185,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
     pclExtractIdx.setInputCloud(pclFiltered);
     pclExtractIdx.setIndices(inlierIndices);
     pclExtractIdx.filter(*pclFiltered);
-    std::cerr << "Points left after side wall removal:" << pclFiltered->points.size() << std::endl;
+    std::cerr << "Points left after bottom removal:" << pclFiltered->points.size() << std::endl;
   }
 
   // Create box which removes everything left and right to bottom plane description
@@ -194,6 +195,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclCropUnusedArea.setMax(Eigen::Vector4f(std::max(planeEdge_mostRight - 0.02f, 0.1f), 0.03, 1.0, 1));
   pclCropUnusedArea.filter(*pclFiltered);
   std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
+
 
   // Determine and remove back plane
   pclSegmentation.setInputCloud(pclFiltered);
@@ -205,11 +207,17 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
                                         << coefficients->values[1] << " "
                                         << coefficients->values[2] << " "
                                         << coefficients->values[3] << std::endl;
-  std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
-  // Remove points of walls: back plane
-  pclExtractIdx.setInputCloud(pclFiltered);
-  pclExtractIdx.setIndices(inlierIndices);
-  pclExtractIdx.filter(*pclFiltered);
+//  std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
+  // Only remove if wer're sure it's not an object
+  if (inlierIndices->indices.size() > 400 &&
+      (pclFiltered->points.size() - inlierIndices->indices.size()) > 30)
+  {
+    // Remove points of walls: back plane
+    pclExtractIdx.setInputCloud(pclFiltered);
+    pclExtractIdx.setIndices(inlierIndices);
+    pclExtractIdx.filter(*pclFiltered);
+    ROS_INFO("Detected backwall: Remove these points (inliers: %lu)", inlierIndices->indices.size());
+  }
 
   std::cerr << "Points left after cropping all walls:" << pclFiltered->points.size() << std::endl;
   // If no points left: stop analysis to prevent seg faults

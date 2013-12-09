@@ -35,26 +35,29 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
       return;
     }
 
-  // TODO: disable recognition when turning 90 degree
+  // Turn off recognition while turning 90 degree
+  if (!activeDetection)
+    return;
+
   // Get object positions (if any)
   objRecog_Contourfilter.depth_contour_filter(curDepthImg);
   lastObjPositions = objRecog_Contourfilter.getDetectedObjects();
   unsigned int cDetectedObjs = lastObjPositions.size();
-  ROS_INFO("[Recognition master] Detected amount of objects: %u", cDetectedObjs);
+  ROS_DEBUG("[Recognition master] Detected amount of objects: %u", cDetectedObjs);
 
   // Reject if no object was detected
   if (cDetectedObjs != 1)
   {
-    ROS_INFO("Rejected basic obj detection, more than 2 objects or no objects.");
+    ROS_DEBUG("Rejected basic obj detection, more than 2 objects or no objects.");
     return;
   }
-  ROS_INFO("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
+//  ROS_DEBUG("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   explorer::Object relMazePos = translateCvToMap(lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
   // If position couldn't determined, reject frame
   if (relMazePos.x == -1)
     return;
-  ROS_INFO("Depth used positon, y: %i, x: %i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
+  ROS_DEBUG("Depth used positon, y: %i, x: %i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   if (lastRecognizedId == OBJTYPE_NO_OBJECT)
     {
@@ -66,7 +69,7 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   if (lastRememberedObjId == lastRecognizedId)
   {
     ++count_LastObjType;
-    ROS_INFO("Received same object (%s) %i times", TEXT_OBJECTS[lastRememberedObjId].c_str(), count_LastObjType);
+    ROS_DEBUG("Received same object (%s) %i times", TEXT_OBJECTS[lastRememberedObjId].c_str(), count_LastObjType);
   }
   else
   {
@@ -88,6 +91,15 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   relMazePos.id = (int)lastRecognizedId;
   ROS_WARN("Report detected object: %s", TEXT_OBJECTS[lastRecognizedId].c_str());
   pub_recognition_result.publish(relMazePos);
+
+  // create competition message
+  contest_msgs::evidence msgEvidence;
+  msgEvidence.group_number = 7;
+  msgEvidence.stamp = ros::Time::now();
+  msgEvidence.image_evidence = curRGBImg;
+  msgEvidence.object_id = TEXT_OBJECTS[lastRecognizedId];
+  pub_evidence.publish(msgEvidence);
+
   // TESTING (sleeping after each processing is good for system performance)
 //  ros::Duration(5).sleep();
 }
@@ -119,7 +131,28 @@ void RecognitionMaster::rcvDepthImg(const sensor_msgs::ImageConstPtr& msg)
     {
       ROS_ERROR("[Recognition master] cv_bridge exception: %s", e.what());
       return;
-    }
+  }
+}
+
+void RecognitionMaster::rcvRGBImg(const sensor_msgs::ImageConstPtr& msg)
+{
+  curRGBImg = *msg;
+}
+
+void RecognitionMaster::rcvEKFStop(const explorer::Stop_EKF::ConstPtr& msg)
+{
+  // Deactivate detection and recognition while turning (lot of false positives)
+  if (msg->stop)
+  {
+    activeDetection = false;
+    ROS_INFO("[Recognition master] Paused recognition due to robot turning.");
+  }
+  else
+  {
+    activeDetection = true;
+    ROS_INFO("[Recognition master] Reactivated recognition.");
+  }
+
 }
 
 explorer::Object RecognitionMaster::translateCvToMap(int y, int x)

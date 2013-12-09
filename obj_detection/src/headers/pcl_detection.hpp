@@ -130,8 +130,17 @@ public:
    */
   void start()
   {
+    if (cProcessedFrames)
+    {
+      ROS_WARN("[PCL processing] Still working, will refuse request to start");
+      return;
+    }
     cProcessedFrames = 0;
     processingActive = true;
+
+    if (sub_pcl_primesense == 0)
+      sub_pcl_primesense = nh_.subscribe("/camera/depth_registered/points", 1,
+                                         &objRecognition::PclRecognition::rcvPointCloud, this);
   }
 
   bool getProcessStatus() const

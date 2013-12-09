@@ -9,9 +9,12 @@
 #include "explorer/Object.h"
 #include "color_filter/Objects.h"
 #include <object_recognition/Recognized_objects.h>
+#include <explorer/Stop_EKF.h>
 // Primesense images (distance of object)
 #include <image_transport/image_transport.h>
 #include <opencv/cv.h>
+// Competition
+#include <contest_msgs/evidence.h>
 
 namespace objRecognition
 {
@@ -22,37 +25,46 @@ public:
   RecognitionMaster(ros::NodeHandle &nh)
     : nh_(nh), it_(nh), cRcvdDepthFrames(0),
       lastRecognizedId(OBJTYPE_NO_OBJECT), lastRememberedObjId(OBJTYPE_NO_OBJECT),
-      lastSendObjId(OBJTYPE_NO_OBJECT), count_LastObjType(0), debugWindows(false)
+      lastSendObjId(OBJTYPE_NO_OBJECT), count_LastObjType(0), activeDetection(true),
+      debugWindows(false)
   {
     // Subscribe to RGB & depth image: Processing by slaves and estimation of objects position
-    sub_rgb_img = it_.subscribe("/camera/depth/image_rect", 1,
+    sub_depth_img = it_.subscribe("/camera/depth/image_rect", 1,
                                 &objRecognition::RecognitionMaster::runRecognitionPipeline, this);
-    // TODO: Initialize recognition slave: color_filter
-
+    sub_rgb_img = it_.subscribe("/camera/rgb/image_color", 1, &RecognitionMaster::rcvRGBImg, this);
+    // Receive recognition
     sub_obj_recogn_type = nh_.subscribe("/recognition/recognized", 1,
                                         &objRecognition::RecognitionMaster::rcvObjType, this);
-//    subscribeDepthImg();  // TODO: remove with optimization
-    pub_recognition_result = nh_.advertise<explorer::Object>("/recognition/object_pos_relative", 5);
+    sub_ekf_turn = nh_.subscribe("/motion/Stop_EKF", 1,
+                                 &objRecognition::RecognitionMaster::rcvEKFStop, this);
+
+    // Publish results
+    pub_recognition_result = nh_.advertise<explorer::Object>("/recognition/object_pos_relative", 1);
+    pub_evidence = nh_.advertise<contest_msgs::evidence>("/contest_evidence", 1);
     ROS_INFO("[Recognition master] Subscribed to recognition slaves, advertising to explorer.");
 
   }
 
-  void subscribeDepthImg()
-  {
-    // Subscribe when not already connected
-    if (sub_depth_img == 0)
-    {
-      cRcvdDepthFrames = 0;  // just subscribed (again), no images processed yet
-      sub_depth_img = it_.subscribe("/camera/depth/image_rect", 1,
-                                    &objRecognition::RecognitionMaster::rcvDepthImg, this);
-    }
-  }
+//  void subscribeDepthImg()
+//  {
+//    // Subscribe when not already connected
+//    if (sub_depth_img == 0)
+//    {
+//      cRcvdDepthFrames = 0;  // just subscribed (again), no images processed yet
+//      sub_depth_img = it_.subscribe("/camera/depth/image_rect", 1,
+//                                    &objRecognition::RecognitionMaster::rcvDepthImg, this);
+//    }
+//  }
 
   void runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg);
 
   void rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg);
 
   void rcvDepthImg(const sensor_msgs::ImageConstPtr& msg);
+
+  void rcvRGBImg(const sensor_msgs::ImageConstPtr& msg);
+
+  void rcvEKFStop(const explorer::Stop_EKF::ConstPtr& msg);
 
   inline void setDebugView(bool pContourFilter = true, bool pDepthImg = true)
   {
@@ -71,8 +83,7 @@ private:
 private:
   // ROS connection
   ros::NodeHandle nh_;
-  ros::Subscriber sub_obj_detection, sub_obj_recogn_type;
-  image_transport::Subscriber sub_rgb_img;
+  ros::Subscriber sub_obj_recogn_type, sub_ekf_turn;
   ros::Publisher pub_recognition_result;
 
   // Recognition slaves: color_filter, feature_recognition
@@ -81,12 +92,20 @@ private:
 
   // Depth image (for distance)
   image_transport::ImageTransport it_;
-  image_transport::Subscriber sub_depth_img;
+  image_transport::Subscriber sub_depth_img, sub_rgb_img;
   cv::Mat curDepthImg;
+  sensor_msgs::Image curRGBImg;
+
   int cRcvdDepthFrames;                        //< counts not used depth frames since last position estimation
+
+  ros::Publisher pub_evidence;
+
   // Object type
   enum EObjectTypes lastRecognizedId, lastRememberedObjId, lastSendObjId;
   int count_LastObjType;
+
+  // Behaviour
+  bool activeDetection;
 
   // Debug
   bool debugWindows;

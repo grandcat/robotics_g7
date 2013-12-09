@@ -181,15 +181,18 @@ HSVHist colorDetectionHSV(Mat img)
 	calcHist( &planes[1], 1, 0, Mat(), sHist, 1, &histSize[1], &histRange[1], true, false );	//saturation
 	calcHist( &planes[2], 1, 0, Mat(), vHist, 1, &histSize[2], &histRange[2], true, false );	//value
 
-  normalize( hHist, hHist, 0, 1, NORM_MINMAX, -1, Mat() );
-  normalize( sHist, sHist, 0, 1, NORM_MINMAX, -1, Mat() );
-  normalize( vHist, vHist, 0, 1, NORM_MINMAX, -1, Mat() );
+
 
   //In the RGB case we needed to set the "black-color" bins to zero,
   //in HSV repr. darkness is located in vHist in the first bin.
 	//hHist.at<float>(0) = 0;
 	//sHist.at<float>(0) = 0;
-	vHist.at<float>(0) = 0;
+
+  vHist.at<float>(0) = 0;
+
+  normalize( hHist, hHist, 0, 1, NORM_MINMAX, -1, Mat() );
+  normalize( sHist, sHist, 0, 1, NORM_MINMAX, -1, Mat() );
+  normalize( vHist, vHist, 0, 1, NORM_MINMAX, -1, Mat() );
 
 	HSVHist hist;
 	hist.hHist = hHist;
@@ -278,13 +281,13 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 
 	for(unsigned int i=0; i < trainImg.size(); ++i) {
 		//RGB
-		double resB = 1 - compareHist(rgb.bHist, trainImg[i].rgb.bHist, CV_COMP_BHATTACHARYYA);
-		double resG = 1 - compareHist(rgb.gHist, trainImg[i].rgb.gHist, CV_COMP_BHATTACHARYYA);
-		double resR = 1 - compareHist(rgb.rHist, trainImg[i].rgb.rHist, CV_COMP_BHATTACHARYYA);
+		double resB = compareHist(rgb.bHist, trainImg[i].rgb.bHist, CV_COMP_CORREL);
+		double resG = compareHist(rgb.gHist, trainImg[i].rgb.gHist, CV_COMP_CORREL);
+		double resR = compareHist(rgb.rHist, trainImg[i].rgb.rHist, CV_COMP_CORREL);
 		//HSV
-		double resH = 1 - compareHist(hsv.hHist, trainImg[i].hsv.hHist, CV_COMP_BHATTACHARYYA);
-		double resS = 1 - compareHist(hsv.sHist, trainImg[i].hsv.sHist, CV_COMP_BHATTACHARYYA);
-		double resV = 1 - compareHist(hsv.vHist, trainImg[i].hsv.vHist, CV_COMP_BHATTACHARYYA);
+		double resH = compareHist(hsv.hHist, trainImg[i].hsv.hHist, CV_COMP_CORREL);
+		double resS = compareHist(hsv.sHist, trainImg[i].hsv.sHist, CV_COMP_CORREL);
+		double resV = compareHist(hsv.vHist, trainImg[i].hsv.vHist, CV_COMP_CORREL);
 
 		/////////////////////////////////////////////////////////
 		matched_objects[i].obj = trainImg[i].obj;
@@ -301,6 +304,7 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 		else
 			matched_objects[i].score_rgb = 0;
 		if (resH > 0 && resS > 0 && resV > 0)
+			//matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
 			matched_objects[i].score_hsv = sqrt( resH*resH + resS*resS + resV*resV)/sqrt(3);
 		else
 			matched_objects[i].score_hsv = 0;
@@ -319,14 +323,14 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 		matched_objects[i].nrOfFesturesTotal = trainImg[i].feat.keypoints.size();
 
 		// Check percent of keypoints that match
-		//float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
-		float res = (float)matches.size() / feat.keypoints.size();
+		float res = (float)matches.size() / trainImg[i].feat.keypoints.size();
+		//float res = (float)matches.size() / feat.keypoints.size();
 
 		///////////////////////////////////////////////////////////
 		matched_objects[i].score_feat = (double)res;
-		//matched_objects[i].score_total = matched_objects[i].score_rgb * matched_objects[i].score_hsv * matched_objects[i].score_feat;
-		matched_objects[i].score_total = matched_objects[i].score_hsv * matched_objects[i].score_feat;
-		//matched_objects[i].score_total = matched_objects[i].score_hsv ;
+		matched_objects[i].score_total = matched_objects[i].score_rgb * matched_objects[i].score_hsv * matched_objects[i].score_feat;
+		//matched_objects[i].score_total = matched_objects[i].score_hsv * matched_objects[i].score_feat;
+//		matched_objects[i].score_total = matched_objects[i].score_hsv ;
 	}
 
 	std::sort(matched_objects.begin(), matched_objects.end());
@@ -337,7 +341,7 @@ std::vector<IdImg> identifyObject(RGBHist& rgb, HSVHist& hsv, Features& feat)
 	std::vector<int> saved_id;
 	std::vector<IdImg> best_matches;
 
-	for (int i=0; i < matched_objects.size(); i++)
+	for (unsigned int i=0; i < matched_objects.size(); i++)
 	{
 		if (best_matches.size() == max_size) break;
 
@@ -521,7 +525,7 @@ public:
 
 			if (FLAG_SHOW_OUTPUT)
 			{
-				int nr_to_show = 5;
+				int nr_to_show = 3;
 				for (unsigned int i = 0; i < objects.size() && i < nr_to_show; ++i)
 				//for (unsigned int i = 0; i < objects.size(); ++i)
 				{

@@ -9,7 +9,7 @@
   	<param name="mode" value="0"/>
   </node>	
   
-  <node pkg="obj_detection" name="recogntion_master" type="recognition_master"/>
+  <node pkg="obj_detection" name="recogntion_master" type="recognition_master" output="screen"/>
   
   <node pkg="robot_talk" name="robot_talk" type="robot_talk"/>
   
