@@ -18,7 +18,8 @@ namespace objRecognition
  */
 void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg)
 {
-//  ros::Duration(0.1).sleep();
+  ros::Duration(0.1).sleep();
+  ++cRcvdDepthFrames;
 
 //  ROS_INFO("[recognition master] received depth image %f", ros::Time::now().toSec());
   // Convert depth image to OpenCV Mat format
@@ -39,7 +40,8 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   objRecog_Contourfilter.depth_contour_filter(curDepthImg);
   lastObjPositions = objRecog_Contourfilter.getDetectedObjects();
   unsigned int cDetectedObjs = lastObjPositions.size();
-  ROS_INFO("Detected amount of objects: %u", cDetectedObjs);
+  ROS_INFO("[Recognition master] Detected amount of objects: %u", cDetectedObjs);
+  ROS_INFO("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   // Reject if no object was detected
   if (cDetectedObjs != 1)
@@ -47,7 +49,6 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     ROS_INFO("Rejected basic obj detection, more than 2 objects or no objects.");
     return;
   }
-//  ROS_INFO("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   explorer::Object relMazePos = translateCvToMap(lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
   // If position couldn't determined, reject frame
@@ -104,7 +105,7 @@ void RecognitionMaster::rcvObjType(const object_recognition::Recognized_objects:
 
 void RecognitionMaster::rcvDepthImg(const sensor_msgs::ImageConstPtr& msg)
 {
-//  ++cRejectedFrames;
+  ++cRcvdDepthFrames;
 //  ros::Duration(4).sleep(); // <-- same thread as rgb image, therefore same rate
   ROS_INFO("[recognition master] received depth image %f", ros::Time::now().toSec());
   // Convert depth image to OpenCV Mat format
@@ -130,9 +131,10 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
   explorer::Object relMazePos;
   relMazePos.x = -1;
 
-  if (cRejectedFrames == 0)
+  if (cRcvdDepthFrames == 0)
     {
       // No frame available: no position estimation possible
+      ROS_WARN("[Recognition master] no depth image available");
       return relMazePos;
     }
 

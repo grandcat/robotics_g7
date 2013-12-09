@@ -20,7 +20,7 @@ class RecognitionMaster
 {
 public:
   RecognitionMaster(ros::NodeHandle &nh)
-    : nh_(nh), it_(nh), cRejectedFrames(0),
+    : nh_(nh), it_(nh), cRcvdDepthFrames(0),
       lastRecognizedId(OBJTYPE_NO_OBJECT), lastRememberedObjId(OBJTYPE_NO_OBJECT),
       lastSendObjId(OBJTYPE_NO_OBJECT), count_LastObjType(0), debugWindows(false)
   {
@@ -42,7 +42,7 @@ public:
     // Subscribe when not already connected
     if (sub_depth_img == 0)
     {
-      cRejectedFrames = 0;  // just subscribed (again), no images processed yet
+      cRcvdDepthFrames = 0;  // just subscribed (again), no images processed yet
       sub_depth_img = it_.subscribe("/camera/depth/image_rect", 1,
                                     &objRecognition::RecognitionMaster::rcvDepthImg, this);
     }
@@ -83,7 +83,7 @@ private:
   image_transport::ImageTransport it_;
   image_transport::Subscriber sub_depth_img;
   cv::Mat curDepthImg;
-  int cRejectedFrames;                        //< counts not used depth frames since last position estimation
+  int cRcvdDepthFrames;                        //< counts not used depth frames since last position estimation
   // Object type
   enum EObjectTypes lastRecognizedId, lastRememberedObjId, lastSendObjId;
   int count_LastObjType;
