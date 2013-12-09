@@ -1652,12 +1652,30 @@ void receive_object(const Object::ConstPtr &msg)
 
 	std::cout << ss.str() << std::endl;
 
-	if((mode == 0) & (objects.size() > 0)) // Change condition (number of objects)
+	if((mode == 0) & (objects.size() > 2)) // Change condition (number of objects)
 	{
 		// Goto start
 		target.x = 0;
 		target.y = 0;
 		goto_target = true;
+	}
+
+
+	if(mode == EXPLORE)
+	{
+		double theta = nPi2(theta_true)*M_PI/2;
+		double x2,y2;
+		if(s1 < s2)
+		{
+			x2 = x_true + 0.2*sin(theta);
+			y2 = y_true - 0.2*cos(theta);
+		}
+		else
+		{
+			x2 = x_true - 0.2*sin(theta);
+			y2 = y_true + 0.2*cos(theta);
+		}
+		create_important_node_targets(x_true,y_true,x2,y2);
 	}
 }
 
