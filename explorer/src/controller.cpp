@@ -347,7 +347,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 
 			// Forward with correction
-
 			if(current_action.n == ACTION_GOTO_FORWARD)
 			{
 				static double x_cmd;
@@ -441,7 +440,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 							{
 								for(int j = 0; j <= i; j++)
 								{
-									important_nodes_targets.erase(important_nodes_targets.begin()+j);
+									important_nodes_targets.erase(important_nodes_targets.begin());
 								}
 								break;
 							}
