@@ -441,7 +441,6 @@ void receive_EKF(const EKF::ConstPtr &msg)
 								{
 									important_nodes_targets.erase(important_nodes_targets.begin()+j);
 								}
-								//important_nodes_targets.erase(important_nodes_targets.begin()+i);
 							}
 						}
 					}
@@ -1658,23 +1657,21 @@ void receive_object(const Object::ConstPtr &msg)
 		target.x = 0;
 		target.y = 0;
 		goto_target = true;
+
+		// Turn
+		Action action;
+		action.n = ACTION_ROTATION;
+		action.parameter1 = M_PI;
+		priority.push_back(action);
 	}
 
 
 	if(mode == EXPLORE)
 	{
 		double theta = nPi2(theta_true)*M_PI/2;
-		double x2,y2;
-		if(s1 < s2)
-		{
-			x2 = x_true + 0.2*sin(theta);
-			y2 = y_true - 0.2*cos(theta);
-		}
-		else
-		{
-			x2 = x_true - 0.2*sin(theta);
-			y2 = y_true + 0.2*cos(theta);
-		}
+		double x2 = x_true + 0.2*cos(theta);
+		double y2 = y_true + 0.2*sin(theta);
+
 		create_important_node_targets(x_true,y_true,x2,y2);
 	}
 }
