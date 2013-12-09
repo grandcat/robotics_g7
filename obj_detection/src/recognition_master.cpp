@@ -41,7 +41,6 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   lastObjPositions = objRecog_Contourfilter.getDetectedObjects();
   unsigned int cDetectedObjs = lastObjPositions.size();
   ROS_INFO("[Recognition master] Detected amount of objects: %u", cDetectedObjs);
-  ROS_INFO("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   // Reject if no object was detected
   if (cDetectedObjs != 1)
@@ -49,6 +48,7 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     ROS_INFO("Rejected basic obj detection, more than 2 objects or no objects.");
     return;
   }
+  ROS_INFO("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   explorer::Object relMazePos = translateCvToMap(lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
   // If position couldn't determined, reject frame

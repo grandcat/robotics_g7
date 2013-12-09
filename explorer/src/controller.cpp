@@ -404,7 +404,7 @@ void receive_EKF(const EKF::ConstPtr &msg)
 				speed.W = -2*r/l*alpha*diff_ang;
 
 
-				if(dist < 0.05) // dist_error // 0.08
+				if(dist < 0.08) // dist_error // 0.08
 				{
 					if(busy == BUSY_ACTIONS) {actions.pop_front();}
 					if(busy == BUSY_PRIORITY) {priority.pop_front(); actions.clear();}
@@ -435,9 +435,9 @@ void receive_EKF(const EKF::ConstPtr &msg)
 
 					if(mode == GOTO_TARGETS)
 					{
-						for(int i = 0; i < important_nodes.size(); i++)
+						for(int i = 0; i < important_nodes_targets.size(); i++)
 						{
-							if(important_nodes.at(i).second == n)
+							if(important_nodes_targets.at(i).second == n)
 							{
 								for(int j = 0; j <= i; j++)
 								{
@@ -715,7 +715,7 @@ void update_map(double s1, double s2)
 	{
 		for(int i = 0; i < near_objects.size(); i++)
 		{
-			if(sqrt((near_objects.at(i).x-x_true)*(near_objects.at(i).x-x_true)+(near_objects.at(i).y-y_true)*(near_objects.at(i).y-y_true)))
+			if(sqrt((near_objects.at(i).x-x_true)*(near_objects.at(i).x-x_true)+(near_objects.at(i).y-y_true)*(near_objects.at(i).y-y_true)) < 0.1)
 			{
 				// Talk
 				std_msgs::String talk;
@@ -801,7 +801,7 @@ void update_map(double s1, double s2)
 		}
 
 
-		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.05)
+		if(sqrt((x_true-target.x)*(x_true-target.x)+(y_true-target.y)*(y_true-target.y)) < 0.1)
 		{
 			Action action;
 			action.n = ACTION_STOP;
@@ -1636,13 +1636,15 @@ void receive_object(const Object::ConstPtr &msg)
 	}
 
 
-	if(mode == EXPLORE)
+	if((mode == EXPLORE) & !goto_target)
 	{
 		double theta = nPi2(theta_true)*M_PI/2;
 		double x2 = x_true + 0.2*cos(theta);
 		double y2 = y_true + 0.2*sin(theta);
 
 		create_important_node_targets(x_true,y_true,x2,y2);
+
+		printf("node targets x = %f, y = %f\n",x_true,y_true);
 	}
 }
 
