@@ -761,6 +761,26 @@ void update_map(double s1, double s2)
 	proc_map = map.clone();
 
 
+	// Check near objects
+	if(mode == GOTO_TARGETS)
+	{
+		for(int i = 0; i < near_objects.size(); i++)
+		{
+			if(sqrt((near_objects.at(i).x-x_true)*(near_objects.at(i).x-x_true)+(near_objects.at(i).y-y_true)*(near_objects.at(i).y-y_true)))
+			{
+				// Talk
+				std_msgs::String talk;
+				std::stringstream ss;
+				ss << "There is an object.";
+
+				talk.data = ss.str();
+				chatter_pub.publish(talk);
+
+				std::cout << ss.str() << std::endl;
+			}
+		}
+	}
+
 	// Test
 	if(mode == 2)
 	{
@@ -776,6 +796,7 @@ void update_map(double s1, double s2)
 			priority.push_back(action);
 		}
 	}
+
 
 	// Goto target
 	if(goto_target & actions.empty() & priority.empty())
