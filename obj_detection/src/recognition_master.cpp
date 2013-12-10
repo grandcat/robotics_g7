@@ -57,11 +57,12 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   // If position couldn't determined, reject frame
   if (relMazePos.x == -1)
     return;
+
   ROS_DEBUG("Depth used positon, y: %i, x: %i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
   if (lastRecognizedId == OBJTYPE_NO_OBJECT)
     {
-      ROS_INFO("Rejected basic obj detection: feature detection didn't work!");
+      ROS_DEBUG("Rejected basic obj detection: feature detection didn't work!");
       lastRecognizedId = OBJTYPE_UNKNOWN_OBJECT_DETECTED;
 //      return;
     }
@@ -86,6 +87,14 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     return;
   }
   lastSendObjId = lastRecognizedId;
+
+  // Get recent PCL obj position if there are any -> overwrite contour pos
+  if ((lastPclObjPos[0] != -1) && fabs(ros::Time::now().toSec() - lastPclTime.toSec()) < 2.0)
+  {
+    relMazePos.x = lastPclObjPos[0];
+    relMazePos.y = lastPclObjPos[1];
+    ROS_INFO("PCL and contour time close, will take PCL; position: d %f", lastPclObjPos[0]);
+  }
 
   // Report object with position
   relMazePos.id = (int)lastRecognizedId;
@@ -150,9 +159,18 @@ void RecognitionMaster::rcvEKFStop(const explorer::Stop_EKF::ConstPtr& msg)
   else
   {
     activeDetection = true;
+    count_LastObjType = 0;
     ROS_INFO("[Recognition master] Reactivated recognition.");
   }
 
+}
+
+void RecognitionMaster::rcvPclObjPos(const explorer::Object::ConstPtr& msg)
+{
+  ROS_INFO("[Recognition master] Received PCL obj pos.");
+  lastPclObjPos[0] = msg->x;    // Distance to object (depth)
+  lastPclObjPos[1] = -(msg->y); // distance from center point (same as contour position)
+  lastPclTime = ros::Time::now();
 }
 
 explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
@@ -220,7 +238,7 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "pcl_processing");
+  ros::init(argc, argv, "recognition_master");
   ros::NodeHandle nh;
   ROS_INFO("[Recognition master] Starting up...");
 

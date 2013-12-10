@@ -17,6 +17,9 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/registration/ia_ransac.h>
 
+#include <explorer/Stop_EKF.h>
+#include <explorer/Object.h>
+
 namespace objRecognition
 {
 const int AMOUNT_COMPARE_FRAMES = 5;
@@ -84,7 +87,7 @@ private:
 /**
  * @brief ImageFetchSmooth class
  */
-class PclRecognition
+class  PclRecognition
 {
   /*
    * Configuration
@@ -110,6 +113,10 @@ public:
                                        &objRecognition::PclRecognition::rcvPointCloud, this);
     pub_pcl_filtered = nh_.advertise<sensor_msgs::PointCloud2>("/camera/filtered_points", 1);
     pub_pcl_obj_alignment = nh_.advertise<sensor_msgs::PointCloud2>("/camera/obj_aligned_points", 1);
+
+    sub_ekf_turn = nh_.subscribe("/motion/Stop_EKF", 1,
+                                 &objRecognition::PclRecognition::rcvEKFStop, this);
+    pub_pcl_position = nh_.advertise<explorer::Object>("/recognition/pcl_object_pos_relative", 1);
     ROS_INFO("pcl_detection: Subscribed to pointcloud data.");
 
     // Prepare obj detection
@@ -121,6 +128,16 @@ public:
    * @param pc_raw  Point cloud data from camera
    */
   void rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr& pc_raw);
+
+  void rcvEKFStop(const explorer::Stop_EKF::ConstPtr& msg)
+  {
+    if (!(msg->stop))
+    {
+      ROS_INFO("[PCL Processing] Start processing 5 frames.");
+      start();
+    }
+
+  }
 
   void compareModelWithScene(FeatureCloud& model);
 
@@ -155,7 +172,8 @@ private:
   // ROS connection
   ros::NodeHandle& nh_;
   ros::Subscriber sub_pcl_primesense;
-  ros::Publisher pub_pcl_filtered, pub_pcl_obj_alignment;
+  ros::Publisher pub_pcl_filtered, pub_pcl_obj_alignment, pub_pcl_position;
+  ros::Subscriber  sub_ekf_turn;
 
   // Process behavior
   bool processingActive;
@@ -164,7 +182,7 @@ private:
   // Point cloud data
   Eigen::Affine3f cameraPoseTransform;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pclFiltered;
-  std::vector<std::vector<Eigen::Vector4f> > lastObjCmPos;
+  std::vector<Eigen::Vector4f> lastObjCmPos;
   // Sample Consensus Initial Alignment
   pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> sacIA;
 };

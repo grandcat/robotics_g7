@@ -37,6 +37,9 @@ public:
                                         &objRecognition::RecognitionMaster::rcvObjType, this);
     sub_ekf_turn = nh_.subscribe("/motion/Stop_EKF", 1,
                                  &objRecognition::RecognitionMaster::rcvEKFStop, this);
+    sub_pcl_obj_pos = nh_.subscribe("/recognition/pcl_object_pos_relative", 1,
+                                    &objRecognition::RecognitionMaster::rcvPclObjPos, this);
+    lastPclObjPos[0] = -1;
 
     // Publish results
     pub_recognition_result = nh_.advertise<explorer::Object>("/recognition/object_pos_relative", 1);
@@ -66,6 +69,8 @@ public:
 
   void rcvEKFStop(const explorer::Stop_EKF::ConstPtr& msg);
 
+  void rcvPclObjPos(const explorer::Object::ConstPtr &msg);
+
   inline void setDebugView(bool pContourFilter = true, bool pDepthImg = true)
   {
     objRecog_Contourfilter.showDebugOutput(pContourFilter);
@@ -83,18 +88,21 @@ private:
 private:
   // ROS connection
   ros::NodeHandle nh_;
-  ros::Subscriber sub_obj_recogn_type, sub_ekf_turn;
+  ros::Subscriber sub_obj_recogn_type, sub_ekf_turn, sub_pcl_obj_pos;
   ros::Publisher pub_recognition_result;
 
   // Recognition slaves: color_filter, feature_recognition
   Contour_Filter objRecog_Contourfilter;
   std::vector<DetectedObject> lastObjPositions;
+  float lastPclObjPos[2];
+  ros::Time lastPclTime;
 
   // Depth image (for distance)
   image_transport::ImageTransport it_;
   image_transport::Subscriber sub_depth_img, sub_rgb_img;
   cv::Mat curDepthImg;
   sensor_msgs::Image curRGBImg;
+
 
   int cRcvdDepthFrames;                        //< counts not used depth frames since last position estimation
 

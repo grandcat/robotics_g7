@@ -84,18 +84,47 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 {
   if (!processingActive)  // TODO: replace by shutdown subscribtion when not needed
     {
-      ROS_INFO_ONCE("Ignore pointcloud frame (not started!)");
+      ROS_INFO_ONCE("Ignore pointcloud frame (not started or stopped!)");
       sub_pcl_primesense.shutdown();
       return;
     }
   // Process and collect obj information during 5 frames to reduce noise
   ++cProcessedFrames;
-  cProcessedFrames %= 6;
+  cProcessedFrames %= 4;
   if (cProcessedFrames == 0)
     {
       processingActive = false;
-      // TODO: process collected information hier
-//      return;
+      // Process collected information here
+      if (lastObjCmPos.empty())
+      {
+        // no object detected
+        explorer::Object pcl_msg;
+        pcl_msg.x = -1;
+        pub_pcl_position.publish(pcl_msg);
+        return;
+      }
+      // Detected at least 1 object
+      Eigen::Vector4f clustCentroid;
+      Eigen::Vector4f bestPointCentroid;
+      float closestZ = 1.5;
+      for (std::vector<Eigen::Vector4f>::const_iterator it = lastObjCmPos.begin(); it != lastObjCmPos.end(); ++it)
+      {
+        clustCentroid = *it;
+        if (clustCentroid[2] < closestZ)
+        {
+          closestZ = clustCentroid[2];
+          bestPointCentroid = clustCentroid;
+        }
+      }
+
+      explorer::Object pcl_msg;
+      pcl_msg.y = bestPointCentroid[0];
+      pcl_msg.x = bestPointCentroid[2];
+      pub_pcl_position.publish(pcl_msg);
+
+      // Clear old objects
+      lastObjCmPos.clear();
+      return;
     }
 
   // Convert to PCL data representation for more advanced treatment of Pointclouds
@@ -254,11 +283,13 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 //              << pclFiltered->points[*clustIter].y << " "
 //              << pclFiltered->points[*clustIter].z << ") "
 //              << " Count: " << it->indices.size() << std::endl;
-    std::cerr << "Cluster Centroid " << clustId << " ("
+    std::cout << "Cluster Centroid " << clustId << " ("
               << clustCentroid[0] << " "
               << clustCentroid[1] << " "
               << clustCentroid[2] << ") "
               << " Count: " << it->indices.size() << std::endl;
+
+    lastObjCmPos.push_back(clustCentroid);
   ++clustId;
   }
 
