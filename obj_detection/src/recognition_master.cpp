@@ -89,12 +89,12 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   lastSendObjId = lastRecognizedId;
 
   // Get recent PCL obj position if there are any -> overwrite contour pos
-  if ((lastPclObjPos[0] != -1) && fabs(ros::Time::now().toSec() - lastPclTime.toSec()) < 2.0)
+  if ((lastPclObjPos[0] != -1) && fabs(ros::Time::now().toSec() - lastPclTime.toSec()) < 1.5)
   {
+    ROS_INFO("PCL and contour time close, will take PCL; position: x:%f y:%f, alternative was x:%f, y:%f",
+             lastPclObjPos[0], lastPclObjPos[1], relMazePos.x, relMazePos.y);
     relMazePos.x = lastPclObjPos[0];
     relMazePos.y = lastPclObjPos[1];
-    ROS_INFO("PCL and contour time close, will take PCL; position: x:%f y:%f",
-             lastPclObjPos[0], lastPclObjPos[1]);
   }
 
   // Report object with position

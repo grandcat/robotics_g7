@@ -147,7 +147,7 @@ public:
    */
   void start()
   {
-    if (cProcessedFrames)
+    if (processingActive)
     {
       ROS_WARN("[PCL processing] Still working, will refuse request to start");
       return;

@@ -93,7 +93,6 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   cProcessedFrames %= 4;
   if (cProcessedFrames == 0)
     {
-      processingActive = false;
       // Process collected information here
       if (lastObjCmPos.empty())
       {
@@ -124,6 +123,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 
       // Clear old objects
       lastObjCmPos.clear();
+      processingActive = false;
       return;
     }
 
@@ -143,7 +143,13 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclVoxelFilter.setFilterLimits(0.0, 1.0);  //< only take XYZ points maximum 1m away from camera on z axis
   pclVoxelFilter.setLeafSize(VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE, VOXEL_LEAF_SIZE);
   pclVoxelFilter.filter(*pclFiltered);
-  ROS_INFO("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
+  ROS_DEBUG("Points filtered: amount->%i", pclFiltered->width * pclFiltered->height);
+
+  if ((pclFiltered->width * pclFiltered->height) == 0)
+  {
+    ROS_WARN("Ignore this PCL frame, seems to be corrupt!");
+    return;
+  }
 
   /*
    * Determine plane surfaces and remove
@@ -173,11 +179,11 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
              "(due to missing point), aborting PCL recognition for this frame");
     return;
   }
-  std::cout << "Bottom plane: Model coefficients: " << coefficients->values[0] << " "
-                                        << coefficients->values[1] << " "
-                                        << coefficients->values[2] << " "
-                                        << coefficients->values[3] << std::endl;
-  std::cout << "Model inliers: " << inlierIndices->indices.size () << std::endl;
+//  ROS_DEBUG("Bottom plane: Model coefficients: " << coefficients->values[0] << " "
+//                                        << coefficients->values[1] << " "
+//                                        << coefficients->values[2] << " "
+//                                        << coefficients->values[3]");
+//  std::cout << "Bottom plane: Model inliers: " << inlierIndices->indices.size () << std::endl;
 
   // Approximate left and right edge of plane surface
   std::vector<Eigen::Vector3f> edgeLeft(100, Eigen::Vector3f(0, 0, 0)), edgeRight(100, Eigen::Vector3f(0, 0, 0));
@@ -201,8 +207,8 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   }
   float planeEdge_mostLeft = filteredMeanfromPlaneEdge(edgeLeft);
   float planeEdge_mostRight = filteredMeanfromPlaneEdge(edgeRight);
-  std::cerr << "Most left: " << planeEdge_mostLeft
-            << ", Most right: " << planeEdge_mostRight << std::endl;
+//  std::cerr << "Most left: " << planeEdge_mostLeft
+//            << ", Most right: " << planeEdge_mostRight << std::endl;
 
   // Remove points of side walls
   bool rmBottomPlane;
@@ -214,7 +220,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
     pclExtractIdx.setInputCloud(pclFiltered);
     pclExtractIdx.setIndices(inlierIndices);
     pclExtractIdx.filter(*pclFiltered);
-    std::cerr << "Points left after bottom removal:" << pclFiltered->points.size() << std::endl;
+//    std::cerr << "Points left after bottom removal:" << pclFiltered->points.size() << std::endl;
   }
 
   // Create box which removes everything left and right to bottom plane description
@@ -223,7 +229,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclCropUnusedArea.setMin(Eigen::Vector4f(std::min(planeEdge_mostLeft + 0.01f, -0.1f), -0.2, 0.0, 1));    // y: max height of object
   pclCropUnusedArea.setMax(Eigen::Vector4f(std::max(planeEdge_mostRight - 0.02f, 0.1f), 0.03, 1.0, 1));
   pclCropUnusedArea.filter(*pclFiltered);
-  std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
+//  std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
 
 
   // Determine and remove back plane
@@ -232,10 +238,10 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclSegmentation.setAxis(axisBackPlane);  // back plane
   pclSegmentation.setDistanceThreshold(0.02);
   pclSegmentation.segment(*inlierIndices, *coefficients);
-  std::cerr << "Back plane: Model coefficients: " << coefficients->values[0] << " "
-                                        << coefficients->values[1] << " "
-                                        << coefficients->values[2] << " "
-                                        << coefficients->values[3] << std::endl;
+//  std::cerr << "Back plane: Model coefficients: " << coefficients->values[0] << " "
+//                                        << coefficients->values[1] << " "
+//                                        << coefficients->values[2] << " "
+//                                        << coefficients->values[3] << std::endl;
 //  std::cerr << "Model inliers: " << inlierIndices->indices.size () << std::endl;
   // Only remove if wer're sure it's not an object
   if (inlierIndices->indices.size() > 400 &&
@@ -245,7 +251,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
     pclExtractIdx.setInputCloud(pclFiltered);
     pclExtractIdx.setIndices(inlierIndices);
     pclExtractIdx.filter(*pclFiltered);
-    ROS_INFO("Detected backwall: Remove these points (inliers: %lu)", inlierIndices->indices.size());
+    ROS_DEBUG("Detected backwall: Remove these points (inliers: %lu)", inlierIndices->indices.size());
   }
 
   std::cerr << "Points left after cropping all walls:" << pclFiltered->points.size() << std::endl;
@@ -283,7 +289,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 //              << pclFiltered->points[*clustIter].y << " "
 //              << pclFiltered->points[*clustIter].z << ") "
 //              << " Count: " << it->indices.size() << std::endl;
-    std::cout << "Cluster Centroid " << clustId << " ("
+    std::cout << "[PCL Processing] Cluster Centroid " << clustId << " ("
               << clustCentroid[0] << " "
               << clustCentroid[1] << " "
               << clustCentroid[2] << ") "
