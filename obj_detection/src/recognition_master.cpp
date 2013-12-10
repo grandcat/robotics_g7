@@ -93,7 +93,8 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   {
     relMazePos.x = lastPclObjPos[0];
     relMazePos.y = lastPclObjPos[1];
-    ROS_INFO("PCL and contour time close, will take PCL; position: d %f", lastPclObjPos[0]);
+    ROS_INFO("PCL and contour time close, will take PCL; position: x:%f y:%f",
+             lastPclObjPos[0], lastPclObjPos[1]);
   }
 
   // Report object with position
