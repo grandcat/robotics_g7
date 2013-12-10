@@ -179,6 +179,10 @@ typedef std::pair<Node,Path> Pair;
 */
 
 
+// Phase 2
+int const avoid_repetition = 10;
+
+
 // Receive functions
 void receive_EKF(const EKF::ConstPtr &msg);
 
