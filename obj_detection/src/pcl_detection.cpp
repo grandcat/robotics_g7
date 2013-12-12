@@ -93,6 +93,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   cProcessedFrames %= 4;
   if (cProcessedFrames == 0)
     {
+    ROS_WARN("Processing frame %i, state %i", cProcessedFrames, processingActive);
       // Process collected information here
       if (lastObjCmPos.empty())
       {
@@ -100,6 +101,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
         explorer::Object pcl_msg;
         pcl_msg.x = -1;
         pub_pcl_position.publish(pcl_msg);
+        processingActive = false;
         return;
       }
       // Detected at least 1 object

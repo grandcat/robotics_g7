@@ -2,7 +2,7 @@
  * contour_filter.h
  *
  *  Created on: Nov 25, 2013
- *      Author: Andreas
+ *      Author: Andreas Pettersson
  */
 
 #ifndef CONTOUR_FILTER_H_
@@ -23,29 +23,12 @@
 #include "recognition_constants.hpp"
 #include <typeinfo>
 
-
-//#include <contour_filter/Rect2D_.h> //msg for ROI of an object
-//#include <contour_filter/Objects.h>//msg containing ROI:s of objects
-
-
-//flag for which filter we are adjusting
-//enum Filter_mode
-//{
-//        WALLS = 0,
-//        FLOOR = 1
-//};
-//Filter_mode mode;
-
 //object contour parameters
 const double minArea = 1000.0;
-//double minArea = 10.0;
-//double maxArea = 100000.0;
 const double maxArea = 17000.0;
 
 //object rectangle parameter
 const double minRatio = 3.5;
-//const double minRatio = 4.3;
-//const double minRatio = 5;
 
 struct ObjectRectangle
 {
@@ -93,12 +76,7 @@ private:
 public:
   Contour_Filter(): it_(nh_), FLAG_SHOW_IMAGE(false), array_ptr(0), nr_of_stored_images(0)
   {
-
-//    image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Contour_Filter::contour_filter, this);
-//    image_sub_ = it_.subscribe("/camera/depth/image_rect", 1, &Contour_Filter::depth_contour_filter, this);
-//    obj_pub_ = nh_.advertise<contour_filter::Objects>("/recognition/detect", 1);
     image_sub_color = it_.subscribe("/camera/rgb/image_color", 1, &Contour_Filter::rcvRgbImage, this);
-
     img_pub_ = it_.advertise("/color_filter/filtered_image", 1);
   }
 
@@ -126,10 +104,8 @@ public:
     return objects;
   }
 
-
 };
 
 
 
 #endif /* CONTOUR_FILTER_H_ */
-
