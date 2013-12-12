@@ -10,8 +10,6 @@ namespace objRecognition
 {
 // Fine-tuning settings
 struct Cf_Params params_walls, params_floor;
-// Debug setting
-Filter_mode mode;
 
 /**
  * @brief on_trackbar
