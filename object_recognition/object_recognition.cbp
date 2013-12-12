@@ -5,7 +5,7 @@
       <Option title="object_recognition" />
       <Option makefile_is_custom="1" />
       <Option compiler="gcc" />
-      <Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\opt\;CMake Files\..\..\..\..\..\..\opt\ros\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\ros\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\ros\core\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\ros\core\rosbuild\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslang\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslang\cmake\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roscpp\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roscpp\rosbuild\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\rospy\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\rospy\rosbuild\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslisp\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslisp\rosbuild\;" />
+      <Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\;CMake Files\..\..\..\..\..\..\opt\;CMake Files\..\..\..\..\..\..\opt\ros\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\ros\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\ros\core\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\ros\core\rosbuild\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslang\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslang\cmake\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslisp\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslisp\rosbuild\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\rospy\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\rospy\rosbuild\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roscpp\;CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roscpp\rosbuild\;" />
       <Build>
       <Target title="all">
          <Option working_dir="/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition" />
@@ -283,14 +283,14 @@
       <Unit filename="/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/../../../../../../opt/ros/fuerte/share/roslang/cmake/roslang.cmake">
           <Option virtualFolder="CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslang\cmake\" />
       </Unit>
-      <Unit filename="/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/../../../../../../opt/ros/fuerte/share/roscpp/rosbuild/roscpp.cmake">
-          <Option virtualFolder="CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roscpp\rosbuild\" />
+      <Unit filename="/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/../../../../../../opt/ros/fuerte/share/roslisp/rosbuild/roslisp.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslisp\rosbuild\" />
       </Unit>
       <Unit filename="/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/../../../../../../opt/ros/fuerte/share/rospy/rosbuild/rospy.cmake">
           <Option virtualFolder="CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\rospy\rosbuild\" />
       </Unit>
-      <Unit filename="/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/../../../../../../opt/ros/fuerte/share/roslisp/rosbuild/roslisp.cmake">
-          <Option virtualFolder="CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roslisp\rosbuild\" />
+      <Unit filename="/home/robo/DD2425_2013/fuerte_workspace/robotics_g7/object_recognition/../../../../../../opt/ros/fuerte/share/roscpp/rosbuild/roscpp.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\..\opt\ros\fuerte\share\roscpp\rosbuild\" />
       </Unit>
    </Project>
 </CodeBlocks_project_file>
