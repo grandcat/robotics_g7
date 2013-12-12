@@ -1,0 +1,5 @@
+Parameters to remove all background (in robotlab)
+H_MIN: 0 H_MAX: 180 S_MIN: 0 S_MAX: 106 V_MIN: 0 V_MAX: 256
+
+
+
