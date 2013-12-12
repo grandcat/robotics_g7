@@ -22,11 +22,11 @@
 
 namespace objRecognition
 {
-const int AMOUNT_COMPARE_FRAMES = 5;
+const int AMOUNT_COMPARE_FRAMES = 3;
 
 
  /*
- * @brief ModelCloud class
+ * @brief ModelCloud class (not used, for object classification)
  */
 class FeatureCloud
 {
@@ -85,9 +85,10 @@ private:
 
 
 /**
- * @brief ImageFetchSmooth class
+ * @brief PclRecognition class
+ *  The whole processing pipeline for extracting and detecting objects based on point cloud frames
  */
-class  PclRecognition
+class PclRecognition
 {
   /*
    * Configuration
@@ -103,8 +104,6 @@ public:
   PclRecognition(ros::NodeHandle& nh) : nh_(nh), processingActive(false), cProcessedFrames(0)
   {
     // Initialize camera pose transformation
-//    cameraPoseTransform = Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX()) *
-//        Eigen::Translation3f(Eigen::Vector3f(0, 0, camera_translation_z));
     cameraPoseTransform = Eigen::Translation3f(Eigen::Vector3f(0, camera_translation_z, 0)) *
         Eigen::AngleAxisf(camera_pose_rotation, Eigen::Vector3f::UnitX());
 
@@ -113,9 +112,10 @@ public:
                                        &objRecognition::PclRecognition::rcvPointCloud, this);
     pub_pcl_filtered = nh_.advertise<sensor_msgs::PointCloud2>("/camera/filtered_points", 1);
     pub_pcl_obj_alignment = nh_.advertise<sensor_msgs::PointCloud2>("/camera/obj_aligned_points", 1);
-
+    // EKF message: Only turn on PCL processing after having turned
     sub_ekf_turn = nh_.subscribe("/motion/Stop_EKF", 1,
                                  &objRecognition::PclRecognition::rcvEKFStop, this);
+    // Publish position of detected objects
     pub_pcl_position = nh_.advertise<explorer::Object>("/recognition/pcl_object_pos_relative", 1);
     ROS_INFO("pcl_detection: Subscribed to pointcloud data.");
 
@@ -124,11 +124,18 @@ public:
   }
 
   /**
-   * @brief rcvPointCloud Process point clouds as soon as start() was triggered
-   * @param pc_raw  Point cloud data from camera
+   * @brief rcvPointCloud
+   *  Process point clouds as soon as start() was triggered
+   * @param pc_raw
+   *  Point cloud data from camera
    */
   void rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr& pc_raw);
 
+  /**
+   * @brief rcvEKFStop
+   *  Use EKF to turn on processing only after robot has turned
+   * @param msg
+   */
   void rcvEKFStop(const explorer::Stop_EKF::ConstPtr& msg)
   {
     if (!(msg->stop))
@@ -136,13 +143,14 @@ public:
       ROS_INFO("[PCL Processing] Start processing 5 frames.");
       start();
     }
-
   }
 
+  // Not used
   void compareModelWithScene(FeatureCloud& model);
 
   /**
-   * @brief start Start point cloud processing for next frames
+   * @brief start
+   *  Start point cloud processing for next frames
    *  Robot should stay at one place for smoothing & recognition process
    */
   void start()
@@ -165,6 +173,9 @@ public:
     return processingActive;
   }
 
+  /*
+   * Helper functions
+   */
 private:
   static float filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3f>& pEdge);
 

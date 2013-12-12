@@ -1,3 +1,9 @@
+/*
+ * recognition_master.cpp
+ *
+ *      Author: Stefan
+ */
+
 #include "headers/recognition_master.hpp"
 #include "color_filter/Rect2D_.h"
 

@@ -1,4 +1,11 @@
-﻿#ifndef RECOGNITION_MASTER_HPP
+﻿/*
+ * recognition_master.hpp
+ *
+ *      Author: Stefan
+ */
+
+
+#ifndef RECOGNITION_MASTER_HPP
 #define RECOGNITION_MASTER_HPP
 
 #include <ros/ros.h>

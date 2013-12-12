@@ -1,13 +1,16 @@
 /*
  *  pcl_detection.cpp
  *
- *  Get frame sequence from Primesense, remove unnecessary objects (walls) and try removing noise and compare
- *  object pcd examples with current depth image
+ *  Author: Stefan
+ *
+ *  Get frame sequence from Primesense, remove unnecessary objects (walls) and get objects' position
+ *  It is also prepared to compare objects to exisiting point cloud files (.pcd format), but scoring is not
+ *  very well
  */
 
 #include "headers/pcl_detection.hpp"
 
-// Point cloud: downsampling & cleaning noise
+// Point cloud: downsampling & removing walls
 #include <pcl/filters/voxel_grid.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -16,13 +19,13 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/statistical_outlier_removal.h>
-// PCL: normals & feature
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/fpfh.h>
 // PCL Detetion and extraction
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
-#include "headers/conditional_euclidean_clustering.hpp"   // Copied version of PCL 1-7
+#include "headers/conditional_euclidean_clustering.hpp"   // Copied version of PCL 1.7 due  to a bug in 1.5
+// PCL: normals & feature (for PCL comparing, not actively used)
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/fpfh.h>
 
 #define VOXEL_LEAF_SIZE 0.005
 
@@ -30,7 +33,6 @@ namespace objRecognition
 {
 
 const float CLUSTER_DROP_HEIGHT = 0.075;  // Drop elements higher than this cluster center height (e.x. traps)
-const float EDGE_MAX_Z_DEPTH = 0.01;
 
 /*
  *
@@ -80,9 +82,17 @@ customEuclideanSegmCond(const pcl::PointXYZ& point_a, const pcl::PointXYZ& point
   return true;
 }
 
+/**
+ * @brief PclRecognition::rcvPointCloud
+ *  PCL processing pipeline
+ *  Takes several point cloud frames, remove walls and detect objects using Euclidean cluster extraction
+ * @param pc_raw
+ *  Input point cloud message
+ */
 void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_raw)
 {
-  if (!processingActive)  // TODO: replace by shutdown subscribtion when not needed
+  // Shutdown point cloud processing when not needed
+  if (!processingActive)
     {
       ROS_INFO_ONCE("Ignore pointcloud frame (not started or stopped!)");
       sub_pcl_primesense.shutdown();
@@ -90,11 +100,11 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
     }
   // Process and collect obj information during 5 frames to reduce noise
   ++cProcessedFrames;
-  cProcessedFrames %= 4;
+  cProcessedFrames %= AMOUNT_COMPARE_FRAMES + 1;
   if (cProcessedFrames == 0)
     {
     ROS_WARN("Processing frame %i, state %i", cProcessedFrames, processingActive);
-      // Process collected information here
+      // Process collected information
       if (lastObjCmPos.empty())
       {
         // no object detected
@@ -117,12 +127,11 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
           bestPointCentroid = clustCentroid;
         }
       }
-
+      // Publish detected object
       explorer::Object pcl_msg;
       pcl_msg.y = bestPointCentroid[0];
       pcl_msg.x = bestPointCentroid[2];
       pub_pcl_position.publish(pcl_msg);
-
       // Clear old objects
       lastObjCmPos.clear();
       processingActive = false;
@@ -167,13 +176,13 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pcl::SACSegmentation<pcl::PointXYZ> pclSegmentation;
   pclSegmentation.setInputCloud(pclFiltered);
   pclSegmentation.setOptimizeCoefficients(true);
-  pclSegmentation.setModelType(pcl::SACMODEL_PLANE); // pcl::SACMODEL_PERPENDICULAR_PLANE
+  pclSegmentation.setModelType(pcl::SACMODEL_PLANE);
   pclSegmentation.setMethodType(pcl::SAC_RANSAC);
   pclSegmentation.setAxis(axisBottomPlane);
   pclSegmentation.setEpsAngle(25.0f * (M_PI/180.0f));
   pclSegmentation.setDistanceThreshold(segmentThreshold); // how close point must be to object to be inlier
   pclSegmentation.setMaxIterations(1000);
-  pclSegmentation.segment(*inlierIndices, *coefficients); //< TODO: nothing detected, take another frame
+  pclSegmentation.segment(*inlierIndices, *coefficients);
 
   if (!coefficients)
   {
@@ -181,13 +190,8 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
              "(due to missing point), aborting PCL recognition for this frame");
     return;
   }
-//  ROS_DEBUG("Bottom plane: Model coefficients: " << coefficients->values[0] << " "
-//                                        << coefficients->values[1] << " "
-//                                        << coefficients->values[2] << " "
-//                                        << coefficients->values[3]");
-//  std::cout << "Bottom plane: Model inliers: " << inlierIndices->indices.size () << std::endl;
 
-  // Approximate left and right edge of plane surface
+  // Approximate left and right edge of plane surface using a grid with a mesh size of 1cm
   std::vector<Eigen::Vector3f> edgeLeft(100, Eigen::Vector3f(0, 0, 0)), edgeRight(100, Eigen::Vector3f(0, 0, 0));
   for (size_t i = 0; i < inlierIndices->indices.size(); ++i)
   {
@@ -212,7 +216,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
 //  std::cerr << "Most left: " << planeEdge_mostLeft
 //            << ", Most right: " << planeEdge_mostRight << std::endl;
 
-  // Remove points of side walls
+  // Remove points of walls left and right to the robot's view
   bool rmBottomPlane;
   ros::param::param<bool>("pcl_remove_bottom", rmBottomPlane, true);
   pcl::ExtractIndices<pcl::PointXYZ> pclExtractIdx;
@@ -231,8 +235,7 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclCropUnusedArea.setMin(Eigen::Vector4f(std::min(planeEdge_mostLeft + 0.01f, -0.1f), -0.2, 0.0, 1));    // y: max height of object
   pclCropUnusedArea.setMax(Eigen::Vector4f(std::max(planeEdge_mostRight - 0.02f, 0.1f), 0.03, 1.0, 1));
   pclCropUnusedArea.filter(*pclFiltered);
-//  std::cerr << "Points left after cropping:" << pclFiltered->points.size() << std::endl;
-
+  ROS_DEBUG("Points left after cropping: %lu", pclFiltered->points.size());
 
   // Determine and remove back plane
   pclSegmentation.setInputCloud(pclFiltered);
@@ -271,11 +274,10 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pclCluster.setConditionFunction(&customEuclideanSegmCond);
   pclCluster.setMinClusterSize(32);
   pclCluster.setMaxClusterSize(10000);
-//  pclCluster.setSearchMethod(sTree);
   pclCluster.setInputCloud(pclFiltered);
   pclCluster.segment(*clusters);
 
-  std::cerr << "Number of extracted clusters: " << clusters->size() << std::endl;
+  ROS_INFO("Number of extracted clusters: %lu", clusters->size());
   int clustId = 0;
   for (std::vector<pcl::PointIndices>::const_iterator it = clusters->begin (); it != clusters->end (); ++it)
   {
@@ -306,11 +308,10 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
   pcl::toROSMsg(*pclFiltered, output);
   pub_pcl_filtered.publish(output);
 
-  // TESTING PCL Object recognition
+  // PCL Object classification based on PCD files (Not used!)
   //  pclFiltered = pclProcessed;
   //  static FeatureCloud objModel;
   //  compareModelWithScene(objModel);
-
 }
 
 /**
@@ -321,7 +322,6 @@ void PclRecognition::rcvPointCloud(const sensor_msgs::PointCloud2ConstPtr &pc_ra
  */
 float PclRecognition::filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3f>& pEdge)
 {
-  // TODO: use biggest sequence instead for mean value
   bool dataSeen = false;
   float avgVals = 0.;
   int countVals = 0;
@@ -335,7 +335,7 @@ float PclRecognition::filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3
     avgVals += (*it)[0];
     ++countVals;
     dataSeen = true;
-
+    // Debug
 //    std::cerr << "Point on left edge: ("
 //              << (*it)[0] << " "
 //              << (*it)[1] << " "
@@ -345,8 +345,11 @@ float PclRecognition::filteredMeanfromPlaneEdge(const std::vector<Eigen::Vector3
   return (avgVals / countVals);
 }
 
-
-
+/**
+ * @brief PclRecognition::compareModelWithScene
+ *  Compare one PCD files with current point cloud frame
+ * @param model
+ */
 void PclRecognition::compareModelWithScene(FeatureCloud& model)
 {
   // Params of Sample Consensus Intial Alignment algorithm
