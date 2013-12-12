@@ -1,3 +1,7 @@
+/*
+ * Removes all unnecessary parts of the provided PCD files
+ */
+
 #include <ros/ros.h>
 #include <boost/filesystem.hpp>
 #include <pcl_ros/point_cloud.h>
