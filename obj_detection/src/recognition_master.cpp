@@ -14,7 +14,8 @@ namespace objRecognition
  * @brief RecognitionMaster::runRecognitionPipeline
  *  Start of the recongition pipeline. This will execute the necessary recognition slaves at a given frame
  *  rate and calculate results.
- * @param msg Primesense image
+ * @param msg
+ *  Camera depth image
  */
 void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -51,8 +52,8 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     ROS_DEBUG("Rejected basic obj detection, more than 2 objects or no objects.");
     return;
   }
-//  ROS_DEBUG("1. Obj:\n cm y:%i x:%i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
+  // Estimate object position based on camera x/y view
   explorer::Object relMazePos = translateCvToMap(lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
   // If position couldn't determined, reject frame
   if (relMazePos.x == -1)
@@ -60,12 +61,15 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
 
   ROS_DEBUG("Depth used positon, y: %i, x: %i", lastObjPositions[0].mc.y, lastObjPositions[0].mc.x);
 
+  /*
+   * Only accepted objects of which the type classification is stable and
+   * different to the last reported object
+   */
   if (lastRecognizedId == OBJTYPE_NO_OBJECT)
-    {
-      ROS_DEBUG("Rejected basic obj detection: feature detection didn't work!");
-      lastRecognizedId = OBJTYPE_UNKNOWN_OBJECT_DETECTED;
-//      return;
-    }
+  {
+    ROS_DEBUG("Rejected basic obj detection: feature detection didn't work!");
+    lastRecognizedId = OBJTYPE_UNKNOWN_OBJECT_DETECTED;
+  }
   // Don't send last object id again
   if (lastRememberedObjId == lastRecognizedId)
   {
@@ -83,12 +87,11 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
     return;
 
   // Dont't send last reported object again (is probably the same one)
-  if (lastSendObjId == lastRecognizedId) {
+  if (lastSendObjId == lastRecognizedId)
     return;
-  }
   lastSendObjId = lastRecognizedId;
 
-  // Get recent PCL obj position if there are any -> overwrite contour pos
+  // Get recent PCL obj position if there are any -> overwrite contour filter's position
   if ((lastPclObjPos[0] != -1) && fabs(ros::Time::now().toSec() - lastPclTime.toSec()) < 1.5)
   {
     ROS_INFO("PCL and contour time close, will take PCL; position: x:%f y:%f, alternative was x:%f, y:%f",
@@ -109,14 +112,12 @@ void RecognitionMaster::runRecognitionPipeline(const sensor_msgs::ImageConstPtr&
   msgEvidence.image_evidence = curRGBImg;
   msgEvidence.object_id = TEXT_OBJECTS[lastRecognizedId];
   pub_evidence.publish(msgEvidence);
-
-  // TESTING (sleeping after each processing is good for system performance)
-//  ros::Duration(5).sleep();
 }
 
 
 /**
- * @brief RecognitionMaster::rcvObjType Store obj type information for processing later in rcvSlaveRecognition
+ * @brief RecognitionMaster::rcvObjType
+ *  Store object type for processing later in rcvSlaveRecognition
  * @param msg
  */
 void RecognitionMaster::rcvObjType(const object_recognition::Recognized_objects::ConstPtr msg)
@@ -128,8 +129,7 @@ void RecognitionMaster::rcvObjType(const object_recognition::Recognized_objects:
 void RecognitionMaster::rcvDepthImg(const sensor_msgs::ImageConstPtr& msg)
 {
   ++cRcvdDepthFrames;
-//  ros::Duration(4).sleep(); // <-- same thread as rgb image, therefore same rate
-  ROS_INFO("[recognition master] received depth image %f", ros::Time::now().toSec());
+  ROS_INFO("[Recognition master] received depth image %f", ros::Time::now().toSec());
   // Convert depth image to OpenCV Mat format
   cv_bridge::CvImagePtr cv_ptr;
   try
@@ -174,11 +174,21 @@ void RecognitionMaster::rcvPclObjPos(const explorer::Object::ConstPtr& msg)
   lastPclTime = ros::Time::now();
 }
 
+/**
+ * @brief RecognitionMaster::translateCvToMap
+ *  Translates the object position in the camera's y/x view to a relative position
+ *  according to the robot local reference frame
+ * @param y
+ *  y position of object in the camera view
+ * @param x
+ *  x position of object in the camera view
+ * @return
+ *  Already prepared message to be sent to the controller
+ */
 explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
 {
   // Correct alignment of depth image to RGB image
   x += RGB_DEPTH_IMG_ALIGNMENT;
-//  y += RGB_DEPTH_IMG_ALIGNMENT;
 
   explorer::Object relMazePos;
   relMazePos.x = -1;
@@ -192,7 +202,6 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
 
   float sumDistance = 0;
   int nAvg = 0;
-
   for (int i = 0; i <= 10; i++)
     {
       for (int j = 0; j <= 10; j++)
@@ -204,7 +213,6 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
               // DEBUG: mark point for visualization
               curDepthImg.at<float>(y + j - 5, x + i - 5) = 255;
 
-//                                ROS_INFO("Raw value: %f", curDepth);
               if (!isnan(curDepth))
                 {
                   sumDistance += curDepth;
@@ -216,13 +224,13 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
 
   if (nAvg != 0)
     {
-      relMazePos.x = sumDistance / nAvg;// * 1000;
+      relMazePos.x = sumDistance / nAvg;
       // calculate y approximation
       relMazePos.y = (320 - x) * (relMazePos.x / 530);
 
+      // DEBUG: show visualization
       if (debugWindows)
       {
-        // DEBUG: show visualization
         cv::imshow("Depth image with marked point", curDepthImg);
         cvWaitKey(10);
       }
@@ -235,7 +243,7 @@ explorer::Object RecognitionMaster::translateCvToMap(int y, int x)
   return relMazePos;
 }
 
-}
+} // END namespace objRecognition
 
 int main(int argc, char** argv)
 {
@@ -250,7 +258,6 @@ int main(int argc, char** argv)
   {
     recognMaster.setDebugView();
   }
-
 
   ros::spin();
   return 0;
