@@ -712,20 +712,30 @@ void update_map(double s1, double s2)
 	// Check near objects
 	if(mode == GOTO_TARGETS)
 	{
-		for(int i = 0; i < near_objects.size(); i++)
+		static int cmpt;
+		if(cmpt >= avoid_repetition)
 		{
-			if(sqrt((near_objects.at(i).x-x_true)*(near_objects.at(i).x-x_true)+(near_objects.at(i).y-y_true)*(near_objects.at(i).y-y_true)) < 0.1)
+			for(int i = 0; i < near_objects.size(); i++)
 			{
-				// Talk
-				std_msgs::String talk;
-				std::stringstream ss;
-				ss << "There is an object.";
+				if(sqrt((near_objects.at(i).x-x_true)*(near_objects.at(i).x-x_true)+(near_objects.at(i).y-y_true)*(near_objects.at(i).y-y_true)) < 0.1)
+				{
+					// Talk
+					std_msgs::String talk;
+					std::stringstream ss;
+					ss << "There is an object.";
 
-				talk.data = ss.str();
-				chatter_pub.publish(talk);
+					talk.data = ss.str();
+					chatter_pub.publish(talk);
 
-				std::cout << ss.str() << std::endl;
+					std::cout << ss.str() << std::endl;
+				}
 			}
+
+			cmpt = 0;
+		}
+		else
+		{
+			cmpt++;
 		}
 	}
 
