@@ -3,12 +3,6 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 
-//for the keyboard input (will remove later and only use the Trackbar)
-#include <sstream>      //std::stringstream
-#include <stdio.h>      //getchar()
-#include <termios.h>    //termios, TCSANOW, ECHO, ICANON
-#include <unistd.h>     //STDIN_FILENO
-
 // Debug
 #include <typeinfo>
 
@@ -18,28 +12,6 @@ namespace objRecognition
 struct Cf_Params params_walls, params_floor;
 // Debug setting
 Filter_mode mode;
-
-///**
-// * @brief Color_Filter::ChangeThreshold
-// * @param msg
-// */
-//void Color_Filter::ChangeThreshold(const std_msgs::String::ConstPtr &msg)
-//{
-//  if ( tolower(msg->data.c_str()[1]) == 'z' )
-//    {
-//      if (image_sub_ == 0) //not subscribing
-//        {
-//          image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
-//          puts("RESUMED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
-//        }
-//      else //don't subscribe to the camera and just be idle
-//        {
-//          image_sub_.shutdown();
-//          puts("STOPPED TO SUBSCRIBE TO TOPIC /camera/rgb/image_color");
-//        }
-//      return;
-//    }
-//}
 
 /**
  * @brief on_trackbar
@@ -127,30 +99,21 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
   cvtColor(remove_background, remove_background, CV_GRAY2BGR); //change image to a BGR image
   bitwise_and(src_image, remove_background, filter_image); //Remove the background
 
-
-
-
-
   //Does some erosion and dilation to remove some of the pixels
   cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
   cv::erode(filter_image, filter_image, cv::Mat());
   cv::dilate(filter_image, filter_image, element);
 
-
-
-  //CONTOURS DETECTION!
-  ///*
-  //http://docs.opencv.org/doc/tutorials/imgproc/shapedescriptors/bounding_rects_circles/bounding_rects_circles.html
-
+  // CONTOURS DETECTION!
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Vec4i> hierarchy;
 
-  /// Detect edges using Threshold
+  // Detect edges using Threshold
   cv::Mat filter_image_bin;
   threshold( filter_image, filter_image_bin, 0, 255, 0 ); //0 == THRESH_BINARY
   cvtColor(filter_image_bin, filter_image_bin, CV_RGB2GRAY); //one channel
 
-  /// Find contours
+  // Find contours
   findContours( filter_image_bin, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
 
   //clear the object vector, and creates a temporary vector storing all detectable things
@@ -172,11 +135,9 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
         }
     }
 
-
   //remove objects that are to narrow to be a real object
   for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
     {
-
       it->rotatedRect = minAreaRect( cv::Mat(it->contours_poly) );
 
       double ratio = (double)std::max( it->rotatedRect.size.height , it->rotatedRect.size.width ) /
@@ -192,12 +153,9 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
 
       it->mc = cv::Point( (int)mu.m10/mu.m00 , (int)mu.m01/mu.m00 );
       objects.push_back(*it); //copy the object and put it in the vector called objects
-
     }
 
   //crop out the objects from the image
-
-
   cv::Mat crop_img = cv::Mat::zeros( src_image.size(), src_image.type());
   cv::Mat mask = cv::Mat::zeros( src_image.size(), src_image.type());
   cv::Scalar color_white = cv::Scalar( 255, 255, 255);
@@ -213,220 +171,21 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
   cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
   src_image = cv_ptr->image.clone();
 
-
-
   // Publish filtered image (if advised to do)
   if (publishFilteredImg) {
     cv_bridge::CvImagePtr img_ptr = cv_ptr;
-    //filter_image.copyTo(img_ptr->image);
     crop_img.copyTo(img_ptr->image);
     img_pub_.publish(img_ptr->toImageMsg());
   }
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Testing to calculate the contours of the found figures
-//
-//	cv::Mat test_src;
-//	test_src = cv_ptr->image; //get the source image from the pointer
-//
-//	//crop out the objects from the image
-//	cv::Mat test_crop_img = cv::Mat::zeros( test_src.size(), test_src.type());
-//	cv::Mat test_mask = cv::Mat::zeros( test_src.size(), test_src.type());
-//	for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
-//	{
-//		//Drawing the up-right rectangle as the ROI
-//		//cv::Rect ROI(it->boundRect.x, it->boundRect.y, it->boundRect.width , it->boundRect.height);
-//		//rectangle(mask, ROI.tl(), ROI.br(), color_white, CV_FILLED); //mask
-//
-//		//Drawing the found contours of the objects as the ROI
-//		std::vector<cv::Point> contour_copy = it->contours_poly;
-//
-//		std::vector<std::vector<cv::Point> > T = std::vector<std::vector<cv::Point> >(1,contour_copy);
-//		for (unsigned int i = 0; i < T.size(); i++)
-//		{
-//			drawContours( test_mask, T,i, cv::Scalar( 255, 255, 255), CV_FILLED, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
-//		}
-//
-//		//increase the size of the contour
-//		cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(13, 13));
-//		cv::dilate(test_mask, test_mask, element);
-//
-//		// Cut out ROI and store it in crop_img
-//		test_src.copyTo(test_crop_img, test_mask);
-//	}
-//	//for some reason the source image get overwritten. Retrieve it back!
-//	cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-//	test_src = cv_ptr->image.clone();
-//
-//
-//
-//	cv::Mat crop_img_gray, canny_output, canny_output_copy;
-//	cvtColor( test_crop_img, crop_img_gray, CV_BGR2GRAY );
-//	blur( crop_img_gray, crop_img_gray, cv::Size(3,3) );
-//	cv::Canny( crop_img_gray, canny_output, 0, 255, 3 );
-//	  canny_output.copyTo(canny_output_copy);
-//	  std::vector<std::vector<cv::Point> > test_contours;
-//	  std::vector<cv::Vec4i> test_hierarchy;
-//	  findContours( canny_output_copy, test_contours, test_hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-//	  /// Draw contours
-//	  cv::Mat test_drawing = cv::Mat::zeros( crop_img.size(), CV_8UC3 );
-//	  for( int i = 0; i< test_contours.size(); i++ )
-//	  {
-//	      drawContours( test_drawing, test_contours, i, cv::Scalar( 255, 255, 255), 2, 8, test_hierarchy, 0, cv::Point() );
-//	  }
-//	  std::cout<<"Size: "<<test_contours.size()<<std::endl;
-//	  cv::imshow("Cropped image", test_crop_img);
-//	  cv::imshow("Cropped blurred image", crop_img_gray);
-//	  cv::imshow("Canny edge", canny_output);
-//	  cv::imshow("found contours", test_drawing);
-//
-//	  cv::waitKey(3);
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //track objects
-
-  //if there where no previous rectangles, add some!
-//  unsigned int prev_rects_size = prev_rects.size();
-//  if (prev_rects_size == 0)
-//    {
-//      for(std::vector<DetectedObject>::iterator it = temp_objects.begin(); it != temp_objects.end(); ++it)
-//        {
-//          ObjectRectangle newRect;
-//          it->ROI_id = ROI_id_counter;
-//          newRect.ROI_id = ROI_id_counter;
-//          newRect.boundRect = it->boundRect;
-//          ++ROI_id_counter;
-//          prev_rects.push_back(newRect);
-//        }
-//    }
-
-  //Create ros-message
-//  if (publishFilteredImg)
-//    {
-//      color_filter::Objects obj_msg;
-//      obj_msg.ROI.reserve( contours_poly.size() );
-//      for (unsigned int i=0; i < boundRect.size(); i++)
-//        {
-//          cv::Rect rect = boundRect[i];
-//          color_filter::Rect2D_ rect2D_msg;
-//          rect2D_msg.x = rect.x;
-//          rect2D_msg.y = rect.y;
-//          rect2D_msg.height = rect.height;
-//          rect2D_msg.width = rect.width;
-//          obj_msg.ROI.push_back(rect2D_msg);
-//          obj_msg.ROI_id = ROI_id_counter;
-//        }
-//      obj_pub_.publish(obj_msg);
-//    }
-
-  /*
-                else
-                {
-                        for(std::vector<ObjectRectangle>::iterator it = prev_rects.begin(); it != prev_rects.end(); ++it)
-                        {
-
-
-                        }
-                }
-                */
-
-  //		if (boundRect.size() == 1)
-  //		{
-  //			//std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
-  //			//std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
-  //			//std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
-  //			if ((boundRect[0] & prev_rect).height == 0) //if its not overlapping with the previous rectangle, its a new object
-  //			{
-  //				ROI_id_counter++;
-  //				prev_rect = boundRect[0];
-  //				flag_send_msg = true;
-  //			}
-  //			else
-  //			{
-  //				prev_rect = boundRect[0];
-  //			}
-  //		}
-  //		else
-  //			prev_rect = cv::Rect();
-
-
-
-
-  //		//could not get the damned openCV-merging-rectangles-function to work properly.
-  //		//Had to create my own way of merging intersecting rectangles!
-  //		bool MERGE_DONE = false;
-  //                unsigned int i = 0;
-  //		while(!MERGE_DONE && boundRect.size()>1)
-  //		{
-  //			bool have_merged = false;
-  //			for (unsigned int j = i+1; j<boundRect.size(); j++)
-  //			{
-  //                                cv::Rect &rect_a = boundRect[i];
-  //
-  //                                cv::Rect &rect_b = boundRect[j];
-  //				cv::Rect intersect = rect_a & rect_b;
-  //				if (intersect.height != 0 && intersect.width != 0) //rectangles intersect!
-  //				{
-  //					int x = std::min(rect_a.x , rect_b.x);
-  //					int y = std::min(rect_a.y , rect_b.y);
-  //					int width = std::max(rect_a.br().x , rect_b.br().x) - x;
-  //					int height = std::max(rect_a.br().y , rect_b.br().y) - y;
-  //					cv::Rect merged_rect(x,y,width, height);
-  //
-  //					boundRect[i] = merged_rect; //write over the old rectangle with the bigger one
-  //					boundRect.erase(boundRect.begin() + j); //delete the rectangle that is already merged
-  //
-  //					have_merged = true;
-  //					break;
-  //				}
-  //			}
-  //
-  //			//if we have merged two rectangles, start all over again in case there exist
-  //			//rectangles that will intersect with the new bigger added rectangle.
-  //			if (have_merged)
-  //			{
-  //				i = 0;
-  //				continue;
-  //			}
-  //			i++;
-  //			if (i == boundRect.size()) MERGE_DONE = true;
-  //		}
-  //
-  //		bool flag_send_msg = false;
-  //		if (boundRect.size() == 1)
-  //		{
-  //			//std::cout<<"boundRect[0]: ("<<boundRect[0].tl()<<", "<<boundRect[0].br()<<")"<<std::endl;
-  //			//std::cout<<"prev_rect: ("<<prev_rect.tl()<<", "<<prev_rect.br()<<")"<<std::endl;
-  //			//std::cout<<"(boundRect[0] & prev_rect): "<<(boundRect[0] & prev_rect).tl()<<", "<<(boundRect[0] & prev_rect).br()<<")"<<std::endl;
-  //			if ((boundRect[0] & prev_rect).height == 0) //if its not overlapping with the previous rectangle, its a new object
-  //			{
-  //				ROI_id_counter++;
-  //				prev_rect = boundRect[0];
-  //				flag_send_msg = true;
-  //			}
-  //			else
-  //			{
-  //				prev_rect = boundRect[0];
-  //			}
-  //		}
-  //		else
-  //			prev_rect = cv::Rect();
-  //
-  //
-  //
 
   if (FLAG_SHOW_IMAGE)
     {
       cv::imshow("Original", src_image);
 
-
       cv::Mat drawing = cv::Mat::zeros( filter_image_bin.size(), CV_8UC3 );
       cv::Scalar color_red = cv::Scalar( 0, 0, 255 );
       cv::Scalar color_blue = cv::Scalar( 255, 0, 0);
       cv::Scalar color_white = cv::Scalar( 255, 255, 255);
-
 
       cv::Point2f rect_points[4];
       for(std::vector<DetectedObject>::iterator it = objects.begin(); it != objects.end(); ++it)
@@ -441,13 +200,10 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
           for( int j = 0; j < 4; j++ )
             line( drawing, rect_points[j], rect_points[(j+1)%4], color_blue, 1, 8 );
 
-          //http://opencv-users.1802565.n2.nabble.com/draw-only-one-contour-using-drawContours-td7404400.html
           std::vector<std::vector<cv::Point> > T = std::vector<std::vector<cv::Point> >(1,it->contours_poly);
           for (unsigned int i = 0; i < T.size(); i++)
             drawContours( drawing, T,i, color_red, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
-
         }
-
       imshow( "Found objects", drawing );
 
       cv::waitKey(3);
@@ -462,125 +218,4 @@ void Color_Filter::color_filter(const sensor_msgs::ImageConstPtr &msg, bool publ
       cv::imshow("Result", filter_image);
       cv::waitKey(3);
     }
-  //*/
-
-
-  //BLOB DETECTION!
-  /*
-
-                //http://stackoverflow.com/questions/8076889/tutorial-on-opencv-simpleblobdetector
-                // set up the parameters (check the defaults in opencv's code in blobdetector.cpp)
-                cv::SimpleBlobDetector::Params params;
-                params.minDistBetweenBlobs = 20.0f;
-                params.filterByInertia = false;
-                params.filterByConvexity = false;
-                params.filterByCircularity = false;
-                params.filterByColor = false;
-                params.filterByArea = true;
-                params.minArea = 100.0f;
-                params.maxArea = 1000000.0f;
-
-                // ... any other params you don't want default value
-
-
-                // set up and create the detector using the parameters
-                cv::Ptr<cv::FeatureDetector> blob_detector = new cv::SimpleBlobDetector(params);
-                blob_detector->create("SimpleBlob");
-
-                // detect!
-
-
-                cv::erode(remove_background, remove_background, cv::Mat());
-                cv::dilate(filter_image, filter_image, element);
-                //cv::imshow("remove_background", remove_background);
-
-
-                cv::Mat imageROI;
-                int y_remove = 100;
-                imageROI= remove_background(cv::Rect(0,y_remove,remove_background.cols,remove_background.rows - y_remove));
-                std::vector<cv::KeyPoint> keypoints;
-                blob_detector->detect(imageROI, keypoints);
-
-
-                // extract the x y coordinates of the keypoints:
-                if (keypoints.size()>0)
-                        std::cout<<"\nFound "<<keypoints.size()<<" keypoints"<<std::endl;
-                for (int i=0; i<keypoints.size(); i++){
-                        keypoints[i].pt.y += y_remove;
-                    float X=keypoints[i].pt.x;
-                    float Y=keypoints[i].pt.y;
-                    std::cout<<"X: "<<X<<std::endl;
-                    std::cout<<"Y: "<<Y<<std::endl<<std::endl;
-                }l
-
-                cv::Mat found_objects;
-                drawKeypoints(remove_background, keypoints,found_objects, cv::Scalar(0,0,255));
-                cv::imshow("found_objects", found_objects);
-  */
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-} // END namespace objRecognition
-
-//int main(int argc, char** argv)
-//{
-//	ros::init(argc, argv, "color_filter");
-//	if (argc != 1)
-//	{
-//		if (atoi(argv[1]) == 1)
-//                {
-//			FLAG_SHOW_IMAGE = true;
-//		}
-//		else if (atoi(argv[1]) >= 2)
-//		{
-//			//FLAG_SHOW_IMAGE = true;
-//			FLAG_CHANGE_THRESHOLD = true;
-//			cv::namedWindow("Trackbar walls", 1);
-//			cv::namedWindow("Trackbar floor", 1);
-//			cv::createTrackbar( "Walls HUE MIN:", "Trackbar walls", &params_walls.H_MIN, 180, on_trackbar);
-//			cv::createTrackbar( "Walls HUE MAX:", "Trackbar walls", &params_walls.H_MAX, 180, on_trackbar);
-//			cv::createTrackbar( "Walls SAT MIN:", "Trackbar walls", &params_walls.S_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Walls SAT MAX:", "Trackbar walls", &params_walls.S_MAX, 255, on_trackbar);
-//			cv::createTrackbar( "Walls VAL MIN:", "Trackbar walls", &params_walls.V_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Walls VAL MAX:", "Trackbar walls", &params_walls.V_MAX, 255, on_trackbar);
-
-//			cv::createTrackbar( "Floor HUE MIN:", "Trackbar floor", &params_floor.H_MIN, 180, on_trackbar);
-//			cv::createTrackbar( "Floor HUE MAX:", "Trackbar floor", &params_floor.H_MAX, 180, on_trackbar);
-//			cv::createTrackbar( "Floor SAT MIN:", "Trackbar floor", &params_floor.S_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Floor SAT MAX:", "Trackbar floor", &params_floor.S_MAX, 255, on_trackbar);
-//			cv::createTrackbar( "Floor VAL MIN:", "Trackbar floor", &params_floor.V_MIN, 255, on_trackbar);
-//			cv::createTrackbar( "Floor VAL MAX:", "Trackbar floor", &params_floor.V_MAX, 255, on_trackbar);
-
-//			/// Show some stuff
-//			on_trackbar( params_walls.H_MIN, 0 );
-//			on_trackbar( params_walls.H_MAX, 0 );
-//			on_trackbar( params_walls.S_MIN, 0 );
-//			on_trackbar( params_walls.S_MAX, 0 );
-//			on_trackbar( params_walls.V_MIN, 0 );
-//			on_trackbar( params_walls.V_MAX, 0 );
-
-//			on_trackbar( params_floor.H_MIN, 0 );
-//			on_trackbar( params_floor.H_MAX, 0 );
-//			on_trackbar( params_floor.S_MIN, 0 );
-//			on_trackbar( params_floor.S_MAX, 0 );
-//			on_trackbar( params_floor.V_MIN, 0 );
-//			on_trackbar( params_floor.V_MAX, 0 );
-//		}
-//	}
-
-
-//	//cv::namedWindow("Linear Blend", 1);
-//	//cv::createTrackbar( " Threshold:", "Linear Blend", &params_floor.S_MAX, 255, on_trackbar);
-//	/// Show some stuff
-//	//on_trackbar( params_floor.S_MAX, 0 );
-
-
-
-//        objRecognition::Color_Filter cf;
-//	puts("Color filter is up and running!");
-//	puts("Message is being sent to /recognition/detect");
-//	ros::spin();
-
-//	return 0;
-//}
-

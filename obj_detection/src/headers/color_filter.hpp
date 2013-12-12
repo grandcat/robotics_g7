@@ -21,12 +21,11 @@
 //#include "recognition_constants.hpp"
 
 #include <color_filter/Rect2D_.h> //msg for ROI of an object
-#include <color_filter/Objects.h>//msg containing ROI:s of objects
+#include <color_filter/Objects.h> //msg containing ROI:s of objects
 
 namespace objRecognition
 {
 // initial min and max HSV filter values.
-// these can be changed in runtime through the keyboard node (TODO, add trackbar instead)
 const int CHANGE = 10;
 const int MAX = 256;
 
@@ -40,22 +39,12 @@ struct Cf_Params
     H_MIN(0), H_MAX(MAX), S_MIN(0), S_MAX(106), V_MIN(0), V_MAX(MAX) {}
 };
 
-
-//flag for which filter we are adjusting
-enum Filter_mode
-{
-  WALLS = 0,
-  FLOOR = 1
-};
-
 //object contour parameters
 const double minArea = 1000.0;
 const double maxArea = 100000.0;
 
 //object rectangle parameter
-//double minRatio = 4.3;
 const double minRatio = 5;
-
 
 struct ObjectRectangle
 {
@@ -96,8 +85,6 @@ public:
   Color_Filter() : it_(nh_), ROI_id_counter(0),
     FLAG_SHOW_IMAGE(false), FLAG_CHANGE_THRESHOLD(false)
   {
-//    image_sub_ = it_.subscribe("/camera/rgb/image_color", 1, &Color_Filter::color_filter, this);
-//    keyboard_sub = nh_.subscribe("/keyboard/input", 1, &Color_Filter::ChangeThreshold, this);
     img_pub_ = it_.advertise("/color_filter/filtered_image", 1);
     obj_pub_ = nh_.advertise<color_filter::Objects>("/recognition/detect", 1);
 
@@ -107,15 +94,8 @@ public:
 
   ~Color_Filter()
   {
-    // TODO: only destroy windows created by color_filter
     cv::destroyAllWindows();
   }
-
-//  /**
-//   * @brief ChangeThreshold
-//   * @param msg
-//   */
-//  void ChangeThreshold(const std_msgs::String::ConstPtr& msg);
 
   /**
    * @brief showConfigurationPanel
